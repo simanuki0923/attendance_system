@@ -1,0 +1,146 @@
+/* public/css/request.css */
+
+.request-list {
+  background: #f3f3f6;               /* 全体の薄いグレー */
+  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+}
+
+.request-list__inner {
+  max-width: 960px;
+  margin: 32px auto 64px;
+  padding: 32px 40px 40px;
+  border-radius: 4px;
+}
+
+/* タイトル周り */
+.request-list__header {
+  margin-bottom: 24px;
+}
+
+.request-list__title {
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.request-list__title-bar {
+  width: 4px;
+  height: 24px;
+  background: #111111;
+  border-radius: 2px;
+}
+
+.request-list__title-text {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* タブ（承認待ち / 承認済み） */
+.request-list__tabs {
+  display: flex;
+  gap: 40px;
+  font-size: 13px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #d1d5db;
+  padding-bottom: 6px;
+}
+
+.request-list__tab {
+  position: relative;
+  padding: 4px 0;
+  text-decoration: none;
+  color: #6b7280;
+}
+
+.request-list__tab.is-active {
+  color: #111827;
+  font-weight: 600;
+}
+
+.request-list__tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 2px;
+  background: #111827;
+  border-radius: 1px;
+}
+
+/* テーブル */
+.request-list__table-wrapper {
+  margin-top: 8px;
+}
+
+.request-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  background: #ffffff;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* ▼ ヘッダー行の下にも横線 */
+.request-table thead tr {
+  background: #f3f4f6;
+  border-bottom: 1px solid #d1d5db;
+}
+
+.request-table__th,
+.request-table__td {
+  padding: 8px 16px;
+  text-align: left;
+  white-space: nowrap;
+  background: #ffffff;
+}
+
+/* ▼ 本文行ごとの横線 */
+.request-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 最後の行だけボーダーなしにしたい場合（好みで） */
+.request-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.request-table__th--narrow,
+.request-table__td--link {
+  text-align: center;
+  width: 80px;
+}
+
+/* 行背景（必要ならそのまま利用） */
+.request-table tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.request-table tbody tr:hover {
+  background: #f1f5f9;
+}
+
+/* 詳細リンク */
+.request-table__detail-link {
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #111827;
+}
+
+.request-table__detail-link:hover {
+  text-decoration: underline;
+}
+
+.request-table__detail-link--disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* データなし行 */
+.request-table__td--empty {
+  text-align: center;
+  padding: 20px 16px;
+}

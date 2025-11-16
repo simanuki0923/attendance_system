@@ -1,0 +1,119 @@
+/* public/css/staff.css */
+
+.staff-list {
+  background: #f3f3f6;               /* 画面全体の薄いグレー */
+  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+}
+
+.staff-list__inner {
+  max-width: 960px;
+  margin: 32px auto 64px;
+  padding: 0 24px;
+}
+
+/* タイトル周り */
+.staff-list__header {
+  margin-bottom: 24px;
+  transform:translateX(100px)
+}
+
+.staff-list__title {
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.staff-list__title-bar {
+  width: 4px;
+  height: 24px;
+  background: #111111;
+  border-radius: 2px;
+}
+
+.staff-list__title-text {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* 白いカード＋テーブル */
+.staff-list__card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #e5e7eb;
+  overflow: hidden;
+}
+
+.staff-list__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.staff-list__th,
+.staff-list__td {
+  padding: 10px 16px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.staff-list__th {
+  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.staff-list__td {
+  font-size: 13px;
+  color: #111827;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+/* 列幅の調整（スクショっぽく中央寄せの細めテーブル） */
+.staff-list__th--name,
+.staff-list__td--name {
+  width: 30%;
+  transform:translateX(80px)
+}
+
+.staff-list__th--email,
+.staff-list__td--email {
+  width: 50%;
+  transform:translateX(-15px)
+}
+
+.staff-list__th--monthly,
+.staff-list__td--monthly {
+  width: 20%;
+  text-align: center;
+  transform:translateX(-80px)
+}
+
+/* 「詳細」リンク */
+.staff-list__detail-link {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111111;
+  text-decoration: none;
+}
+
+.staff-list__detail-link:hover {
+  text-decoration: underline;
+}
+
+.staff-list__detail-text {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* データなし行 */
+.staff-list__td--empty {
+  text-align: center;
+  color: #6b7280;
+}
+

@@ -1,0 +1,142 @@
+html, body { height: 100%; }
+body {
+  margin: 0;
+  color: #222;
+}
+
+header {
+  background: #111;
+  padding: 8px 16px;
+}
+header a {
+  display: inline-block;
+  line-height: 0;
+}
+header img {
+  height: 28px;
+  display: block;
+}
+
+main {
+  display: grid;
+  place-items: center;
+  padding: 48px 16px;
+}
+
+.login__content {
+  width: min(550px, 100%);
+  background: #fff;
+  padding: 28px 28px 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.02);
+}
+
+.login-form__heading {
+  margin: 0 0 50px;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 700;
+  transform:translateX(-20px);
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 10px;
+}
+
+.form__group { display: block; }
+
+.form__label--item {
+  display: block;
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 6px;
+  font-weight:700;
+}
+
+.form input[type="email"],
+.form input[type="password"] {
+  box-sizing: border-box;
+  display: block;
+  width: 500px;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #222;
+  background: #fff;
+  border: 1px solid black;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  margin-bottom: 30px;
+}
+
+.form input[type="email"]:focus,
+.form input[type="password"]:focus {
+  border-color: #333;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.06);
+}
+
+.form__error {
+  display: block;
+  margin-top: 6px;
+  color: #d93025;
+  font-size: 12px;
+}
+
+.form__button-submit {
+  width: 100%;
+  border: none;
+  border-radius: 2px;
+  height: 44px;
+  margin-top: 20px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  background: black;
+  cursor: pointer;
+  transition: filter .15s ease, transform .02s ease;
+}
+
+.register__link {
+  margin: 14px 0 2px;
+  text-align: center;
+}
+.register__button-submit {
+  font-size: 20px;
+  color: #2a7bd2;
+  text-decoration: none;
+}
+.register__button-submit:hover {
+  text-decoration: underline;
+}
+
+@media (min-width: 1400px) and (max-width: 1540px) {
+  header {
+    background: #111;
+    padding: 8px 16px;
+  }
+
+  header img {
+    height: 28px;
+  }
+
+  main {
+    padding: 48px 16px;
+  }
+
+  .login__content {
+    width: min(420px, 100%);
+    padding: 28px 28px 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02);
+  }
+
+  .form__button-submit {
+    height: 44px;
+    font-size: 14px;
+  }
+
+  .register__button-submit {
+    font-size: 12px;
+  }
+
+}

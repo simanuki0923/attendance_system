@@ -1,0 +1,99 @@
+/* public/css/app.css */
+
+:root {
+  --container: 1200px;
+  --bg: #f3f4f6;
+  --header-bg: #000000;
+  --text: #111827;
+  --border: #e5e7eb;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Roboto, "Helvetica Neue", Arial, "Noto Sans JP",
+               "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ========== Header ========== */
+
+.header {
+  background: var(--header-bg);
+  border-bottom: 1px solid #000;
+}
+
+.header__inner {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 10px 16px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: 24px;
+}
+
+.header__logo img {
+  display: block;
+  height: 26px;        /* スクショに近い高さ */
+  transform:translateX(-150px);
+}
+
+/* ログイン画面などでナビが無いときに左寄せになりすぎないように */
+.header__nav {
+  margin-left: auto;
+}
+
+.header__nav-list {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header__nav-item {
+  margin: 0;
+}
+
+.header__nav-link {
+  display: inline-block;
+  font-size: 14px;
+  color: #ffffff;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  padding: 4px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.header__nav-link:hover,
+.header__nav-link.is-active {
+  opacity: 0.7;
+}
+
+.header__nav-link--logout {
+  /* button だが a と同じ見た目に */
+}
+
+/* ========== Main ========== */
+
+.main {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}

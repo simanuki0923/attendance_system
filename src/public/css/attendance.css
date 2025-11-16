@@ -1,0 +1,105 @@
+.attendance {
+  min-height: calc(100vh - 56px); /* ヘッダー分を引いた高さ想定 */
+  padding: 40px 16px 60px;
+}
+
+.attendance__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ステータスバッジ */
+.attendance__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  padding: 4px 16px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 28px;
+  background: rgb(155, 154, 154);
+  color: #d8d8d8;
+}
+
+/* 状態ごとに色変えたい場合はここで上書きしてもOK */
+.attendance__badge--before_work { }
+.attendance__badge--working { }
+.attendance__badge--on_break { }
+.attendance__badge--after_work { }
+
+.attendance__date {
+  font-size: 30px;
+  margin: 0 0 12px;
+  color: #111827;
+  font-weight: 700;
+
+}
+
+.attendance__time {
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0 40px;
+  color: #111827;
+}
+
+/* ボタンエリア */
+.attendance__actions {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.attendance__actions--single {
+  width: 100%;
+}
+
+.attendance__actions--single .attendance__btn {
+  min-width: 220px;
+}
+
+.attendance__actions--double .attendance__btn {
+  min-width: 160px;
+}
+
+/* ボタン共通 */
+.attendance__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 32px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+/* 黒ボタン */
+.attendance__btn--primary {
+  background: #111111;
+  color: #ffffff;
+}
+
+/* 白ボタン */
+.attendance__btn--secondary {
+  background: #ffffff;
+  color: #111111;
+  border-color: #d1d5db;
+}
+
+/* 退勤後メッセージ */
+.attendance__message {
+  margin-top: 32px;
+  font-size: 16px;
+  color: #111827;
+}

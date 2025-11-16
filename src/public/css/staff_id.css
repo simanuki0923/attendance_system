@@ -1,0 +1,240 @@
+/* public/css/staff_id.css */
+
+/* 画面全体 -------------------------------------------------- */
+.attendance-list {
+  background: #f3f3f6;               /* 外側の薄いグレー */
+  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+}
+
+.attendance-list__inner {
+  max-width: 720px;                  /* 中央の白いエリアの幅感 */
+  margin: 32px auto 64px;
+  padding: 0 24px;
+}
+
+/* タイトル -------------------------------------------------- */
+.attendance-list__header {
+  margin-bottom: 12px;
+}
+
+.attendance-list__title {
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 700;
+  transform:translateY(-9px);
+}
+
+.attendance-list__title-bar {
+  width: 4px;
+  height: 24px;
+  background: #111111;
+  border-radius: 2px;
+}
+
+/* 月切替ナビ（白いピル型＋白黒カレンダー） */
+.attendance-list__month-nav {
+  display: flex;
+  align-items: center;
+  /* 左右いっぱいを使いつつ、全体は中央に配置 */
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 5px;
+  padding: 10px 28px;
+  box-shadow: 0 0 0 1px #e5e7eb;
+  transform:translateY(-10px);
+}
+
+/* 左右ボタン（前月 / 翌月） */
+.month-nav__btn {
+  min-width: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  color: black;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.month-nav__btn:hover {
+  text-decoration: underline;
+}
+
+.month-nav__btn--disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.month-nav__arrow {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* 前月ボタンを左端へ */
+.month-nav__btn--prev {
+  margin-right: auto;
+  font-size: 20px;
+}
+
+
+/* 翌月ボタンを右端へ */
+.month-nav__btn--next {
+  margin-left: auto;
+  font-size: 20px;
+}
+
+/* 真ん中のカレンダー表示（中央寄せ） */
+.month-nav__current {
+  min-width: auto;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+  margin: 0 auto;
+}
+
+/* カレンダーの白黒アイコン */
+.month-nav__icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid #111111;   /* 黒枠 */
+  position: relative;
+  display: inline-block;
+}
+
+
+
+.month-nav__icon::before,
+.month-nav__icon::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  height: 1px;
+  background: #111111;
+}
+
+.month-nav__icon::before { top: 3px; }
+.month-nav__icon::after  { top: 6px; }
+
+.month-nav__label {
+  letter-spacing: 0.03em;
+}
+
+/* 一覧テーブル ---------------------------------------------- */
+.attendance-list__table--staff {
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 3px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  font-size: 11px;
+}
+
+/* 行レイアウト */
+.attendance-list__row {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(4, 1fr) 0.9fr; /* 日付 + 出退勤 + 休憩 + 合計 + 詳細 */
+  align-items: center;
+}
+
+/* ヘッダー行 */
+.attendance-list__row--head {
+  background: #f9fafb;
+  font-weight: 600;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.attendance-list__cell {
+  padding: 7px 10px;
+  text-align: center;
+  border-bottom: 1px solid #f3f4f6;
+  white-space: nowrap;
+}
+
+.attendance-list__cell--date {
+  text-align: left;
+}
+
+/* 最終行は下線を消す */
+.attendance-list__row:last-child .attendance-list__cell {
+  border-bottom: none;
+}
+
+/* アクティブ行（青強調。必要なければこのブロックを削除） */
+.attendance-list__row--active {
+  position: relative;
+  background: #eff6ff;
+}
+
+.attendance-list__row--active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #2563eb;
+}
+
+/* 詳細リンク */
+.attendance-list__cell--detail {
+  text-align: center;
+}
+
+.attendance-list__detail-link {
+  font-size: 11px;
+  text-decoration: underline;
+  color: #111111;
+}
+
+.attendance-list__detail-link--disabled {
+  color: #9ca3af;
+  text-decoration: none;
+  cursor: default;
+}
+
+/* データなしメッセージ */
+.attendance-list__empty {
+  padding: 18px 12px 20px;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* CSV出力ボタン ---------------------------------------------- */
+.attendance-list__footer {
+  margin-top: 26px;
+  text-align: center;
+}
+
+.attendance-list__csv-btn {
+  min-width: 110px;
+  padding: 8px 20px;
+  border-radius: 4px;
+  border: none;
+  background: #111111;
+  color: #ffffff;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transform:translateX(280px);
+}
+
+.attendance-list__csv-btn:hover {
+  opacity: 0.9;
+}

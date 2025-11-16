@@ -1,0 +1,149 @@
+:root{
+  --header:#0b0b0b;
+  --text:#111827;
+  --muted:#6b7280;
+  --primary:#1d4ed8;
+  --radius:14px;
+  --shadow:0 8px 30px rgba(0,0,0,.12);
+  --bg-page:#f6f7f8;
+  --bg-card:#ffffff;
+  --border:#e5e7eb;
+}
+
+*{ box-sizing: border-box; }
+html,body{
+  height:100%;
+}
+
+body{
+  margin:0;
+  color:var(--text);
+  background:var(--bg-page);
+  font:16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI",
+       "Hiragino Kaku Gothic ProN", Meiryo, Roboto, "Noto Sans JP",
+       "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+}
+
+header{
+  background:var(--header);
+  border-bottom:1px solid #111;
+}
+header a{
+  display:inline-flex;
+  align-items:center;
+  min-height:56px;
+  padding:8px 16px;
+}
+header img{
+  height:24px;
+  width:auto;
+  display:block;
+}
+
+main{
+  min-height:calc(100vh - 56px);
+  display:grid;
+  place-items:center;
+  padding:28px 16px;
+  transform: translateY(-100px);
+}
+.verify__content{
+  width:clamp(320px, 70vw, 920px);
+  min-height:320px;
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:48px 20px;
+}
+
+.verify__status{
+  margin:-8px 0 18px;
+  padding:10px 14px;
+  background:#f0f9ff;
+  color:#075985;
+  border:1px solid #bae6fd;
+  border-radius:10px;
+  font-size:14px;
+}
+.verify__lead{
+  margin:6px 0 28px;
+  color:#111;
+  font-size:20px;
+  font-weight: 700;
+}
+
+.verify__button{
+  display:inline-block;
+  padding:10px 20px;
+  background:#c4c5c7;
+  color:#111;
+  border:1px solid #c4c5c7;
+  border-radius:8px;
+  font-size: 25px;
+  font-weight:600;
+  text-decoration:none;
+  box-shadow:0 1px 0 rgba(0,0,0,.05);
+  transition:transform .02s ease, box-shadow .15s ease, background .2s ease;
+}
+.verify__button:hover{
+  background:#f3f4f6;
+}
+
+.verify__button:active{
+  transform:translateY(1px);
+  box-shadow:none;
+}
+
+.verify__resend{
+  margin-top:18px;
+}
+
+.verify__resend button.verify__resend-link{
+  appearance:none;
+  background:none;
+  border:none;
+  padding:0;
+  margin:0;
+  color:var(--primary);
+  font-size:15px;
+  cursor:pointer;
+  text-decoration:none;
+  transform: translateY(30px);
+}
+
+.verify__resend button.verify__resend-link:hover{
+  text-decoration:underline;
+}
+
+@media (min-width:1400px) and (max-width:1540px){
+  header a{
+    min-height:56px;
+    padding:8px 16px;
+  }
+
+  header img{
+    height:24px;
+  }
+
+  main{
+    padding:28px 16px;
+  }
+
+  .verify__content{
+    width:clamp(320px, 70vw, 920px);
+    min-height:320px;
+    padding:48px 20px;
+  }
+
+  .verify__status{
+    font-size:14px;
+  }
+
+  .verify__button{
+    padding:10px 20px;
+  }
+
+}
