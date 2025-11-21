@@ -20,6 +20,8 @@
     <section class="register__content">
         <h1 class="register-form__heading">会員登録</h1>
 
+        {{-- ★ グローバルなエラー一覧は削除済み --}}
+
         @if (session('status'))
             <div class="flash__message" role="status">{{ session('status') }}</div>
         @endif
@@ -37,7 +39,7 @@
                     autocomplete="name"
                     required
                     aria-invalid="{{ $errors->has('name') ? 'true' : 'false' }}"
-                    aria-describedBy="{{ $errors->has('name') ? 'error-name' : '' }}"
+                    aria-describedby="{{ $errors->has('name') ? 'error-name' : '' }}"
                 />
                 @if ($errors->has('name'))
                     @foreach ($errors->get('name') as $msg)
@@ -56,13 +58,13 @@
                     autocomplete="email"
                     required
                     aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}"
-                    aria-describedBy="{{ $errors->has('email') ? 'error-email' : '' }}"
+                    aria-describedby="{{ $errors->has('email') ? 'error-email' : '' }}"
                 />
-            @if ($errors->has('email'))
-                @foreach ($errors->get('email') as $msg)
-                    <span id="error-email" class="form__error">{{ $msg }}</span>
-                @endforeach
-            @endif
+                @if ($errors->has('email'))
+                    @foreach ($errors->get('email') as $msg)
+                        <span id="error-email" class="form__error">{{ $msg }}</span>
+                    @endforeach
+                @endif
             </label>
 
             {{-- パスワード --}}
@@ -75,7 +77,7 @@
                     autocomplete="new-password"
                     required
                     aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
-                    aria-describedBy="{{ $errors->has('password') ? 'error-password' : '' }}"
+                    aria-describedby="{{ $errors->has('password') ? 'error-password' : '' }}"
                 />
                 @if ($errors->has('password'))
                     @foreach ($errors->get('password') as $msg)
@@ -93,11 +95,12 @@
                     minlength="8"
                     autocomplete="new-password"
                     required
-                    aria-invalid="{{ $errors->has('password_confirmation') ? 'true' : 'false' }}"
-                    aria-describedBy="{{ $errors->has('password_confirmation') ? 'error-password-confirmation' : '' }}"
+                    {{-- confirmed のエラーは password につく --}}
+                    aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}"
+                    aria-describedby="{{ $errors->has('password') ? 'error-password-confirmation' : '' }}"
                 />
-                @if ($errors->has('password_confirmation'))
-                    @foreach ($errors->get('password_confirmation') as $msg)
+                @if ($errors->has('password'))
+                    @foreach ($errors->get('password') as $msg)
                         <span id="error-password-confirmation" class="form__error">{{ $msg }}</span>
                     @endforeach
                 @endif
