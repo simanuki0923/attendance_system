@@ -36,7 +36,7 @@
                 // デフォルト：一般ユーザー（出勤前 / 通常）
                 $menu = [
                     ['label' => '勤怠',     'route' => 'attendance.list'],
-                    ['label' => '勤怠一覧', 'route' => 'attendance.list'],
+                    ['label' => '勤怠一覧', 'route' => 'attendance.month'],
                     ['label' => '申請',     'route' => 'requests.list'],
                 ];
 
@@ -44,7 +44,7 @@
                 if ($user->is_admin ?? false) {
                     $menu = [
                         ['label' => '勤怠',     'route' => 'admin.attendance.list'],
-                        ['label' => '勤怠一覧', 'route' => 'admin.attendance.list'],
+                        ['label' => '勤怠一覧', 'route' => 'admin.attendance.month'],
                         ['label' => '申請',     'route' => 'admin.requests.list'],
                     ];
                 }
