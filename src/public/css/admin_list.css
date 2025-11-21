@@ -191,6 +191,7 @@
 
 .attendance-list__cell--date {
   text-align: left;
+  transform:translateX(50px);
 }
 
 .attendance-list__cell--detail {
