@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\RegisterResponse;
+use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -47,32 +48,36 @@ class FortifyServiceProvider extends ServiceProvider
         // 会員登録処理
         Fortify::createUsersUsing(CreateNewUser::class);
 
-        // ====== ログイン認証ロジック（バリデーション + メール未認証チェック） ======
+        // ====== ログイン認証ロジック（FormRequestバリデーション + 認証チェック） ======
         Fortify::authenticateUsing(function (Request $request) {
-            // ① バリデーション
+
+            // ① LoginRequest のルール＆メッセージでバリデーション
+            $formRequest = new LoginRequest();
+
             $validator = Validator::make(
                 $request->all(),
-                [
-                    'email'    => ['required', 'string', 'email'],
-                    'password' => ['required', 'string'],
-                ],
-                [
-                    'email.required'    => 'メールアドレスを入力してください',
-                    'email.email'       => 'メールアドレスを正しい形式で入力してください',
-                    'password.required' => 'パスワードを入力してください',
-                ]
+                $formRequest->rules(),
+                $formRequest->messages()
             );
 
             if ($validator->fails()) {
-                throw ValidationException::withMessages($validator->errors()->toArray());
+                throw new ValidationException($validator);
             }
 
-            // ② メールアドレス + パスワードチェック
+            // ② メールアドレスでユーザー検索
             $user = User::where('email', $request->string('email'))->first();
 
-            if (! $user || ! Hash::check($request->string('password'), $user->password)) {
+            // ★ メールが存在しない場合 → email欄の下に出す
+            if (! $user) {
                 throw ValidationException::withMessages([
-                    'auth' => 'ログイン情報が登録されていません',
+                    'email' => 'ログイン情報が登録されていません',
+                ]);
+            }
+
+            // ★ パスワードが違う場合 → password欄の下に出す
+            if (! Hash::check($request->string('password'), $user->password)) {
+                throw ValidationException::withMessages([
+                    'password' => 'ログイン情報が登録されていません',
                 ]);
             }
 
@@ -83,6 +88,7 @@ class FortifyServiceProvider extends ServiceProvider
                 session()->flash('must_verify', true);
                 session()->flash('verification_link_sent', true);
 
+                // 未認証系はグローバルで表示する想定のまま auth に付ける
                 throw ValidationException::withMessages([
                     'auth' => 'メール認証が完了していません',
                 ]);
@@ -92,7 +98,7 @@ class FortifyServiceProvider extends ServiceProvider
             return $user;
         });
 
-        // ====== ★ レートリミッター定義（ここが今回のエラー原因） ======
+        // ====== レートリミッター定義 ======
 
         // login レートリミッター（1分あたり5回まで）
         RateLimiter::for('login', function (Request $request) {

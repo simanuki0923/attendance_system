@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ListController;
+use App\Http\Controllers\RequestController;
+use App\Http\Controllers\DetailtController;
 
 // トップはログイン画面へ飛ばす
 Route::get('/', function () {
@@ -13,7 +16,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 勤怠登録画面（GET）
     Route::get('/attendance', [AttendanceController::class, 'index'])
         ->name('attendance.list');
-    
+
+    Route::get('/attendance/month', [ListController::class, 'index'])
+        ->name('attendance.month');
+
+    // ★ 詳細画面（今回追加）
+    Route::get('/attendance/detail/{attendance}', [DetailtController::class, 'show'])
+        ->name('attendance.detail');
+
     // ★ 申請一覧画面（今回エラーになっているやつ）
     Route::get('/requests', [RequestController::class, 'index'])
         ->name('requests.list');   // ← エラーメッセージと同じ「requests.list」にする
@@ -41,5 +51,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // home ルート（welcome.blade.php などから参照される想定）
 Route::get('/home', function () {
-    return redirect()->route('attendance.index');
+    return redirect()->route('attendance.list');
 })->name('home');
