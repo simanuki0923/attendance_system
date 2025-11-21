@@ -67,7 +67,9 @@
                     aria-describedby="{{ $errors->has('email') ? 'error-email' : '' }}"
                 />
                 @error('email')
-                    <span id="error-email" class="form__error" role="alert">{{ $message }}</span>
+                    <span id="error-email" class="form__error" role="alert">
+                        {{ $message }} {{-- メールアドレスを入力してください / メールアドレスを正しい形式で入力してください --}}
+                    </span>
                 @enderror
             </label>
 
@@ -84,7 +86,9 @@
                     aria-describedby="{{ $errors->has('password') ? 'error-password' : '' }}"
                 />
                 @error('password')
-                    <span id="error-password" class="form__error" role="alert">{{ $message }}</span>
+                    <span id="error-password" class="form__error" role="alert">
+                        {{ $message }} {{-- パスワードを入力してください --}}
+                    </span>
                 @enderror
             </label>
 
