@@ -1,55 +1,226 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AttendanceController;
-use App\Http\Controllers\ListController;
-use App\Http\Controllers\RequestController;
-use App\Http\Controllers\DetailtController;
+use Illuminate\Http\Request;
 
-// トップはログイン画面へ飛ばす
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceListController;
+use App\Http\Controllers\DetailtController;
+use App\Http\Controllers\RequestController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\AdminRequestController;
+use App\Http\Controllers\EditController;
+
+// トップはログインへ
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// 認証済 & メール認証済のみ利用できるルート
+// =========================
+// 管理者ログイン（未認証OK）
+// =========================
+Route::prefix('admin')->group(function () {
+    Route::get('/login', [AdminController::class, 'showLoginForm'])
+        ->name('admin.login');
+
+    Route::post('/login', [AdminController::class, 'login'])
+        ->name('admin.login.post');
+
+    Route::post('/logout', [AdminController::class, 'logout'])
+        ->name('admin.logout');
+});
+
+// ======================================================
+// ★管理者判定（is_admin / ホワイトリスト両対応）
+// ======================================================
+$isAdminUser = function ($user): bool {
+    if (!$user) return false;
+
+    // DB の is_admin を優先
+    if ((bool)($user->is_admin ?? false)) {
+        return true;
+    }
+
+    // ホワイトリスト（config/admin.php の emails）
+    return in_array($user->email, config('admin.emails', []), true);
+};
+
+// ======================================================
+// ★追加：勤怠詳細（日付指定・一般ユーザー用）
+//  - GET /attendance/detail/date/{date}
+//    打刻レコードが無ければ自動作成して詳細画面へ
+// ======================================================
+Route::middleware(['auth'])->get(
+    '/attendance/detail/date/{date}',
+    function (Request $request, $date) use ($isAdminUser) {
+
+        $user    = $request->user();
+        $isAdmin = $isAdminUser($user);
+
+        // 管理者はこのURLは使わない想定なので 404
+        if ($isAdmin) {
+            abort(404);
+        }
+
+        // 一般ユーザーはメール認証必須
+        if (!$user || !$user->hasVerifiedEmail()) {
+            return redirect()->route('verification.notice');
+        }
+
+        // 実処理は DetailtController@showByDate へ
+        return app(DetailtController::class)->showByDate($date);
+    }
+)->name('attendance.detail.byDate');
+
+// ======================================================
+// 勤怠詳細（一般 / 管理者 共通パス）
+//  - GET /attendance/detail/{id}
+// ======================================================
+Route::middleware(['auth'])->get(
+    '/attendance/detail/{id}',
+    function (Request $request, $id) use ($isAdminUser) {
+
+        $user    = $request->user();
+        $isAdmin = $isAdminUser($user);
+
+        // 一般ユーザーだけメール認証必須
+        if (!$isAdmin) {
+            if (!$user || !$user->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+            return app(DetailtController::class)->show($id);
+        }
+
+        // 管理者詳細（編集画面）
+        return app(EditController::class)->show($id);
+    }
+)->name('attendance.detail');
+
+// ======================================================
+// 勤怠詳細 更新（一般 / 管理者 共通パス）
+//  - PATCH /attendance/detail/{id}
+// ======================================================
+Route::middleware(['auth'])->patch(
+    '/attendance/detail/{id}',
+    function (Request $request, $id) use ($isAdminUser) {
+
+        $user    = $request->user();
+        $isAdmin = $isAdminUser($user);
+
+        // 一般ユーザーだけメール認証必須
+        if (!$isAdmin) {
+            if (!$user || !$user->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+
+            return app(DetailtController::class)->update($request, $id);
+        }
+
+        return app(EditController::class)->update($request, $id);
+    }
+)->name('attendance.detail.update');
+
+// ======================================================
+// 申請一覧（一般 / 管理者 共通パス）
+//  - /stamp_correction_request/list
+// ======================================================
+Route::middleware(['auth'])->get(
+    '/stamp_correction_request/list',
+    function (Request $request) use ($isAdminUser) {
+
+        $user    = $request->user();
+        $isAdmin = $isAdminUser($user);
+
+        if (!$isAdmin) {
+            if (!$user || !$user->hasVerifiedEmail()) {
+                return redirect()->route('verification.notice');
+            }
+        }
+
+        return $isAdmin
+            ? app(AdminRequestController::class)->index($request)
+            : app(RequestController::class)->index($request);
+    }
+)->name('requests.list');
+
+// ======================================================
+// 修正申請 承認画面（管理者専用）
+//  - GET  /stamp_correction_request/approve/{attendance_correct_request_id}
+//     → admin/detail.blade.php（承認ボタン付き）
+//  - POST /stamp_correction_request/approve/{attendance_correct_request_id}
+//     → 承認処理（JSON返却 / 画面遷移なし）
+// ======================================================
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get(
+        '/stamp_correction_request/approve/{attendance_correct_request_id}',
+        [AdminRequestController::class, 'showApprove']
+    )->name('stamp_correction_request.approve.show');
+
+    Route::post(
+        '/stamp_correction_request/approve/{attendance_correct_request_id}',
+        [AdminRequestController::class, 'approve']
+    )->name('stamp_correction_request.approve');
+});
+
+// =========================
+// 一般ユーザー（verified 必須）
+// =========================
 Route::middleware(['auth', 'verified'])->group(function () {
-    // 勤怠登録画面（GET）
+
     Route::get('/attendance', [AttendanceController::class, 'index'])
         ->name('attendance.list');
 
-    Route::get('/attendance/month', [ListController::class, 'index'])
-        ->name('attendance.month');
+    Route::get('/attendance/list', [AttendanceListController::class, 'index'])
+        ->name('attendance.userList');
 
-    // ★ 詳細画面（今回追加）
-    Route::get('/attendance/detail/{attendance}', [DetailtController::class, 'show'])
-        ->name('attendance.detail');
-
-    // ★ 申請一覧画面（今回エラーになっているやつ）
-    Route::get('/requests', [RequestController::class, 'index'])
-        ->name('requests.list');   // ← エラーメッセージと同じ「requests.list」にする
-
-    // ★ スタッフ一覧画面（あれば）
-    Route::get('/staff', [StaffController::class, 'index'])
-        ->name('staff.list');
-
-    // 出勤
     Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])
         ->name('attendance.clockIn');
 
-    // 退勤
     Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])
         ->name('attendance.clockOut');
 
-    // 休憩入
     Route::post('/attendance/break-in', [AttendanceController::class, 'breakIn'])
         ->name('attendance.breakIn');
 
-    // 休憩戻
     Route::post('/attendance/break-out', [AttendanceController::class, 'breakOut'])
         ->name('attendance.breakOut');
 });
 
-// home ルート（welcome.blade.php などから参照される想定）
-Route::get('/home', function () {
+// =========================
+// 管理者ルート（auth + admin）
+// =========================
+Route::middleware(['auth', 'admin'])
+    ->prefix('admin')
+    ->group(function () {
+
+        Route::get('/attendance/list', [AdminController::class, 'list'])
+            ->name('admin.attendance.list');
+
+        Route::get('/staff/list', [StaffController::class, 'index'])
+            ->name('admin.staff.list');
+
+        Route::get('/staff/{user}/attendance', [StaffController::class, 'attendance'])
+            ->whereNumber('user')
+            ->name('admin.staff.attendance');
+
+        // ★追加：スタッフ別 月次勤怠一覧 CSV ダウンロード
+        // 例）GET /admin/staff/3/attendance/csv?month=2025-11
+        Route::get('/staff/{user}/attendance/csv', [StaffController::class, 'attendanceCsv'])
+            ->whereNumber('user')
+            ->name('admin.staff.attendance.csv');
+    });
+
+// =========================
+// home（管理者は admin 側へ）
+// =========================
+Route::get('/home', function () use ($isAdminUser) {
+
+    $user = auth()->user();
+
+    if ($isAdminUser($user)) {
+        return redirect()->route('admin.attendance.list');
+    }
+
     return redirect()->route('attendance.list');
 })->name('home');
