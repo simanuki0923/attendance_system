@@ -11,12 +11,12 @@ return new class extends Migration
         Schema::create('attendance_applications', function (Blueprint $table) {
             $table->id();
 
-            // どの勤怠に対する申請か
+            // 対象となる勤怠レコード
             $table->foreignId('attendance_id')
                 ->constrained('attendances')
                 ->cascadeOnDelete();
 
-            // 誰が申請したか（名前は users から取得）
+            // 申請者（一般ユーザー）
             $table->foreignId('applicant_user_id')
                 ->constrained('users')
                 ->cascadeOnDelete();
@@ -30,6 +30,15 @@ return new class extends Migration
 
             // 申請日時
             $table->dateTime('applied_at');
+
+            // ★追加：修正後の希望打刻内容（承認前はここにのみ保持）
+            $table->time('requested_work_start_time')->nullable();
+            $table->time('requested_work_end_time')->nullable();
+            $table->time('requested_break1_start_time')->nullable();
+            $table->time('requested_break1_end_time')->nullable();
+            $table->time('requested_break2_start_time')->nullable();
+            $table->time('requested_break2_end_time')->nullable();
+            $table->text('requested_note')->nullable();
 
             $table->timestamps();
 
