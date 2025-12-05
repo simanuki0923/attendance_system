@@ -6,120 +6,105 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-// モデルは DB 設計に合わせて用意しておく想定
 use App\Models\Attendance;
-use App\Models\AttendanceApplication;   // attendance_applications
-use App\Models\ApplicationStatus;      // application_statuses
+use App\Models\AttendanceApplication;
+use App\Models\ApplicationStatus;
 
 class RequestController extends Controller
 {
     /**
-     * 申請一覧画面
+     * 一般ユーザー用 申請一覧
      *
-     * ルート: GET /requests   (name: requests.list)
-     * view : resources/views/request.blade.php
-     *
-     * クエリパラメータ:
-     *   ?tab=pending|approved
+     * GET /stamp_correction_request/list  (name: requests.list)
+     * ?tab=pending|approved
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
+        $user   = Auth::user();
+        $userId = $user->id;
 
         // -----------------------------
-        // 1. タブ状態の決定
+        // 1) タブ判定
         // -----------------------------
-        $rawTab = (string) $request->query('tab', 'pending');
+        $rawTab    = (string) $request->query('tab', 'pending');
         $activeTab = in_array($rawTab, ['pending', 'approved'], true) ? $rawTab : 'pending';
 
-        // タブ切り替え用 URL
         $pendingTabUrl  = route('requests.list', ['tab' => 'pending']);
         $approvedTabUrl = route('requests.list', ['tab' => 'approved']);
-
-        // 画面タイトル
-        $pageTitle = '申請一覧';
+        $pageTitle      = '申請一覧';
 
         // -----------------------------
-        // 2. 対象ステータスの取得
+        // 2) 今アクティブなタブのステータスを取得
+        //    code = 'pending' or 'approved'
         // -----------------------------
-        // application_statuses.code = 'pending' / 'approved' / 'rejected' を想定
-        $statusCode = $activeTab === 'approved' ? 'approved' : 'pending';
-
-        $status = ApplicationStatus::where('code', $statusCode)->first();
+        $status = ApplicationStatus::where('code', $activeTab)->first();
 
         if (!$status) {
-            // ステータスマスタが未整備の場合でも画面が落ちないように空一覧で返す
+            // マスタ未設定などの場合は空で返す
             return view('request', [
                 'pageTitle'      => $pageTitle,
                 'activeTab'      => $activeTab,
                 'pendingTabUrl'  => $pendingTabUrl,
                 'approvedTabUrl' => $approvedTabUrl,
-                'requests'       => collect(),   // 空
+                'requests'       => collect(),
             ]);
         }
 
         // -----------------------------
-        // 3. 申請データの取得
+        // 3) ログインユーザーの申請 + タブに対応するステータスだけ取得
+        //    → pending タブ: status.code = 'pending'
+        //      approved タブ: status.code = 'approved'
         // -----------------------------
-        // ここでは「自分が申請したもの」を一覧表示する想定
         $applications = AttendanceApplication::with([
-                'attendance',           // Attendance モデル
-                'attendance.user',      // 勤怠のユーザー
-                'status',               // ApplicationStatus モデル
+                'attendance',
+                'attendance.user',   // 勤怠の本人
+                'status',
             ])
-            ->where('applicant_user_id', $user->id)
-            ->where('status_id', $status->id)
+            ->where('applicant_user_id', $userId) // 自分が出した申請だけ
+            ->where('status_id', $status->id)     // タブのステータスのみ
             ->orderByDesc('applied_at')
             ->get();
 
         // -----------------------------
-        // 4. Blade 用配列に整形
+        // 4) Blade(request.blade.php) が期待する配列形に整形
         // -----------------------------
         $requests = $applications->map(function (AttendanceApplication $app) {
             $attendance = $app->attendance;
             $owner      = $attendance?->user;
-            $status     = $app->status;
 
-            // 状態ラベル：application_statuses.label をそのまま表示
-            $statusLabel = $status?->label ?? '';
-
-            // 名前：勤怠のユーザー名（申請者本人と同じ想定）
-            $nameLabel = $owner?->name ?? '';
-
-            // 対象日付：勤怠日付（YYYY/MM/DD）
+            // 対象日付
             $targetDateLabel = '';
-            if ($attendance?->work_date) {
-                $targetDateLabel = Carbon::parse($attendance->work_date)->format('Y/m/d');
+            if ($attendance && $attendance->work_date) {
+                $workDate        = $attendance->work_date instanceof \DateTimeInterface
+                    ? Carbon::instance($attendance->work_date)
+                    : Carbon::parse($attendance->work_date);
+                $targetDateLabel = $workDate->format('Y/m/d');
             }
 
-            // 申請理由
-            $reasonLabel = $app->reason ?? '';
-
-            // 申請日付（applied_at）
+            // 申請日付
             $appliedDateLabel = '';
             if ($app->applied_at) {
-                $appliedDateLabel = Carbon::parse($app->applied_at)->format('Y/m/d');
-            }
-
-            // ★ ここがポイント：勤怠詳細（detail.blade.php）へのリンク
-            //    route('attendance.detail', ['attendance' => 勤怠ID])
-            $detailUrl = null;
-            if ($attendance) {
-                $detailUrl = route('attendance.detail', ['attendance' => $attendance->id]);
+                $appliedAt        = $app->applied_at instanceof \DateTimeInterface
+                    ? Carbon::instance($app->applied_at)
+                    : Carbon::parse($app->applied_at);
+                $appliedDateLabel = $appliedAt->format('Y/m/d');
             }
 
             return [
-                'status_label'       => $statusLabel,
-                'name_label'         => $nameLabel,
+                'status_label'       => $app->status?->label ?? '承認待ち',  // '承認待ち' / '承認済み'
+                'name_label'         => $owner?->name ?? '',
                 'target_date_label'  => $targetDateLabel,
-                'reason_label'       => $reasonLabel,
+                'reason_label'       => $app->reason ?? '',
                 'applied_date_label' => $appliedDateLabel,
-                'detail_url'         => $detailUrl,
+                // 一般ユーザーの詳細リンク → 自分用の勤怠詳細画面
+                'detail_url'         => $attendance
+                    ? route('attendance.detail', ['id' => $attendance->id])
+                    : null,
             ];
         });
 
         // -----------------------------
-        // 5. 画面に渡す
+        // 5) 画面へ返却
         // -----------------------------
         return view('request', [
             'pageTitle'      => $pageTitle,
