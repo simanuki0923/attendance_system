@@ -1,27 +1,22 @@
-/* 勤怠詳細／修正申請承認画面 共通 */
+/* public/css/detail.css */
 
-/* 画面全体 */
-.attendance-detail,
-.approval-detail {
+.attendance-detail {
   background: #f3f3f6;               /* 画面全体の薄いグレー */
   min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
 }
 
-.attendance-detail__inner,
-.approval-detail__inner {
+.attendance-detail__inner {
   max-width: 840px;
   margin: 32px auto 64px;
   padding: 0 24px;
 }
 
 /* タイトル周り */
-.attendance-detail__header,
-.approval-detail__header {
+.attendance-detail__header {
   margin-bottom: 24px;
 }
 
-.attendance-detail__title,
-.approval-detail__title {
+.attendance-detail__title {
   margin: 0 0 20px;
   display: flex;
   align-items: center;
@@ -30,8 +25,7 @@
   font-weight: 700;
 }
 
-.attendance-detail__title-bar,
-.approval-detail__title-bar {
+.attendance-detail__title-bar {
   width: 7px;
   height: 30px;
   background: #111111;
@@ -39,8 +33,7 @@
 }
 
 /* 白いカード全体 */
-.attendance-detail__card,
-.approval-detail__card {
+.attendance-detail__card {
   background: #ffffff;
   border-radius: 4px;
   box-shadow: 0 0 0 1px #e5e7eb;
@@ -48,20 +41,17 @@
 }
 
 /* 1行ごとのレイアウト */
-.attendance-detail__row,
-.approval-detail__row {
+.attendance-detail__row {
   display: flex;
   align-items: stretch;
   border-top: 1px solid #f1f1f3;
 }
 
-.attendance-detail__row:first-child,
-.approval-detail__row:first-child {
+.attendance-detail__row:first-child {
   border-top: none;
 }
 
-.attendance-detail__label,
-.approval-detail__label {
+.attendance-detail__label {
   flex: 0 0 180px;
   padding: 20px 24px;
   font-size: 15px;
@@ -70,8 +60,7 @@
   align-items: center;
 }
 
-.attendance-detail__value,
-.approval-detail__value {
+.attendance-detail__value {
   flex: 1;
   padding: 20px 24px;
   font-size: 14px;
@@ -80,29 +69,25 @@
   align-items: center;
 }
 
-.attendance-detail__value--date,
-.approval-detail__value--date {
+.attendance-detail__value--date {
   justify-content: center;
   gap: 120px; /* 年と月日の間隔をスクショに近づける */
 }
 
 /* 表示用テキスト */
-.attendance-detail__text,
-.approval-detail__text {
+.attendance-detail__text {
   font-weight: 600;
 }
 
 /* 時刻レンジ */
-.attendance-detail__time-range,
-.approval-detail__time-range {
+.attendance-detail__time-range {
   display: inline-flex;
   align-items: center;
   gap: 16px;
   margin: 0 auto;
 }
 
-.attendance-detail__time-input input,
-.approval-detail__time-input input {
+.attendance-detail__time-input input {
   width: 96px;
   height: 36px;
   border-radius: 6px;
@@ -113,32 +98,27 @@
   padding: 0 8px;
 }
 
-.attendance-detail__time-input input[readonly],
-.approval-detail__time-input input[readonly] {
+.attendance-detail__time-input input[readonly] {
   cursor: default;
 }
 
-.attendance-detail__tilde,
-.approval-detail__tilde {
+.attendance-detail__tilde {
   font-size: 14px;
   color: #6b7280;
 }
 
 /* 備考欄 */
-.attendance-detail__row--note .attendance-detail__value,
-.approval-detail__row--note .approval-detail__value {
+.attendance-detail__row--note .attendance-detail__value {
   align-items: stretch;
 }
 
-.attendance-detail__note,
-.approval-detail__note {
+.attendance-detail__note {
   width: 100%;
   display: flex;
   align-items: center;
 }
 
-.attendance-detail__note input,
-.approval-detail__note input {
+.attendance-detail__note input {
   width: 200px;
   height: 60px;
   border-radius: 6px;
@@ -149,15 +129,13 @@
 }
 
 /* 下部ボタン */
-.attendance-detail__actions,
-.approval-detail__actions {
+.attendance-detail__actions {
   margin-top: 24px;
   display: flex;
   justify-content: flex-end;
 }
 
-.attendance-detail__button,
-.approval-detail__button {
+.attendance-detail__button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -170,23 +148,17 @@
   background: #111111;
   border-radius: 4px;
   text-decoration: none;
-  transform: translateY(25px);
+  transform: translate(-1px, 25px);
 }
 
-.attendance-detail__button:hover,
-.approval-detail__button:hover {
+.attendance-detail__button:hover {
   opacity: 0.85;
 }
 
-/* 承認メッセージ（レイアウトを崩さない程度のシンプルな指定） */
-.approval-detail__message {
-  margin-left: 16px;
-  font-size: 13px;
-  color: #4b5563;
+.attendance-detail__button--disabled {
+  background: #9ca3af;   /* グレー系の背景色に変更 */
+  cursor: default;       /* ポインタを通常に */
+  opacity: 0.7;          /* 少し薄くして無効っぽく */
+  pointer-events: none;  /* クリックできないように */
 }
 
-/* 承認済みボタン（色だけ少し薄くする程度） */
-.approval-detail__button--done {
-  background: #9ca3af;
-  cursor: default;
-}

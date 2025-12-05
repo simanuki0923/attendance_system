@@ -52,6 +52,7 @@ main {
   color: #333;
   margin-bottom: 6px;
   font-weight:700;
+  transform:translateX(-80px);
 }
 
 .form input[type="email"],
@@ -68,6 +69,7 @@ main {
   outline: none;
   transition: border-color .15s ease, box-shadow .15s ease;
   margin-bottom: 30px;
+  transform:translateX(-80px);
 }
 
 .form input[type="email"]:focus,
@@ -81,6 +83,7 @@ main {
   margin-top: 6px;
   color: #d93025;
   font-size: 12px;
+  transform:translateX(-80px);
 }
 
 .form__button-submit {
@@ -95,11 +98,13 @@ main {
   background: black;
   cursor: pointer;
   transition: filter .15s ease, transform .02s ease;
+  transform:translateX(-80px);
 }
 
 .register__link {
   margin: 14px 0 2px;
   text-align: center;
+  transform:translateX(-10px);
 }
 .register__button-submit {
   font-size: 20px;
