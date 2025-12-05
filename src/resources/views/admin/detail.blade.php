@@ -1,33 +1,39 @@
+{{-- resources/views/admin/detail.blade.php --}}
+
 @extends('layouts.app')
 
 @section('css')
-  <link rel="stylesheet" href="{{ asset('css/detail.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/admin-detail.css') }}">
 @endsection
 
 @section('content')
 @php
     /**
-     * 勤怠詳細画面 想定パラメータ
+     * 勤怠詳細（管理者用 修正申請承認画面）想定パラメータ
      *
-     * コントローラ側で必要に応じて差し替えできるよう、
-     * 画面では「ラベル文字列」を受け取る想定にしています。
+     * コントローラ(AdminRequestController@showApprove)側で
+     * ラベル文字列・承認状態を作って渡す前提。
      *
-     * @var string      $employeeName       名前ラベル
-     * @var string      $dateYearLabel      年部分ラベル   例: '2023年'
-     * @var string      $dateDayLabel       月日部分ラベル 例: '6月1日'
-     * @var string|null $workStartLabel     出勤時刻       例: '09:00'
-     * @var string|null $workEndLabel       退勤時刻       例: '18:00'
-     * @var string|null $break1StartLabel   休憩1開始      例: '12:00'
-     * @var string|null $break1EndLabel     休憩1終了      例: '13:00'
-     * @var string|null $break2StartLabel   休憩2開始
-     * @var string|null $break2EndLabel     休憩2終了
-     * @var string|null $noteLabel          備考
-     * @var string|null $editUrl            「修正」ボタンの遷移先URL
+     * @var string      $employeeName        名前ラベル
+     * @var string      $dateYearLabel       年部分ラベル   例: '2023年'
+     * @var string      $dateDayLabel        月日部分ラベル 例: '6月1日'
+     * @var string|null $workStartLabel      出勤時刻       例: '09:00'
+     * @var string|null $workEndLabel        退勤時刻       例: '18:00'
+     * @var string|null $break1StartLabel    休憩1開始      例: '12:00'
+     * @var string|null $break1EndLabel      休憩1終了      例: '13:00'
+     * @var string|null $break2StartLabel    休憩2開始
+     * @var string|null $break2EndLabel      休憩2終了
+     * @var string|null $noteLabel           備考
+     * @var string|null $statusLabel         ステータス表示用ラベル（承認待ち／承認済み など）
+     * @var string|null $statusCode          ステータスコード（pending / approved など・必要なら）
+     * @var string|null $approveUrl          承認ボタンのPOST先URL（未承認時のみセット）
+     * @var bool        $isApproved          既に承認済みなら true
      */
 
     $employeeName      = $employeeName      ?? '';
     $dateYearLabel     = $dateYearLabel     ?? '';
     $dateDayLabel      = $dateDayLabel      ?? '';
+
     $workStartLabel    = $workStartLabel    ?? '';
     $workEndLabel      = $workEndLabel      ?? '';
     $break1StartLabel  = $break1StartLabel  ?? '';
@@ -35,7 +41,12 @@
     $break2StartLabel  = $break2StartLabel  ?? '';
     $break2EndLabel    = $break2EndLabel    ?? '';
     $noteLabel         = $noteLabel         ?? '';
-    $editUrl           = $editUrl           ?? '#';
+
+    $statusLabel       = $statusLabel       ?? '';
+    $statusCode        = $statusCode        ?? null;
+
+    $approveUrl        = $approveUrl        ?? '';
+    $isApproved        = (bool)($isApproved ?? false);
 @endphp
 
 <main class="attendance-detail">
@@ -46,10 +57,22 @@
       <h1 class="attendance-detail__title">
         <span class="attendance-detail__title-bar" aria-hidden="true"></span>
         <span>勤怠詳細</span>
+        @if ($statusLabel !== '')
+          <span style="font-size: 14px; color:#6b7280; font-weight:400; margin-left: 8px;">
+            （{{ $statusLabel }}）
+          </span>
+        @endif
       </h1>
+
+      {{-- フラッシュメッセージ --}}
+      @if (session('status'))
+        <p style="font-size: 13px; color:#059669; margin:0 0 4px 4px;">
+          {{ session('status') }}
+        </p>
+      @endif
     </header>
 
-    {{-- 詳細カード --}}
+    {{-- 詳細カード（全て readonly 表示専用） --}}
     <section class="attendance-detail__card" aria-label="勤怠詳細">
       {{-- 名前 --}}
       <dl class="attendance-detail__row">
@@ -127,11 +150,28 @@
       </dl>
     </section>
 
-    {{-- 修正ボタン --}}
+    {{-- 承認 or 承認済みボタン --}}
     <div class="attendance-detail__actions">
-      <a href="{{ $editUrl }}" class="attendance-detail__button">
-        修正
-      </a>
+      @if ($isApproved)
+        {{-- 既に承認済み：押せないボタン --}}
+        <button
+          type="button"
+          class="attendance-detail__button attendance-detail__button--disabled"
+          disabled
+        >
+          承認済み
+        </button>
+      @else
+        {{-- 未承認で、承認URLがある場合のみ承認ボタンを表示 --}}
+        @if ($approveUrl !== '')
+          <form method="POST" action="{{ $approveUrl }}">
+            @csrf
+            <button type="submit" class="attendance-detail__button">
+              承認
+            </button>
+          </form>
+        @endif
+      @endif
     </div>
 
   </div>

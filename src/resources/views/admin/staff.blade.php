@@ -8,59 +8,8 @@
 
 @section('content')
 @php
-    /**
-     * 管理者用 スタッフ一覧画面 想定パラメータ
-     *
-     * @var string $pageTitle 画面タイトル 例: 'スタッフ一覧'
-     * @var \Illuminate\Support\Collection|array<array{
-     *   name_label:string,
-     *   email_label:string,
-     *   detail_url:?string,
-     *   detail_text?:string,
-     * }> $staffList
-     */
-
     $pageTitle = $pageTitle ?? 'スタッフ一覧';
-
-    // コントローラ未実装時のダミーデータ（本番では削除OK）
-    $staffList = $staffList ?? collect([
-        [
-            'name_label'   => '西 帆香',
-            'email_label'  => 'reina.m@coachtech.com',
-            'detail_url'   => '#',
-            'detail_text'  => '詳細',
-        ],
-        [
-            'name_label'   => '山田 太郎',
-            'email_label'  => 'taro.y@coachtech.com',
-            'detail_url'   => '#',
-            'detail_text'  => '詳細',
-        ],
-        [
-            'name_label'   => '増田 一世',
-            'email_label'  => 'issei.m@coachtech.com',
-            'detail_url'   => '#',
-            'detail_text'  => '詳細',
-        ],
-        [
-            'name_label'   => '山本 啓曹',
-            'email_label'  => 'keiichi.y@coachtech.com',
-            'detail_url'   => '#',
-            'detail_text'  => '詳細',
-        ],
-        [
-            'name_label'   => '秋田 朋美',
-            'email_label'  => 'tomomi.a@coachtech.com',
-            'detail_url'   => '#',
-            'detail_text'  => '詳細',
-        ],
-        [
-            'name_label'   => '中田 範夫',
-            'email_label'  => 'norio.n@coachtech.com',
-            'detail_url'   => '#',
-            'detail_text'  => '詳細',
-        ],
-    ]);
+    $staffList = $staffList ?? collect(); // ★ダミーを削除して Controller の値を使う
 @endphp
 
 <main class="staff-list">
@@ -81,6 +30,7 @@
           <th class="staff-list__th staff-list__th--monthly">月次勤怠</th>
         </tr>
         </thead>
+
         <tbody>
         @forelse ($staffList as $row)
           <tr>

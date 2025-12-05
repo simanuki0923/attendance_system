@@ -17,13 +17,15 @@
      * @var string|null $nextDateUrl 翌日へのURL。なければ null
      *
      * @var \Illuminate\Support\Collection|array<array{
-     *   name_label:string,   // 例: '山田 太郎'
-     *   start_label:string,  // 例: '09:00'
-     *   end_label:string,    // 例: '18:00'
-     *   break_label:string,  // 例: '1:00'
-     *   total_label:string,  // 例: '8:00'
-     *   detail_url:?string,  // 詳細画面へのURL / null
-     *   is_active?:bool      // true の行は青枠で強調表示
+     *   attendance_id?:int,  // ★ 追加想定：勤怠ID（推奨）
+     *   id?:int,             // ★ 追加想定：勤怠IDが id で来る場合の保険
+     *   name_label:string,
+     *   start_label:string,
+     *   end_label:string,
+     *   break_label:string,
+     *   total_label:string,
+     *   detail_url:?string,
+     *   is_active?:bool
      * }> $attendances
      */
 
@@ -36,7 +38,6 @@
 @endphp
 
 <main class="attendance-list attendance-list--admin">
-
   <div class="attendance-list__inner">
 
     {{-- タイトル --}}
@@ -46,7 +47,7 @@
         {{ $currentDateLabel }}の勤怠
       </h1>
 
-      {{-- 日付切替ナビ（layouts/list.blade.php と同じクラス構成） --}}
+      {{-- 日付切替ナビ --}}
       <div class="attendance-list__month-nav">
         @if(!empty($prevDateUrl))
           <a href="{{ $prevDateUrl }}" class="month-nav__btn month-nav__btn--prev">
@@ -95,6 +96,13 @@
       @forelse($attendances as $row)
         @php
           $isActive = !empty($row['is_active']);
+
+          // ★ detail_url を信用せず、勤怠IDから必ず共通ルートを作る
+          $attendanceId = $row['attendance_id'] ?? $row['id'] ?? null;
+
+          $detailUrl = $attendanceId
+              ? route('attendance.detail', $attendanceId)
+              : null;
         @endphp
 
         <div class="attendance-list__row {{ $isActive ? 'attendance-list__row--active' : '' }}">
@@ -113,9 +121,10 @@
           <div class="attendance-list__cell">
             {{ $row['total_label'] ?? '' }}
           </div>
+
           <div class="attendance-list__cell attendance-list__cell--detail">
-            @if (!empty($row['detail_url']))
-              <a href="{{ $row['detail_url'] }}"
+            @if (!empty($detailUrl))
+              <a href="{{ $detailUrl }}"
                  class="attendance-list__detail-link">
                 詳細
               </a>

@@ -1,3 +1,4 @@
+{{-- resources/views/admin/login.blade.php --}}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -36,6 +37,7 @@
         @if ($errors->has('auth'))
             <div class="form__error--global" role="alert">
                 {{ $errors->first('auth') }}
+            </div>
         @endif
 
         @if (session('verification_link_sent'))
@@ -44,7 +46,8 @@
             </div>
         @endif
 
-        <form class="form" action="{{ route('login') }}" method="post" novalidate>
+        {{-- ★ここを admin.login.post に --}}
+        <form class="form" action="{{ route('admin.login.post') }}" method="post" novalidate>
             @csrf
 
             <label class="form__group" for="email">
