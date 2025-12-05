@@ -5,6 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
 use App\Models\AttendanceTotal;
+use App\Models\AttendanceBreak;
+
+// ★ 申請関連
+use App\Models\AttendanceApplication;
+use App\Models\ApplicationStatus;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -20,7 +26,7 @@ class AttendanceController extends Controller
         $today = Carbon::today();
 
         // 今日の勤怠レコードを取得（あれば）
-        $attendance = Attendance::with(['time', 'total'])
+        $attendance = Attendance::with(['time', 'total', 'breaks'])
             ->where('user_id', $user->id)
             ->whereDate('work_date', $today)
             ->first();
@@ -38,35 +44,36 @@ class AttendanceController extends Controller
     }
 
     /**
-     * 画面用ステータスを決定
-     * - セッションを優先
-     * - なければ DB の start_time / end_time から推定
+     * 画面用ステータス判定
      */
     protected function resolveStatus(?Attendance $attendance): string
     {
-        // セッション優先
+        // セッションにあればそれを優先
         $sessionStatus = session('attendance_status');
         if ($sessionStatus) {
             return $sessionStatus;
         }
 
-        // DB から推定
-        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
-            // 出勤前
+        // 勤怠自体ない or 出勤していない
+        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
             return 'before_work';
         }
 
+        // 退勤済み
         if ($attendance->time->end_time) {
-            // 退勤済
             return 'after_work';
         }
 
-        // 出勤済・退勤前（休憩中かはセッションがないと分からないので working 扱い）
-        return 'working';
+        // 休憩中かどうか
+        $hasOpenBreak = $attendance->breaks
+            ? $attendance->breaks->contains(fn($b) => empty($b->end_time))
+            : false;
+
+        return $hasOpenBreak ? 'on_break' : 'working';
     }
 
     /**
-     * 本日分の勤怠レコードを取得（なければ作成）
+     * 当日の勤怠レコードを取得 or 作成
      */
     protected function getOrCreateTodayAttendanceForUser(int $userId): Attendance
     {
@@ -82,7 +89,7 @@ class AttendanceController extends Controller
     }
 
     /**
-     * 集計（attendance_totals）レコードを用意
+     * 合計レコードを取得 or 作成
      */
     protected function ensureTotal(Attendance $attendance): AttendanceTotal
     {
@@ -96,9 +103,51 @@ class AttendanceController extends Controller
     }
 
     /**
+     * 次の休憩Noを採番
+     */
+    protected function nextBreakNo(Attendance $attendance): int
+    {
+        $maxNo = $attendance->breaks()->max('break_no');
+        return ($maxNo ?? 0) + 1;
+    }
+
+    /**
+     * ★ pending 申請を必ず1件付与する（無ければ作成）
+     *
+     * - application_statuses.code = 'pending' の id を取得
+     * - 対象勤怠 + pending status のレコードが無い場合だけ新規作成
+     */
+    private function ensurePendingApplication(Attendance $attendance, int $userId): void
+    {
+        $pendingStatusId = ApplicationStatus::where('code', 'pending')->value('id');
+
+        if (!$pendingStatusId) {
+            // マスタ未設定の場合は致命的なので例外にしておく
+            throw new \RuntimeException('application_statuses に pending が存在しません。Seeder を確認してください。');
+        }
+
+        $exists = AttendanceApplication::where('attendance_id', $attendance->id)
+            ->where('status_id', $pendingStatusId)
+            ->exists();
+
+        if ($exists) {
+            return;
+        }
+
+        AttendanceApplication::create([
+            'attendance_id'     => $attendance->id,
+            'applicant_user_id' => $userId,
+            'status_id'         => $pendingStatusId,
+            'reason'            => '自動作成（打刻により承認待ち）',
+            'applied_at'        => now(),
+        ]);
+    }
+
+    /**
      * 出勤ボタン
-     * - 1日1回だけ出勤可能
-     * - 出勤時刻を attendance_times に保存
+     *  - 勤怠レコードを作成/更新
+     *  - 合計レコードを保証
+     *  - pending 申請を自動作成（なければ）
      */
     public function clockIn(Request $request)
     {
@@ -106,79 +155,89 @@ class AttendanceController extends Controller
         $attendance     = $this->getOrCreateTodayAttendanceForUser($user->id);
         $attendanceTime = $attendance->time;
 
-        // すでに start_time が入っていれば当日出勤済み
+        // すでに出勤済みならそのまま一覧へ
         if ($attendanceTime && $attendanceTime->start_time) {
-            return redirect()->route('attendance.list')
-                ->with('error_message', '本日はすでに出勤打刻済みです。');
+            return redirect()->route('attendance.list');
         }
 
-        if (! $attendanceTime) {
+        if (!$attendanceTime) {
             $attendanceTime = new AttendanceTime();
             $attendanceTime->attendance_id = $attendance->id;
         }
 
-        // 時刻だけ保存（カラム型 time 想定）
         $attendanceTime->start_time = now()->format('H:i:s');
         $attendanceTime->save();
 
-        // 集計用レコードも作成（休憩・合計勤務時間）
+        // 合計レコードを保証
         $this->ensureTotal($attendance);
 
-        // 画面ステータス更新
-        session([
-            'attendance_status' => 'working',
-        ]);
-        session()->forget('break_start_at');
+        // ★ 出勤時点で pending 申請を必ず1件付与
+        $this->ensurePendingApplication($attendance, $user->id);
 
-        return redirect()->route('attendance.list')
-            ->with('status_message', '出勤打刻を登録しました。');
+        session(['attendance_status' => 'working']);
+        session()->forget('break_start_at');
+        session()->forget('break_id');
+
+        return redirect()->route('attendance.list');
     }
 
     /**
      * 退勤ボタン
-     * - 1日1回だけ退勤可能
-     * - 休憩中に押された場合は、最後の休憩を締めてから合計勤務時間を計算
      */
     public function clockOut(Request $request)
     {
         $user  = Auth::user();
         $today = Carbon::today();
 
-        $attendance = Attendance::with(['time', 'total'])
+        $attendance = Attendance::with(['time', 'total', 'breaks'])
             ->where('user_id', $user->id)
             ->whereDate('work_date', $today)
             ->first();
 
-        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
-            return redirect()->route('attendance.list')
-                ->with('error_message', '出勤前は退勤できません。');
+        // 出勤していなければ処理しない
+        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
+            return redirect()->route('attendance.list');
         }
 
-        // すでに退勤済みなら何もしない
+        // すでに退勤済み
         if ($attendance->time->end_time) {
             session(['attendance_status' => 'after_work']);
             session()->forget('break_start_at');
-
+            session()->forget('break_id');
             return redirect()->route('attendance.list');
         }
 
         $total = $this->ensureTotal($attendance);
 
-        // もし「休憩中」のまま退勤された場合、最後の休憩も集計
+        // 休憩中のまま退勤した場合の整理
+        $breakId    = session('break_id');
         $breakStart = session('break_start_at');
-        if ($breakStart) {
-            $start   = Carbon::parse($breakStart);
-            $minutes = $start->diffInMinutes(now());
-            $total->break_minutes += $minutes;
+
+        if ($breakId && $breakStart) {
+            $break = AttendanceBreak::where('attendance_id', $attendance->id)
+                ->where('id', $breakId)
+                ->first();
+
+            if ($break && empty($break->end_time)) {
+                $start   = Carbon::parse($breakStart);
+                $minutes = $start->diffInMinutes(now());
+
+                $break->end_time = now()->format('H:i:s');
+                $break->minutes  = $minutes;
+                $break->save();
+
+                $total->break_minutes += $minutes;
+            }
+
             session()->forget('break_start_at');
+            session()->forget('break_id');
         }
 
-        // 退勤時刻を保存（こちらも時刻だけ）
+        // 退勤時刻の保存
         $attendance->time->end_time = now()->format('H:i:s');
         $attendance->time->save();
 
-        // ★ 合計勤務時間（分） = 出勤〜退勤 の差 ー 休憩合計
-        //   createFromFormat ではなく parse() を使うことで、フォーマット違いによる例外を防ぐ
+        // 勤務時間（分）を計算
         $startTime = Carbon::parse($attendance->time->start_time);
         $endTime   = Carbon::parse($attendance->time->end_time);
 
@@ -190,102 +249,111 @@ class AttendanceController extends Controller
         $total->total_work_minutes = $workMinutes;
         $total->save();
 
-        session([
-            'attendance_status' => 'after_work',
-        ]);
+        // ★ 退勤時点でも pending 申請を保証
+        $this->ensurePendingApplication($attendance, $user->id);
 
-        return redirect()->route('attendance.list')
-            ->with('status_message', '退勤打刻を登録しました。');
+        session(['attendance_status' => 'after_work']);
+
+        return redirect()->route('attendance.list');
     }
 
     /**
-     * 休憩入ボタン
-     * - 出勤中のみ押下可能
-     * - 何回でも押せるが、「休憩中」状態での連続押下は無視
-     * - 休憩開始時刻はセッションに保持（DB には戻るタイミングで集計）
+     * 休憩開始ボタン
      */
     public function breakIn(Request $request)
     {
         $user  = Auth::user();
         $today = Carbon::today();
 
-        $attendance = Attendance::with('time')
+        $attendance = Attendance::with(['time', 'breaks'])
             ->where('user_id', $user->id)
             ->whereDate('work_date', $today)
             ->first();
 
-        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
-            return redirect()->route('attendance.list')
-                ->with('error_message', '出勤中のみ休憩に入れます。');
-        }
-
-        if ($attendance->time->end_time) {
-            return redirect()->route('attendance.list')
-                ->with('error_message', '退勤後は休憩に入れません。');
-        }
-
-        // すでに休憩中なら何もしない
-        if (session()->has('break_start_at')) {
+        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
+        if ($attendance->time->end_time) {
+            return redirect()->route('attendance.list');
+        }
+
+        // すでに休憩中なら何もしない
+        if (session()->has('break_id')) {
+            return redirect()->route('attendance.list');
+        }
+
+        $nextNo = $this->nextBreakNo($attendance);
+
+        $break = AttendanceBreak::create([
+            'attendance_id' => $attendance->id,
+            'break_no'      => $nextNo,
+            'start_time'    => now()->format('H:i:s'),
+            'end_time'      => null,
+            'minutes'       => 0,
+        ]);
+
         session([
             'attendance_status' => 'on_break',
+            'break_id'          => $break->id,
             'break_start_at'    => now()->toDateTimeString(),
         ]);
 
-        return redirect()->route('attendance.list')
-            ->with('status_message', '休憩に入りました。');
+        return redirect()->route('attendance.list');
     }
 
     /**
-     * 休憩戻ボタン
-     * - 「休憩中」の時だけ休憩時間を集計
-     * - 休憩合計（break_minutes）に加算
+     * 休憩終了ボタン
      */
     public function breakOut(Request $request)
     {
         $user  = Auth::user();
         $today = Carbon::today();
 
-        $attendance = Attendance::with('total', 'time')
+        $attendance = Attendance::with(['total', 'time'])
             ->where('user_id', $user->id)
             ->whereDate('work_date', $today)
             ->first();
 
-        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
-            return redirect()->route('attendance.list')
-                ->with('error_message', '出勤中のみ休憩戻ができます。');
-        }
-
-        if ($attendance->time->end_time) {
-            return redirect()->route('attendance.list')
-                ->with('error_message', '退勤後は休憩戻できません。');
-        }
-
-        $breakStart = session('break_start_at');
-
-        // 休憩開始が記録されていない場合は、単にステータスだけ戻す
-        if (! $breakStart) {
-            session(['attendance_status' => 'working']);
-
+        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
-        $total = $this->ensureTotal($attendance);
+        if ($attendance->time->end_time) {
+            return redirect()->route('attendance.list');
+        }
 
-        $start   = Carbon::parse($breakStart);
-        $minutes = $start->diffInMinutes(now());
+        $breakId    = session('break_id');
+        $breakStart = session('break_start_at');
 
-        $total->break_minutes += $minutes;
-        $total->save();
+        if (!$breakId || !$breakStart) {
+            session(['attendance_status' => 'working']);
+            session()->forget('break_id');
+            session()->forget('break_start_at');
+            return redirect()->route('attendance.list');
+        }
 
-        session([
-            'attendance_status' => 'working',
-        ]);
+        $break = AttendanceBreak::where('attendance_id', $attendance->id)
+            ->where('id', $breakId)
+            ->first();
+
+        if ($break) {
+            $start   = Carbon::parse($breakStart);
+            $minutes = $start->diffInMinutes(now());
+
+            $break->end_time = now()->format('H:i:s');
+            $break->minutes  = $minutes;
+            $break->save();
+
+            $total = $this->ensureTotal($attendance);
+            $total->break_minutes += $minutes;
+            $total->save();
+        }
+
+        session(['attendance_status' => 'working']);
+        session()->forget('break_id');
         session()->forget('break_start_at');
 
-        return redirect()->route('attendance.list')
-            ->with('status_message', '休憩から戻りました。');
+        return redirect()->route('attendance.list');
     }
 }
