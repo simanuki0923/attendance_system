@@ -9,25 +9,21 @@
     /**
      * 申請一覧画面 想定パラメータ
      *
-     * コントローラ側で差し替え可能なように、
-     * 画面は「ラベル文字列」を受け取る想定にしています。
-     *
-     * @var string $pageTitle           画面タイトル例: '申請一覧'
-     * @var string $activeTab           タブ: 'pending' | 'approved'
-     * @var string|null $pendingTabUrl  「承認待ち」タブのURL
-     * @var string|null $approvedTabUrl 「承認済み」タブのURL
+     * @var string $pageTitle
+     * @var string $activeTab           'pending' | 'approved'
+     * @var string|null $pendingTabUrl
+     * @var string|null $approvedTabUrl
      *
      * @var \Illuminate\Support\Collection|array<array{
-     *   status_label:string,       // 状態 例: '承認待ち'
-     *   name_label:string,         // 名前 例: '西 作一'
-     *   target_date_label:string,  // 対象日付 例: '2023/06/01'
-     *   reason_label:string,       // 申請理由 例: '遅刻のため'
-     *   applied_date_label:string, // 申請日付 例: '2023/06/02'
-     *   detail_url:string          // 詳細ページURL
+     *   status_label:string,
+     *   name_label:string,
+     *   target_date_label:string,
+     *   reason_label:string,
+     *   applied_date_label:string,
+     *   detail_url:string|null
      * }> $requests
      */
 
-    // デモ表示用のデフォルト値（コントローラが未実装でも画面確認できるように）
     $pageTitle = $pageTitle ?? '申請一覧';
     $activeTab = $activeTab ?? 'pending';
 

@@ -38,19 +38,6 @@
       </p>
     @endif
 
-    {{-- フラッシュメッセージ --}}
-    @if (session('status_message'))
-      <p class="attendance__flash attendance__flash--success">
-        {{ session('status_message') }}
-      </p>
-    @endif
-
-    @if (session('error_message'))
-      <p class="attendance__flash attendance__flash--error">
-        {{ session('error_message') }}
-      </p>
-    @endif
-
     {{-- 日付・時刻表示 --}}
     <p class="attendance__date">{{ $displayDate }}</p>
     <p class="attendance__time">{{ $displayTime }}</p>
@@ -88,25 +75,20 @@
       </div>
 
     @elseif ($status === 'on_break')
-      {{-- 休憩中 → 「退勤」「休憩戻」 --}}
-      <div class="attendance__actions attendance__actions--double">
-        <form method="POST" action="{{ route('attendance.clockOut') }}">
-          @csrf
-          <button type="submit" class="attendance__btn attendance__btn--primary">
-            退勤
-          </button>
-        </form>
-
-        <form method="POST" action="{{ route('attendance.breakOut') }}">
-          @csrf
-          <button type="submit" class="attendance__btn attendance__btn--secondary">
-            休憩戻
-          </button>
-        </form>
-      </div>
+      {{-- 休憩中 → 「休憩戻」だけ表示 --}}
+      <form
+        class="attendance__actions attendance__actions--single"
+        method="POST"
+        action="{{ route('attendance.breakOut') }}"
+      >
+        @csrf
+        <button type="submit" class="attendance__btn attendance__btn--secondary">
+          休憩戻
+        </button>
+      </form>
 
     @elseif ($status === 'after_work')
-      {{-- 退勤済 → メッセージのみ --}}
+      {{-- 退勤済 → メッセージのみ（残す） --}}
       <p class="attendance__message">
         お疲れ様でした。
       </p>
