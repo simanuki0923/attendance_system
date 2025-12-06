@@ -4,24 +4,28 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $user = $request->user();
+        $user = Auth::user();
 
-        if (!$user) {
+        // まず未ログイン対策
+        if (! $user) {
             return redirect()->route('admin.login');
         }
 
-        // ★管理者判定：is_admin true OR ホワイトリスト一致
+        // is_admin OR ホワイトリスト
         $isAdmin =
-            (bool)($user->is_admin ?? false)
+            (bool) ($user->is_admin ?? false)
             || in_array($user->email, config('admin.emails', []), true);
 
-        if (!$isAdmin) {
-            abort(403, '管理者のみアクセスできます。');
+        if (! $isAdmin) {
+            // 仕様に寄せて文言は統一
+            return redirect()->route('admin.login')
+                ->withErrors(['auth' => 'ログイン情報が登録されていません']);
         }
 
         return $next($request);

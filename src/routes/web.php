@@ -12,14 +12,31 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\AdminRequestController;
 use App\Http\Controllers\EditController;
 
+// ======================================================
+// ★管理者判定（is_admin / ホワイトリスト両対応）
+// ======================================================
+$isAdminUser = function ($user): bool {
+    if (! $user) return false;
+
+    // DB の is_admin を優先
+    if ((bool) ($user->is_admin ?? false)) {
+        return true;
+    }
+
+    // ホワイトリスト（config/admin.php の emails）
+    return in_array($user->email, config('admin.emails', []), true);
+};
+
+// ======================================================
 // トップはログインへ
+// ======================================================
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// =========================
+// ======================================================
 // 管理者ログイン（未認証OK）
-// =========================
+// ======================================================
 Route::prefix('admin')->group(function () {
     Route::get('/login', [AdminController::class, 'showLoginForm'])
         ->name('admin.login');
@@ -30,21 +47,6 @@ Route::prefix('admin')->group(function () {
     Route::post('/logout', [AdminController::class, 'logout'])
         ->name('admin.logout');
 });
-
-// ======================================================
-// ★管理者判定（is_admin / ホワイトリスト両対応）
-// ======================================================
-$isAdminUser = function ($user): bool {
-    if (!$user) return false;
-
-    // DB の is_admin を優先
-    if ((bool)($user->is_admin ?? false)) {
-        return true;
-    }
-
-    // ホワイトリスト（config/admin.php の emails）
-    return in_array($user->email, config('admin.emails', []), true);
-};
 
 // ======================================================
 // ★追加：勤怠詳細（日付指定・一般ユーザー用）
@@ -64,7 +66,7 @@ Route::middleware(['auth'])->get(
         }
 
         // 一般ユーザーはメール認証必須
-        if (!$user || !$user->hasVerifiedEmail()) {
+        if (! $user || ! $user->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
 
@@ -85,10 +87,11 @@ Route::middleware(['auth'])->get(
         $isAdmin = $isAdminUser($user);
 
         // 一般ユーザーだけメール認証必須
-        if (!$isAdmin) {
-            if (!$user || !$user->hasVerifiedEmail()) {
+        if (! $isAdmin) {
+            if (! $user || ! $user->hasVerifiedEmail()) {
                 return redirect()->route('verification.notice');
             }
+
             return app(DetailtController::class)->show($id);
         }
 
@@ -109,21 +112,31 @@ Route::middleware(['auth'])->patch(
         $isAdmin = $isAdminUser($user);
 
         // 一般ユーザーだけメール認証必須
-        if (!$isAdmin) {
-            if (!$user || !$user->hasVerifiedEmail()) {
+        if (! $isAdmin) {
+            if (! $user || ! $user->hasVerifiedEmail()) {
                 return redirect()->route('verification.notice');
             }
 
-            return app(DetailtController::class)->update($request, $id);
+            // ★修正ポイント：
+            // FormRequest を DetailtController に注入できるように
+            // 「インスタンス + メソッド」で app()->call する
+            return app()->call(
+                [app(DetailtController::class), 'update'],
+                ['id' => $id]
+            );
         }
 
-        return app(EditController::class)->update($request, $id);
+        // ★管理者側も同様に統一（将来 FormRequest 化しても安全）
+        return app()->call(
+            [app(EditController::class), 'update'],
+            ['id' => $id]
+        );
     }
 )->name('attendance.detail.update');
 
 // ======================================================
 // 申請一覧（一般 / 管理者 共通パス）
-//  - /stamp_correction_request/list
+//  - GET /stamp_correction_request/list
 // ======================================================
 Route::middleware(['auth'])->get(
     '/stamp_correction_request/list',
@@ -132,8 +145,9 @@ Route::middleware(['auth'])->get(
         $user    = $request->user();
         $isAdmin = $isAdminUser($user);
 
-        if (!$isAdmin) {
-            if (!$user || !$user->hasVerifiedEmail()) {
+        // 一般ユーザーだけメール認証必須
+        if (! $isAdmin) {
+            if (! $user || ! $user->hasVerifiedEmail()) {
                 return redirect()->route('verification.notice');
             }
         }
@@ -149,9 +163,10 @@ Route::middleware(['auth'])->get(
 //  - GET  /stamp_correction_request/approve/{attendance_correct_request_id}
 //     → admin/detail.blade.php（承認ボタン付き）
 //  - POST /stamp_correction_request/approve/{attendance_correct_request_id}
-//     → 承認処理（JSON返却 / 画面遷移なし）
+//     → 承認処理
 // ======================================================
 Route::middleware(['auth', 'admin'])->group(function () {
+
     Route::get(
         '/stamp_correction_request/approve/{attendance_correct_request_id}',
         [AdminRequestController::class, 'showApprove']
@@ -163,9 +178,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     )->name('stamp_correction_request.approve');
 });
 
-// =========================
+// ======================================================
 // 一般ユーザー（verified 必須）
-// =========================
+// ======================================================
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/attendance', [AttendanceController::class, 'index'])
@@ -187,9 +202,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('attendance.breakOut');
 });
 
-// =========================
+// ======================================================
 // 管理者ルート（auth + admin）
-// =========================
+// ======================================================
 Route::middleware(['auth', 'admin'])
     ->prefix('admin')
     ->group(function () {
@@ -211,9 +226,9 @@ Route::middleware(['auth', 'admin'])
             ->name('admin.staff.attendance.csv');
     });
 
-// =========================
+// ======================================================
 // home（管理者は admin 側へ）
-// =========================
+// ======================================================
 Route::get('/home', function () use ($isAdminUser) {
 
     $user = auth()->user();
