@@ -4,62 +4,50 @@ namespace App\Http\Requests;
 
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterRequest extends FormRequest
 {
-    /**
-     * 認可（会員登録は誰でもOKなので true）
-     */
     public function authorize(): bool
     {
+        // 会員登録は誰でもOK
         return true;
     }
 
-    /**
-     * バリデーションルール
-     *
-     * ・Fortifyデフォルト相当（name / email / password）
-     * ・パスワードは 8文字以上 & 確認用と一致（confirmed）
-     */
     public function rules(): array
     {
         return [
             'name' => [
                 'required',
                 'string',
-                'max:255',
+                'max:100', // users.name(100) に合わせる
             ],
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:255',
-                'unique:' . User::class,
+                Rule::unique('users', 'email'),
             ],
             'password' => [
                 'required',
                 'string',
-                'min:8',     // 8文字以上
-                'confirmed', // password_confirmation と一致
+                'min:8',
+                'confirmed',
             ],
         ];
     }
 
-    /**
-     * 日本語のエラーメッセージ
-     *
-     * 指示いただいた内容に対応
-     */
     public function messages(): array
     {
         return [
             // 1. 未入力の場合
-            'name.required'     => 'お名前を入力してください',
-            'email.required'    => 'メールアドレスを入力してください',
-            'password.required' => 'パスワードを入力してください',
+            'name.required'      => 'お名前を入力してください',
+            'email.required'     => 'メールアドレスを入力してください',
+            'password.required'  => 'パスワードを入力してください',
 
             // 2. パスワードの入力規則違反の場合
-            'password.min'      => 'パスワードは8文字以上で入力してください',
+            'password.min'       => 'パスワードは8文字以上で入力してください',
 
             // 3. 確認用パスワードの入力規則違反の場合
             'password.confirmed' => 'パスワードと一致しません',

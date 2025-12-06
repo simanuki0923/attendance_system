@@ -2,13 +2,12 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;
 
-class LoginRequest extends FormRequest
+class LoginRequest extends FortifyLoginRequest
 {
     public function authorize(): bool
     {
-        // ログインフォームなので誰でもOK
         return true;
     }
 
@@ -23,12 +22,9 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // 1. 未入力の場合
             'email.required'    => 'メールアドレスを入力してください',
-            'password.required' => 'パスワードを入力してください',
-
-            // 形式エラーも日本語にしたいなら（任意）
             'email.email'       => 'メールアドレスを正しい形式で入力してください',
+            'password.required' => 'パスワードを入力してください',
         ];
     }
 }
