@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AttendanceEditRequest;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceTotal;
 use App\Models\AttendanceApplication;
-use Illuminate\Http\Request;
+use App\Models\ApplicationStatus;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -41,12 +42,15 @@ class EditController extends Controller
 
         $noteLabel = $attendance->note ?? '';
 
-        // 承認待ち申請の有無
+        // 申請の存在自体は把握できるように残す（警告表示用途など）
         $hasPendingApplication = AttendanceApplication::where('attendance_id', $attendance->id)
             ->whereHas('status', function ($q) {
                 $q->where('code', 'pending');
             })
             ->exists();
+
+        // ★管理者画面ではロックしない方針
+        $lockByPending = false;
 
         return view('admin.edit', [
             'attendance'            => $attendance,
@@ -60,40 +64,24 @@ class EditController extends Controller
             'break2StartLabel'      => $break2StartLabel,
             'break2EndLabel'        => $break2EndLabel,
             'noteLabel'             => $noteLabel,
+
+            // view 側で「警告表示」するなら使える
             'hasPendingApplication' => $hasPendingApplication,
+
+            // view 側で disabled に使うのはこれ
+            'lockByPending'         => $lockByPending,
         ]);
     }
 
     /**
      * 管理者による勤怠修正
      */
-    public function update(Request $request, int $id)
+    public function update(AttendanceEditRequest $request, int $id)
     {
         $attendance = Attendance::with(['time', 'total', 'breaks'])
             ->findOrFail($id);
 
-        // 承認待ちなら更新禁止
-        $hasPendingApplication = AttendanceApplication::where('attendance_id', $attendance->id)
-            ->whereHas('status', function ($q) {
-                $q->where('code', 'pending');
-            })
-            ->exists();
-
-        if ($hasPendingApplication) {
-            return redirect()
-                ->back()
-                ->with('error', '承認待ちのため修正はできません。');
-        }
-
-        $validated = $request->validate([
-            'start_time'   => ['nullable', 'date_format:H:i'],
-            'end_time'     => ['nullable', 'date_format:H:i', 'after_or_equal:start_time'],
-            'break1_start' => ['nullable', 'date_format:H:i'],
-            'break1_end'   => ['nullable', 'date_format:H:i', 'after_or_equal:break1_start'],
-            'break2_start' => ['nullable', 'date_format:H:i'],
-            'break2_end'   => ['nullable', 'date_format:H:i', 'after_or_equal:break2_start'],
-            'note'         => ['nullable', 'string', 'max:1000'],
-        ]);
+        $validated = $request->validated();
 
         DB::transaction(function () use ($attendance, $validated) {
 
@@ -121,13 +109,31 @@ class EditController extends Controller
                 $validated['break2_end'] ?? null
             );
 
-            // 備考
+            // 備考（FormRequestで必須化）
             $attendance->note = $validated['note'] ?? null;
             $attendance->save();
 
             // 合計再計算
             $attendance->load(['time', 'breaks', 'total']);
             $this->recalculateTotal($attendance);
+
+            // ★管理者が直接修正した場合、承認待ち申請が残ると整合性が崩れるので却下へ
+            $pendingApps = AttendanceApplication::where('attendance_id', $attendance->id)
+                ->whereHas('status', function ($q) {
+                    $q->where('code', 'pending');
+                })
+                ->get();
+
+            if ($pendingApps->isNotEmpty()) {
+                $rejectedId = ApplicationStatus::where('code', 'rejected')->value('id');
+
+                if ($rejectedId) {
+                    foreach ($pendingApps as $app) {
+                        $app->status_id = $rejectedId;
+                        $app->save();
+                    }
+                }
+            }
         });
 
         return redirect()
@@ -223,7 +229,7 @@ class EditController extends Controller
             $workMinutes = $start->diffInMinutes($end);
         }
 
-        $breakMinutes = (int)$attendance->breaks->sum('minutes');
+        $breakMinutes = (int) $attendance->breaks->sum('minutes');
         $breakMinutes = max(0, $breakMinutes);
 
         $netMinutes = max(0, $workMinutes - $breakMinutes);

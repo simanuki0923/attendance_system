@@ -23,14 +23,42 @@
 
     $noteLabel         = $noteLabel         ?? '';
 
-    $hasPendingApplication = $hasPendingApplication ?? false;
-    $isLocked              = (bool)$hasPendingApplication;
-    $readOnlyAttr          = $isLocked ? 'readonly' : '';
+    /**
+     * ★管理者画面のロックは hasPendingApplication では判定しない
+     *  - lockByPending が true の時だけロック
+     *  - Controller から渡されない場合は false
+     */
+    $lockByPending = $lockByPending ?? false;
+
+    $isLocked     = (bool) $lockByPending;
+    $readOnlyAttr = $isLocked ? 'readonly' : '';
 @endphp
 
 @isset($attendance)
 @php
-    $updateAction = route('attendance.detail.update', $attendance->id);
+    /**
+     * ★更新先ルートの安全決定
+     *  - 管理者用があれば優先
+     *  - なければ既存の update を利用
+     */
+    $updateAction = null;
+
+    if (\Illuminate\Support\Facades\Route::has('admin.attendance.detail.update')) {
+        $updateAction = route('admin.attendance.detail.update', $attendance->id);
+    } elseif (\Illuminate\Support\Facades\Route::has('attendance.detail.update')) {
+        $updateAction = route('attendance.detail.update', $attendance->id);
+    } else {
+        $updateAction = '#';
+    }
+
+    // -----------------------------
+    // ★行ごとの“まとめ表示”用エラー
+    //  - 同じ文言が2行出るのを防ぐ
+    // -----------------------------
+    $workTimeError  = $errors->first('start_time') ?: $errors->first('end_time');
+    $break1Error    = $errors->first('break1_start') ?: $errors->first('break1_end');
+    $break2Error    = $errors->first('break2_start') ?: $errors->first('break2_end');
+    $noteError      = $errors->first('note');
 @endphp
 
 <main class="attendance-detail attendance-detail--admin">
@@ -53,6 +81,8 @@
       </p>
     @endif
 
+    {{-- ★NG.pngの原因になる上部の errors->all() は表示しない --}}
+    {{--
     @if ($errors->any())
       <div class="attendance-detail__errors">
         <ul>
@@ -62,6 +92,7 @@
         </ul>
       </div>
     @endif
+    --}}
 
     <form method="POST" action="{{ $updateAction }}">
       @csrf
@@ -97,6 +128,7 @@
                        name="start_time"
                        placeholder="09:00"
                        value="{{ old('start_time', $workStartLabel) }}"
+                       class="{{ $errors->has('start_time') ? 'is-invalid' : '' }}"
                        {{ $readOnlyAttr }}>
               </div>
 
@@ -107,10 +139,15 @@
                        name="end_time"
                        placeholder="18:00"
                        value="{{ old('end_time', $workEndLabel) }}"
+                       class="{{ $errors->has('end_time') ? 'is-invalid' : '' }}"
                        {{ $readOnlyAttr }}>
               </div>
 
             </div>
+
+            @if ($workTimeError)
+              <p class="form-error">{{ $workTimeError }}</p>
+            @endif
           </dd>
         </dl>
 
@@ -125,6 +162,7 @@
                        name="break1_start"
                        placeholder="12:00"
                        value="{{ old('break1_start', $break1StartLabel) }}"
+                       class="{{ $errors->has('break1_start') ? 'is-invalid' : '' }}"
                        {{ $readOnlyAttr }}>
               </div>
 
@@ -135,10 +173,15 @@
                        name="break1_end"
                        placeholder="13:00"
                        value="{{ old('break1_end', $break1EndLabel) }}"
+                       class="{{ $errors->has('break1_end') ? 'is-invalid' : '' }}"
                        {{ $readOnlyAttr }}>
               </div>
 
             </div>
+
+            @if ($break1Error)
+              <p class="form-error">{{ $break1Error }}</p>
+            @endif
           </dd>
         </dl>
 
@@ -153,6 +196,7 @@
                        name="break2_start"
                        placeholder="15:00"
                        value="{{ old('break2_start', $break2StartLabel) }}"
+                       class="{{ $errors->has('break2_start') ? 'is-invalid' : '' }}"
                        {{ $readOnlyAttr }}>
               </div>
 
@@ -163,10 +207,15 @@
                        name="break2_end"
                        placeholder="15:15"
                        value="{{ old('break2_end', $break2EndLabel) }}"
+                       class="{{ $errors->has('break2_end') ? 'is-invalid' : '' }}"
                        {{ $readOnlyAttr }}>
               </div>
 
             </div>
+
+            @if ($break2Error)
+              <p class="form-error">{{ $break2Error }}</p>
+            @endif
           </dd>
         </dl>
 
@@ -179,8 +228,13 @@
                      name="note"
                      placeholder="備考を入力"
                      value="{{ old('note', $noteLabel) }}"
+                     class="{{ $errors->has('note') ? 'is-invalid' : '' }}"
                      {{ $readOnlyAttr }}>
             </div>
+
+            @if ($noteError)
+              <p class="form-error">{{ $noteError }}</p>
+            @endif
           </dd>
         </dl>
 
