@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AdminLoginRequest;
 use App\Models\Attendance;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
@@ -23,33 +25,40 @@ class AdminController extends Controller
     /**
      * POST /admin/login
      */
-    public function login(Request $request)
+    public function login(AdminLoginRequest $request)
     {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+        $email    = (string) $request->input('email');
+        $password = (string) $request->input('password');
 
-        if (!Auth::attempt($credentials)) {
+        // ① メールでユーザー取得
+        $user = User::where('email', $email)->first();
+
+        // 仕様：入力情報が誤っている場合
+        if (! $user) {
             throw ValidationException::withMessages([
-                'auth' => 'メールアドレスまたはパスワードが正しくありません。',
+                'email' => 'ログイン情報が登録されていません',
             ]);
         }
 
-        $request->session()->regenerate();
-
-        $user = Auth::user();
-
-        // ★管理者メールのホワイトリスト判定
-        if (!$this->isAdmin($user->email)) {
-            Auth::logout();
-
-            return back()
-                ->withErrors(['auth' => '管理者権限がありません。'])
-                ->withInput();
+        // ② パスワード照合
+        if (! Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => 'ログイン情報が登録されていません',
+            ]);
         }
 
-        // ★管理者ログイン後は必ず「管理者勤怠一覧」に表示
+        // ③ 管理者判定（is_admin OR ホワイトリスト）
+        if (! $this->isAdminUser($user)) {
+            throw ValidationException::withMessages([
+                'auth' => 'ログイン情報が登録されていません',
+            ]);
+        }
+
+        // ④ ここで確定ログイン
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        // ★管理者ログイン後は必ず「管理者勤怠一覧」
         return redirect()->route('admin.attendance.list');
     }
 
@@ -83,9 +92,12 @@ class AdminController extends Controller
         }
 
         // 1) 一般ユーザー（管理者以外）を全員取得
+        //    ★ is_admin と ホワイトリスト両方を除外して安全に
         $adminEmails = config('admin.emails', []);
+
         $staffUsers = User::query()
-            ->when(!empty($adminEmails), fn($q) => $q->whereNotIn('email', $adminEmails))
+            ->where('is_admin', false)
+            ->when(! empty($adminEmails), fn ($q) => $q->whereNotIn('email', $adminEmails))
             ->orderBy('id')
             ->get();
 
@@ -109,21 +121,25 @@ class AdminController extends Controller
             }
 
             return [
-                // ★これを追加：Blade で route('attendance.detail', ...) を作るため必須
-                'attendance_id' => $a?->id,   // 勤怠が無い場合は null
+                // Blade 互換用（勤怠が無い場合 null）
+                'attendance_id' => $a?->id,
 
                 'name_label'  => $u->name ?? '',
+
                 'start_label' => $time?->start_time
                     ? Carbon::parse($time->start_time)->format('H:i')
                     : '',
+
                 'end_label'   => $time?->end_time
                     ? Carbon::parse($time->end_time)->format('H:i')
                     : '',
+
                 'break_label' => $total
-                    ? $this->minutesToHhmm((int)$total->break_minutes)
+                    ? $this->minutesToHhmm((int) $total->break_minutes)
                     : '',
+
                 'total_label' => $total
-                    ? $this->minutesToHhmm((int)$total->total_work_minutes)
+                    ? $this->minutesToHhmm((int) $total->total_work_minutes)
                     : '',
 
                 // 互換用（Bladeがこれを使わないなら残っててもOK）
@@ -154,7 +170,10 @@ class AdminController extends Controller
         ));
     }
 
-    // ===== helper =====
+    // =========================
+    // helper
+    // =========================
+
     private function minutesToHhmm(int $minutes): string
     {
         $h = intdiv($minutes, 60);
@@ -163,10 +182,15 @@ class AdminController extends Controller
     }
 
     /**
-     * config/admin.php の emails に入っているメールだけ管理者扱い
+     * ★管理者判定を統一
+     * is_admin = true OR config('admin.emails') に一致
      */
-    private function isAdmin(string $email): bool
+    private function isAdminUser(User $user): bool
     {
-        return in_array($email, config('admin.emails', []), true);
+        if ((bool) ($user->is_admin ?? false)) {
+            return true;
+        }
+
+        return in_array($user->email, config('admin.emails', []), true);
     }
 }
