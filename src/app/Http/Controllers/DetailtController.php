@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AttendanceDetailRequest;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
 use App\Models\AttendanceTotal;
 use App\Models\AttendanceBreak;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -130,8 +130,10 @@ class DetailtController extends Controller
     /**
      * 勤怠詳細更新（一般ユーザー）
      *  - 修正内容を反映しつつ「修正申請」を pending で作成
+     *
+     * ★バリデーションは FormRequest に移譲
      */
-    public function update(Request $request, int $id)
+    public function update(AttendanceDetailRequest $request, int $id)
     {
         $user = Auth::user();
         if (!$user) {
@@ -143,6 +145,7 @@ class DetailtController extends Controller
             ->findOrFail($id);
 
         // 既に pending なら画面・サーバ両方でロック
+        // （FormRequest 側にも同等のガードを置いているなら二重で安全）
         $latestApp = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
@@ -153,17 +156,7 @@ class DetailtController extends Controller
                 ->withInput();
         }
 
-        $validated = $request->validate(
-            [
-                'start_time'    => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
-                'end_time'      => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
-                'break1_start'  => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
-                'break1_end'    => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
-                'break2_start'  => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
-                'break2_end'    => ['nullable', 'regex:/^\d{1,2}:\d{2}$/'],
-                'note'          => ['nullable', 'string', 'max:255'],
-            ]
-        );
+        $validated = $request->validated();
 
         // 出勤・退勤
         $time = $attendance->time ?: new AttendanceTime([
@@ -258,6 +251,7 @@ class DetailtController extends Controller
         $startNorm = $this->normalizeTime($start);
         $endNorm   = $this->normalizeTime($end);
 
+        // 最新状態のコレクションで探す
         $break = $attendance->breaks->firstWhere('break_no', $breakNo);
 
         // 両方空なら削除
@@ -300,7 +294,7 @@ class DetailtController extends Controller
         }
 
         // 休憩は minutes カラムの合計
-        $breakMinutes = (int)$attendance->breaks->sum('minutes');
+        $breakMinutes = (int) $attendance->breaks->sum('minutes');
         $breakMinutes = max(0, $breakMinutes);
 
         $netMinutes = max(0, $workMinutes - $breakMinutes);
