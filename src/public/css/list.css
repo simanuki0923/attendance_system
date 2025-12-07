@@ -86,7 +86,6 @@
   font-size: 20px;
 }
 
-
 /* 翌月ボタンを右端へ */
 .month-nav__btn--next {
   margin-left: auto;
@@ -226,4 +225,25 @@
   font-size: 14px;
   text-align: center;
   background: #ffffff;
+}
+
+/* ======================================================
+   PCレスポンシブ（1400px - 1540px）
+   - 元デザインを崩さないため、幅/余白だけ最小調整
+   ====================================================== */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  .attendance-list__inner {
+    max-width: 1040px;          /* 960px → 少しだけ広げる */
+    padding: 32px 48px 40px;    /* 横余白をわずかに拡張 */
+  }
+
+  .attendance-list__month-nav {
+    max-width: 1080px;          /* innerとバランスを取る */
+    padding: 12px 32px;         /* ピルの余白を少しだけ増やす */
+  }
+
+  .attendance-list__cell {
+    padding: 10px 22px;         /* 横詰まり/間延びの中間に調整 */
+  }
 }

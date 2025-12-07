@@ -1,3 +1,5 @@
+/* attendance.css */
+
 .attendance {
   min-height: calc(100vh - 56px); /* ヘッダー分を引いた高さ想定 */
   padding: 40px 16px 60px;
@@ -40,7 +42,6 @@
   margin: 0 0 12px;
   color: #111827;
   font-weight: 700;
-
 }
 
 .attendance__time {
@@ -102,4 +103,59 @@
   margin-top: 32px;
   font-size: 16px;
   color: #111827;
+}
+
+
+/* =====================================================
+   PCレスポンシブ（1400px - 1540px）
+   - 既存デザインを崩さず、余白と横幅をわずかに最適化
+   ===================================================== */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  .attendance {
+    /* 画面が広い分、上下の余白を少しだけ増やして中心感を維持 */
+    padding: 48px 24px 72px;
+  }
+
+  .attendance__inner {
+    /* 既存の見た目を保ちつつ、少しだけ横幅を広げる */
+    max-width: 1040px;
+    min-height: 460px;
+  }
+
+  .attendance__badge {
+    font-size: 16px;
+    padding: 6px 18px;
+    margin-bottom: 30px;
+  }
+
+  .attendance__date {
+    font-size: 32px;
+  }
+
+  .attendance__time {
+    font-size: 68px;
+    margin-bottom: 44px;
+  }
+
+  .attendance__actions {
+    gap: 28px;
+  }
+
+  .attendance__actions--single .attendance__btn {
+    min-width: 240px;
+  }
+
+  .attendance__actions--double .attendance__btn {
+    min-width: 180px;
+  }
+
+  .attendance__btn {
+    font-size: 17px;
+    padding: 14px 36px;
+  }
+
+  .attendance__message {
+    font-size: 17px;
+  }
 }

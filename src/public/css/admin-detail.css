@@ -1,4 +1,4 @@
-/* public/css/detail.css */
+/* public/css/admin-detail.css */
 
 .attendance-detail {
   background: #f3f3f6;               /* 画面全体の薄いグレー */
@@ -162,3 +162,35 @@
   pointer-events: none;  /* クリックできないように */
 }
 
+
+/* =========================================================
+   レスポンシブ（PC: 1400px - 1540px）
+   - 元の見た目を崩さず、余白と横幅だけを微調整
+   ========================================================= */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  .attendance-detail__inner {
+    max-width: 920px;      /* 840px → 少しだけ拡張 */
+    margin: 36px auto 68px;
+    padding: 0 32px;       /* 24px → 少しだけ拡張 */
+  }
+
+  /* ラベル列をほんの少し広げて、横幅に対する情報密度を安定 */
+  .attendance-detail__label {
+    flex: 0 0 200px;       /* 180px → 200px */
+  }
+
+  /* 年/月日表示の間隔だけ微調整（増やしすぎない） */
+  .attendance-detail__value--date {
+    gap: 140px;            /* 120px → 140px */
+  }
+
+  /* 入力幅を少しだけ広げる（見た目のバランス用） */
+  .attendance-detail__time-input input {
+    width: 100px;          /* 96px → 100px */
+  }
+
+  .attendance-detail__note input {
+    width: 220px;          /* 200px → 220px */
+  }
+}

@@ -225,3 +225,34 @@
 .attendance-detail__note input.is-invalid {
   border-color: #e11d48;
 }
+
+/* ======================================================
+   ★ レスポンシブ（PC 1400px - 1540px）
+   - 元のデザインを崩さず、内側幅と余白を微調整
+   ====================================================== */
+
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+  .attendance-detail__inner {
+    max-width: 900px;   /* 840 → 900 で“広すぎず狭すぎず” */
+    padding: 0 32px;    /* 24 → 32 で余白のバランスを微調整 */
+  }
+
+  /* 日付行は画面に合わせて間を少し広げる */
+  .attendance-detail__value--date {
+    gap: 140px;         /* 120 → 140 */
+  }
+
+  /* 入力幅はごく軽く増やす（見た目の密度維持） */
+  .attendance-detail__time-input input {
+    width: 100px;       /* 96 → 100 */
+  }
+
+  .attendance-detail__note input {
+    width: 220px;       /* 200 → 220 */
+  }
+
+  /* 右寄せボタンの視覚的ズレを軽く抑える */
+  .attendance-detail__button {
+    transform: translate(-40px, -22px); /* -50/-25 → -40/-22 */
+  }
+}

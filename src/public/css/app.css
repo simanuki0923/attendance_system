@@ -97,3 +97,52 @@ body {
   margin: 0 auto;
   padding: 32px 16px 64px;
 }
+
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  /* バナー画面の外枠（クラス名は実CSSに合わせて） */
+  .banner,
+  .banner-page,
+  .banner-screen {
+    /* 既存が min-height の場合も崩れにくい安全な調整 */
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* 中央カラム（app.cssの設計思想に寄せる） */
+  .banner__inner,
+  .banner-page__inner,
+  .banner-screen__inner {
+    max-width: var(--container); /* 1200px想定 */
+    margin-left: auto;
+    margin-right: auto;
+
+    /* 既存のpaddingが強い場合に備え“控えめ” */
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  /* タイトル系：大きすぎ/小さすぎを抑制 */
+  .banner__title,
+  .banner-page__title,
+  .banner-screen__title {
+    font-size: clamp(22px, 1.6vw, 28px);
+  }
+
+  /* 横並び要素がある場合の崩れ対策 */
+  .banner__row,
+  .banner__grid,
+  .banner__actions,
+  .banner-page__row,
+  .banner-page__grid {
+    gap: 12px;
+  }
+
+  /* ボタンやカードが詰まりすぎるのを防ぐ */
+  .banner__button,
+  .banner__card,
+  .banner-page__button,
+  .banner-page__card {
+    max-width: 100%;
+  }
+}

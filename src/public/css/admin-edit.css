@@ -1,8 +1,8 @@
-/* public/css/detail.css */
+/* public/css/admin-edit.css */
 
 .attendance-detail {
   background: #f3f3f6;               /* 画面全体の薄いグレー */
-  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+  min-height: calc(100vh - 56px);    /* 画面全体の高さ調整 */
 }
 
 .attendance-detail__inner {
@@ -214,4 +214,43 @@
   color: #e11d48;
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* ======================================================
+   ★レスポンシブ（PC: 1400px - 1540px）
+   - 元の見た目を崩さず、横幅・余白・間隔のみ微調整
+   ====================================================== */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  /* 画面が広いPC帯では、カードが細すぎて見えないよう少しだけ広げる */
+  .attendance-detail__inner {
+    max-width: 900px;
+    padding: 0 32px;
+  }
+
+  /* ラベルと値のバランスを軽く最適化（内側余白中心） */
+  .attendance-detail__label,
+  .attendance-detail__value {
+    padding: 22px 28px;
+  }
+
+  /* 日付の左右間隔を画面幅に合わせて微調整 */
+  .attendance-detail__value--date {
+    gap: 140px;
+  }
+
+  /* 時刻入力はサイズ感を変えすぎない範囲で少しだけ余裕 */
+  .attendance-detail__time-input input {
+    width: 100px;
+  }
+
+  /* 備考入力も同様に少しだけ幅を広げ、窮屈さを回避 */
+  .attendance-detail__note input {
+    width: 220px;
+  }
+
+  /* ボタン群の余白感を維持しつつ、右側に自然に収まるよう微調整 */
+  .attendance-detail__actions {
+    gap: 12px;
+  }
 }

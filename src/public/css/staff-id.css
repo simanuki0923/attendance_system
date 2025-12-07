@@ -1,4 +1,4 @@
-/* public/css/staff_id.css */
+/* public/css/staff-id.css */
 
 /* ==================================================
    全体レイアウト
@@ -168,7 +168,6 @@
   position: relative;
 }
 
-
 /* 詳細リンク */
 .attendance-list__cell--detail {
   text-align: center;
@@ -219,3 +218,52 @@
   opacity: .9;
 }
 
+/* ==================================================
+   PCレスポンシブ（1400px - 1540px）
+   - 現状の比率/デザインを崩さず
+   - 中心カラムの呼吸だけ少し広げる
+================================================== */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  .attendance-list__inner {
+    /* 画面が広い帯なので、中央の情報量を少しだけ増やす */
+    max-width: 900px;
+    padding: 0 24px;
+  }
+
+  .attendance-list__title {
+    /* タイトルの視認性だけほんの少し調整 */
+    font-size: 21px;
+  }
+
+  .attendance-list__month-nav {
+    /* ピルの左右余白を少し増やして窮屈感を消す */
+    padding: 12px 26px;
+  }
+
+  .month-nav__btn {
+    font-size: 18px; /* 既存と同等だが明示してブレ防止 */
+  }
+
+  .month-nav__current {
+    font-size: 20px; /* 既存と同等 */
+  }
+
+  .attendance-list__table--staff {
+    /* テーブルカードの可読性を最小限アップ */
+    font-size: 12.5px;
+  }
+
+  .attendance-list__cell {
+    padding: 9px 12px;
+  }
+
+  .attendance-list__row {
+    min-height: 46px;
+  }
+
+  .attendance-list__csv-btn {
+    /* ボタンのサイズ感は維持しつつ余白だけ微増 */
+    padding: 9px 20px;
+  }
+}

@@ -144,3 +144,48 @@
   text-align: center;
   padding: 20px 16px;
 }
+
+/* =====================================================
+   PCレスポンシブ（1400px〜1540px）
+   - 元のトーンを維持しつつ、余白と可読性だけ微調整
+   - レイアウト崩れ防止が目的
+===================================================== */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  .request-list__inner {
+    max-width: 1040px;          /* 画面が広い帯では少しだけ器を広げる */
+    padding: 36px 48px 44px;    /* 余白をわずかに増やして窮屈さを回避 */
+  }
+
+  .request-list__header {
+    margin-bottom: 26px;
+  }
+
+  .request-list__title-text {
+    font-size: 21px;            /* 1px〜程度の微増で違和感なし */
+  }
+
+  .request-list__tabs {
+    gap: 48px;
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .request-table {
+    font-size: 13px;
+  }
+
+  .request-table__th,
+  .request-table__td {
+    padding: 10px 18px;
+  }
+
+  .request-table__th--narrow,
+  .request-table__td--link {
+    width: 90px;
+  }
+
+  .request-table__detail-link {
+    font-size: 13px;
+  }
+}

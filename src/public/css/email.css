@@ -1,3 +1,5 @@
+/* public/css/email.css */
+
 :root{
   --header:#0b0b0b;
   --text:#111827;
@@ -47,6 +49,7 @@ main{
   padding:28px 16px;
   transform: translateY(-100px);
 }
+
 .verify__content{
   width:clamp(320px, 70vw, 920px);
   min-height:320px;
@@ -68,11 +71,12 @@ main{
   border-radius:10px;
   font-size:14px;
 }
+
 .verify__lead{
   margin:6px 0 28px;
   color:#111;
   font-size:20px;
-  font-weight: 700;
+  font-weight:700;
 }
 
 .verify__button{
@@ -82,7 +86,7 @@ main{
   color:#111;
   border:1px solid #c4c5c7;
   border-radius:8px;
-  font-size: 25px;
+  font-size:25px;
   font-weight:600;
   text-decoration:none;
   box-shadow:0 1px 0 rgba(0,0,0,.05);
@@ -91,7 +95,6 @@ main{
 .verify__button:hover{
   background:#f3f4f6;
 }
-
 .verify__button:active{
   transform:translateY(1px);
   box-shadow:none;
@@ -113,25 +116,34 @@ main{
   text-decoration:none;
   transform: translateY(30px);
 }
-
 .verify__resend button.verify__resend-link:hover{
   text-decoration:underline;
 }
 
+/* ===============================
+   PC 1400px - 1540px
+   元デザインを崩さない安全な調整
+   =============================== */
 @media (min-width:1400px) and (max-width:1540px){
+
+  /* headerは現状維持 */
   header a{
     min-height:56px;
     padding:8px 16px;
   }
-
   header img{
     height:24px;
   }
 
+  /* 余白・センタリングの安定化 */
   main{
+    min-height:calc(100vh - 56px);
+    place-items:center;
     padding:28px 16px;
+    transform: translateY(-100px);
   }
 
+  /* カード幅は現状のclampを踏襲（崩れ防止） */
   .verify__content{
     width:clamp(320px, 70vw, 920px);
     min-height:320px;
@@ -142,8 +154,17 @@ main{
     font-size:14px;
   }
 
-  .verify__button{
-    padding:10px 20px;
+  .verify__lead{
+    font-size:20px;
   }
 
+  .verify__button{
+    padding:10px 20px;
+    font-size:25px;
+  }
+
+  .verify__resend button.verify__resend-link{
+    font-size:15px;
+    transform: translateY(30px);
+  }
 }

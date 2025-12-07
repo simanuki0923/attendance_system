@@ -1,4 +1,4 @@
-/* public/css/list.css */
+/* public/css/admin-list.css */
 
 .attendance-list {
   background: #f3f3f6;               /* 画面全体の薄いグレー */
@@ -85,7 +85,6 @@
   margin-right: auto;
   font-size: 20px;
 }
-
 
 /* 翌月ボタンを右端へ */
 .month-nav__btn--next {
@@ -227,4 +226,49 @@
   font-size: 14px;
   text-align: center;
   background: #ffffff;
+}
+
+
+/* =====================================================
+   レスポンシブ（PC 1400px - 1540px）
+   - 元のデザインを崩さず、横幅と余白を少しだけ拡張
+   - ナビと内側コンテナの最大幅を揃えて“間延び”防止
+   ===================================================== */
+@media screen and (min-width: 1400px) and (max-width: 1540px) {
+
+  .attendance-list__inner {
+    max-width: 1100px;
+    padding: 36px 48px 44px;
+  }
+
+  .attendance-list__title {
+    font-size: 22px;
+  }
+
+  .attendance-list__month-nav {
+    max-width: 1100px;
+    padding: 12px 32px;
+  }
+
+  .month-nav__btn {
+    font-size: 17px;
+  }
+
+  .month-nav__btn--prev,
+  .month-nav__btn--next {
+    font-size: 22px;
+  }
+
+  .month-nav__current {
+    font-size: 22px;
+  }
+
+  /* 6カラム構造は維持しつつ、広い画面で少しだけバランス調整 */
+  .attendance-list__row {
+    grid-template-columns: 2.3fr 1.45fr 1.45fr 1.45fr 1.45fr 1fr;
+  }
+
+  .attendance-list__cell {
+    padding: 12px 28px;
+  }
 }
