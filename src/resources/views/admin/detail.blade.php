@@ -57,19 +57,7 @@
       <h1 class="attendance-detail__title">
         <span class="attendance-detail__title-bar" aria-hidden="true"></span>
         <span>勤怠詳細</span>
-        @if ($statusLabel !== '')
-          <span style="font-size: 14px; color:#6b7280; font-weight:400; margin-left: 8px;">
-            （{{ $statusLabel }}）
-          </span>
-        @endif
       </h1>
-
-      {{-- フラッシュメッセージ --}}
-      @if (session('status'))
-        <p style="font-size: 13px; color:#059669; margin:0 0 4px 4px;">
-          {{ session('status') }}
-        </p>
-      @endif
     </header>
 
     {{-- 詳細カード（全て readonly 表示専用） --}}

@@ -3,7 +3,7 @@
 @extends('layouts.app')
 
 @section('css')
-  <link rel="stylesheet" href="{{ asset('css/staff_id.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/staff-id.css') }}">
 @endsection
 
 @section('content')
