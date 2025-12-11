@@ -16,7 +16,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            // 勤怠日付（表示時に YYYY/MM/DD に整形）
+            // ✅ 勤怠日付（テスト＆設計通り date 型）
             $table->date('work_date');
 
             // 備考情報

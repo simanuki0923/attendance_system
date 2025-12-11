@@ -51,9 +51,7 @@
         action="{{ route('attendance.clockIn') }}"
       >
         @csrf
-        <button type="submit" class="attendance__btn attendance__btn--primary">
-          出勤
-        </button>
+        <button type="submit" class="attendance__btn attendance__btn--primary">出勤</button>
       </form>
 
     @elseif ($status === 'working')
@@ -61,16 +59,12 @@
       <div class="attendance__actions attendance__actions--double">
         <form method="POST" action="{{ route('attendance.clockOut') }}">
           @csrf
-          <button type="submit" class="attendance__btn attendance__btn--primary">
-            退勤
-          </button>
+          <button type="submit" class="attendance__btn attendance__btn--primary">退勤</button>
         </form>
 
         <form method="POST" action="{{ route('attendance.breakIn') }}">
           @csrf
-          <button type="submit" class="attendance__btn attendance__btn--secondary">
-            休憩入
-          </button>
+          <button type="submit" class="attendance__btn attendance__btn--secondary">休憩入</button>
         </form>
       </div>
 
@@ -82,9 +76,7 @@
         action="{{ route('attendance.breakOut') }}"
       >
         @csrf
-        <button type="submit" class="attendance__btn attendance__btn--secondary">
-          休憩戻
-        </button>
+        <button type="submit" class="attendance__btn attendance__btn--secondary">休憩戻</button>
       </form>
 
     @elseif ($status === 'after_work')

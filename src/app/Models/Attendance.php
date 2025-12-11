@@ -42,9 +42,9 @@ class Attendance extends Model
         return $this->hasMany(AttendanceApplication::class);
     }
 
-    public function breaks()
+    public function breaks(): HasMany
     {
-        return $this->hasMany(\App\Models\AttendanceBreak::class)
+        return $this->hasMany(AttendanceBreak::class)
             ->orderBy('break_no');
     }
 }
