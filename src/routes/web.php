@@ -49,7 +49,7 @@ Route::prefix('admin')->group(function () {
 });
 
 // ======================================================
-// ★追加：勤怠詳細（日付指定・一般ユーザー用）
+// ★勤怠詳細（日付指定・一般ユーザー用）
 //  - GET /attendance/detail/date/{date}
 //    打刻レコードが無ければ自動作成して詳細画面へ
 // ======================================================
@@ -74,65 +74,6 @@ Route::middleware(['auth'])->get(
         return app(DetailtController::class)->showByDate($date);
     }
 )->name('attendance.detail.byDate');
-
-// ======================================================
-// 勤怠詳細（一般 / 管理者 共通パス）
-//  - GET /attendance/detail/{id}
-// ======================================================
-Route::middleware(['auth'])->get(
-    '/attendance/detail/{id}',
-    function (Request $request, $id) use ($isAdminUser) {
-
-        $user    = $request->user();
-        $isAdmin = $isAdminUser($user);
-
-        // 一般ユーザーだけメール認証必須
-        if (! $isAdmin) {
-            if (! $user || ! $user->hasVerifiedEmail()) {
-                return redirect()->route('verification.notice');
-            }
-
-            return app(DetailtController::class)->show($id);
-        }
-
-        // 管理者詳細（編集画面）
-        return app(EditController::class)->show($id);
-    }
-)->name('attendance.detail');
-
-// ======================================================
-// 勤怠詳細 更新（一般 / 管理者 共通パス）
-//  - PATCH /attendance/detail/{id}
-// ======================================================
-Route::middleware(['auth'])->patch(
-    '/attendance/detail/{id}',
-    function (Request $request, $id) use ($isAdminUser) {
-
-        $user    = $request->user();
-        $isAdmin = $isAdminUser($user);
-
-        // 一般ユーザーだけメール認証必須
-        if (! $isAdmin) {
-            if (! $user || ! $user->hasVerifiedEmail()) {
-                return redirect()->route('verification.notice');
-            }
-
-            // ★修正ポイント：
-            // FormRequest を DetailtController に注入できるように
-            // 「インスタンス + メソッド」で app()->call する
-            return app()->call(
-                [app(DetailtController::class), 'update'],
-                ['id' => $id]
-            );
-        }
-
-        // ★管理者側も同様に統一（将来 FormRequest 化しても安全）
-        return app()->call(
-            [app(EditController::class), 'update'],
-            ['id' => $id]
-        );
-    }
-)->name('attendance.detail.update');
 
 // ======================================================
 // 申請一覧（一般 / 管理者 共通パス）
@@ -161,9 +102,7 @@ Route::middleware(['auth'])->get(
 // ======================================================
 // 修正申請 承認画面（管理者専用）
 //  - GET  /stamp_correction_request/approve/{attendance_correct_request_id}
-//     → admin/detail.blade.php（承認ボタン付き）
 //  - POST /stamp_correction_request/approve/{attendance_correct_request_id}
-//     → 承認処理
 // ======================================================
 Route::middleware(['auth', 'admin'])->group(function () {
 
@@ -189,6 +128,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance/list', [AttendanceListController::class, 'index'])
         ->name('attendance.userList');
 
+    // ✅ 一般ユーザーの勤怠詳細（テキスト通り）
+    Route::get('/attendance/detail/{id}', [DetailtController::class, 'show'])
+        ->whereNumber('id')
+        ->name('attendance.detail');
+
+    // ✅ 一般ユーザーの勤怠詳細 更新（FormRequest を安全に注入するため app()->call）
+    Route::patch('/attendance/detail/{id}', function (Request $request, int $id) {
+        return app()->call(
+            [app(DetailtController::class), 'update'],
+            ['id' => $id]
+        );
+    })
+        ->whereNumber('id')
+        ->name('attendance.detail.update');
+
     Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])
         ->name('attendance.clockIn');
 
@@ -209,21 +163,55 @@ Route::middleware(['auth', 'admin'])
     ->prefix('admin')
     ->group(function () {
 
+        // 勤怠一覧（管理者）
         Route::get('/attendance/list', [AdminController::class, 'list'])
             ->name('admin.attendance.list');
 
+        // ✅ 勤怠詳細（管理者）テキスト通り：/admin/attendance/{id}
+        Route::get('/attendance/{id}', [EditController::class, 'show'])
+            ->whereNumber('id')
+            ->name('admin.attendance.detail');
+
+        // ✅ 勤怠詳細 更新（管理者）テキスト通り：PATCH /admin/attendance/{id}
+        Route::patch('/attendance/{id}', function (Request $request, int $id) {
+            return app()->call(
+                [app(EditController::class), 'update'],
+                ['id' => $id]
+            );
+        })
+            ->whereNumber('id')
+            ->name('admin.attendance.detail.update');
+
+        // スタッフ一覧（管理者）
         Route::get('/staff/list', [StaffController::class, 'index'])
             ->name('admin.staff.list');
 
-        Route::get('/staff/{user}/attendance', [StaffController::class, 'attendance'])
-            ->whereNumber('user')
-            ->name('admin.staff.attendance');
+        // ✅ スタッフ別勤怠一覧（管理者）テキスト通り：/admin/attendance/staff/{id}
+        Route::get('/attendance/staff/{id}', [StaffController::class, 'attendance'])
+            ->whereNumber('id')
+            ->name('admin.attendance.staff');
 
-        // ★追加：スタッフ別 月次勤怠一覧 CSV ダウンロード
-        // 例）GET /admin/staff/3/attendance/csv?month=2025-11
-        Route::get('/staff/{user}/attendance/csv', [StaffController::class, 'attendanceCsv'])
-            ->whereNumber('user')
-            ->name('admin.staff.attendance.csv');
+        // 追加：CSV（新URL側に寄せる）
+        Route::get('/attendance/staff/{id}/csv', [StaffController::class, 'attendanceCsv'])
+            ->whereNumber('id')
+            ->name('admin.attendance.staff.csv');
+
+        // ------------------------------------------------------
+        // 互換（旧URL → 新URLへリダイレクト）
+        // ------------------------------------------------------
+        Route::get('/staff/{user}/attendance', function (Request $request, int $user) {
+            return redirect()->route('admin.attendance.staff', array_merge(
+                ['id' => $user],
+                $request->only('month')
+            ));
+        })->whereNumber('user');
+
+        Route::get('/staff/{user}/attendance/csv', function (Request $request, int $user) {
+            return redirect()->route('admin.attendance.staff.csv', array_merge(
+                ['id' => $user],
+                $request->only('month')
+            ));
+        })->whereNumber('user');
     });
 
 // ======================================================
