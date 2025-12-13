@@ -11,6 +11,8 @@ use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use DateTimeInterface;
 
 class EditController extends Controller
 {
@@ -42,7 +44,6 @@ class EditController extends Controller
 
         $noteLabel = $attendance->note ?? '';
 
-        // 申請の存在自体は把握できるように残す（警告表示用途など）
         $hasPendingApplication = AttendanceApplication::where('attendance_id', $attendance->id)
             ->whereHas('status', function ($q) {
                 $q->where('code', 'pending');
@@ -64,11 +65,7 @@ class EditController extends Controller
             'break2StartLabel'      => $break2StartLabel,
             'break2EndLabel'        => $break2EndLabel,
             'noteLabel'             => $noteLabel,
-
-            // view 側で「警告表示」するなら使える
             'hasPendingApplication' => $hasPendingApplication,
-
-            // view 側で disabled に使うのはこれ
             'lockByPending'         => $lockByPending,
         ]);
     }
@@ -117,7 +114,7 @@ class EditController extends Controller
             $attendance->load(['time', 'breaks', 'total']);
             $this->recalculateTotal($attendance);
 
-            // ★管理者が直接修正した場合、承認待ち申請が残ると整合性が崩れるので却下へ
+            // 管理者が直接修正した場合、承認待ち申請が残ると整合性が崩れるので却下へ
             $pendingApps = AttendanceApplication::where('attendance_id', $attendance->id)
                 ->whereHas('status', function ($q) {
                     $q->where('code', 'pending');
@@ -143,47 +140,70 @@ class EditController extends Controller
 
     /* ===== ヘルパー ===== */
 
-    private function normalizeTime(?string $value): ?string
+    /**
+     * 受け取った値から "HH:MM" または "HH:MM:SS" を抽出して返す
+     * - "2025-12-01 09:00:00" のような形でも末尾の時刻を拾う
+     */
+    private function extractTimeString(mixed $value): ?string
     {
-        if ($value === null) {
-            return null;
+        if ($value === null) return null;
+
+        // Carbon / DateTime
+        if ($value instanceof CarbonInterface || $value instanceof DateTimeInterface) {
+            return Carbon::instance($value)->format('H:i:s');
         }
-        $value = trim($value);
-        if ($value === '') {
-            return null;
+
+        $str = trim((string) $value);
+        if ($str === '') return null;
+
+        // 末尾の時刻だけ拾う（HH:MM or HH:MM:SS）
+        if (preg_match('/(\d{2}:\d{2})(:\d{2})?$/', $str, $m)) {
+            return $m[1] . ($m[2] ?? '');
+        }
+
+        return null;
+    }
+
+    /**
+     * DB保存用に "H:i:s" へ正規化
+     */
+    private function normalizeTime(mixed $value): ?string
+    {
+        $t = $this->extractTimeString($value);
+        if ($t === null) return null;
+
+        // HH:MM の場合は秒を付与
+        if (preg_match('/^\d{2}:\d{2}$/', $t)) {
+            $t .= ':00';
         }
 
         try {
-            $dt = Carbon::createFromFormat('H:i', $value);
+            return Carbon::createFromFormat('H:i:s', $t)->format('H:i:s');
         } catch (\Throwable $e) {
-            try {
-                $dt = Carbon::createFromFormat('H:i:s', $value);
-            } catch (\Throwable $e2) {
-                return null;
-            }
+            return null;
         }
-
-        return $dt->format('H:i:s');
     }
 
-    private function parseTime(?string $value): ?Carbon
+    /**
+     * 画面表示用の Carbon 化（内部計算用）
+     */
+    private function parseTime(mixed $value): ?Carbon
     {
-        if ($value === null || $value === '') {
-            return null;
+        $t = $this->extractTimeString($value);
+        if ($t === null) return null;
+
+        if (preg_match('/^\d{2}:\d{2}$/', $t)) {
+            $t .= ':00';
         }
 
         try {
-            return Carbon::createFromFormat('H:i:s', $value);
+            return Carbon::createFromFormat('H:i:s', $t);
         } catch (\Throwable $e) {
-            try {
-                return Carbon::createFromFormat('H:i', $value);
-            } catch (\Throwable $e2) {
-                return null;
-            }
+            return null;
         }
     }
 
-    private function updateBreak(Attendance $attendance, int $breakNo, ?string $start, ?string $end): void
+    private function updateBreak(Attendance $attendance, int $breakNo, mixed $start, mixed $end): void
     {
         $startNorm = $this->normalizeTime($start);
         $endNorm   = $this->normalizeTime($end);
@@ -244,7 +264,10 @@ class EditController extends Controller
         $total->save();
     }
 
-    private function formatTime(?string $value): string
+    /**
+     * 画面表示用 "H:i"
+     */
+    private function formatTime(mixed $value): string
     {
         $dt = $this->parseTime($value);
         return $dt ? $dt->format('H:i') : '';

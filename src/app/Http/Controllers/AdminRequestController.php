@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
+use App\Models\AttendanceTotal;
 
 class AdminRequestController extends Controller
 {
@@ -53,26 +54,15 @@ class AdminRequestController extends Controller
             $att = $app->attendance;
 
             return [
-                // application_statuses.label 例: '承認待ち', '承認済み'
                 'status_label'       => $app->status?->label ?? '承認待ち',
-
-                // 申請者名
                 'name_label'         => $app->applicant?->name ?? '不明',
-
-                // 対象日付
                 'target_date_label'  => $att?->work_date
                     ? Carbon::parse($att->work_date)->format('Y/m/d')
                     : '',
-
-                // 申請理由
                 'reason_label'       => $app->reason ?? '',
-
-                // 申請日付
                 'applied_date_label' => $app->applied_at
                     ? Carbon::parse($app->applied_at)->format('Y/m/d')
                     : '',
-
-                // 詳細リンク → 修正申請承認画面
                 'detail_url'         => route(
                     'stamp_correction_request.approve.show',
                     ['attendance_correct_request_id' => $app->id]
@@ -107,7 +97,6 @@ class AdminRequestController extends Controller
 
         $attendance = $app->attendance;
 
-        // 対応する勤怠が無い場合は 404
         if (!$attendance) {
             abort(404, '対応する勤怠データが存在しません。');
         }
@@ -138,7 +127,6 @@ class AdminRequestController extends Controller
             }
 
             try {
-                // DB が H:i:s 保存を想定
                 return Carbon::createFromFormat('H:i:s', $value)->format('H:i');
             } catch (\Throwable $e) {
                 try {
@@ -164,18 +152,13 @@ class AdminRequestController extends Controller
         $break2StartLabel = $formatTime($break2?->start_time ?? null);
         $break2EndLabel   = $formatTime($break2?->end_time   ?? null);
 
-        // 備考（勤怠テーブル側の note を表示する想定）
         $noteLabel = (string)($attendance->note ?? '');
 
-        // ステータス（application_statuses）
-        $statusCode  = $app->status?->code  ?? null;   // 'pending' / 'approved' など
+        $statusCode  = $app->status?->code  ?? null;
         $statusLabel = $app->status?->label ?? '承認待ち';
 
-        // ★ 承認済みかどうか（ここがボタン切り替えに効く）
         $isApproved = ($statusCode === 'approved');
 
-        // ★ 承認ボタンのPOST先URL
-        // 承認済みなら空文字にしておき、Blade 側でフォーム自体を出さないようにする
         $approveUrl = $isApproved
             ? ''
             : route('stamp_correction_request.approve', [
@@ -197,7 +180,6 @@ class AdminRequestController extends Controller
             'statusLabel'       => $statusLabel,
             'statusCode'        => $statusCode,
 
-            // 承認ボタン制御用
             'approveUrl'        => $approveUrl,
             'isApproved'        => $isApproved,
         ]);
@@ -213,7 +195,6 @@ class AdminRequestController extends Controller
      */
     public function approve(Request $request, int $attendance_correct_request_id)
     {
-        // 対象申請＋ステータス＋勤怠データ一式を取得
         $app = AttendanceApplication::with([
                 'status',
                 'attendance.time',
@@ -224,7 +205,6 @@ class AdminRequestController extends Controller
 
         // すでに pending 以外なら何もしない
         if (($app->status?->code ?? null) !== 'pending') {
-
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'ok'      => true,
@@ -233,7 +213,6 @@ class AdminRequestController extends Controller
                     'message' => 'この申請は既に処理済みです。',
                 ]);
             }
-
             return back()->with('status', 'この申請は既に処理済みです。');
         }
 
@@ -241,71 +220,55 @@ class AdminRequestController extends Controller
         $approvedStatus = ApplicationStatus::where('code', 'approved')->firstOrFail();
 
         // --------------------------------------------------
-        // 1) 勤怠データの合計を「承認タイミング」で確定計算する
+        // 1) 勤怠データの合計を「承認タイミング」で確定計算する（★修正版）
         // --------------------------------------------------
         $attendance = $app->attendance;
 
         if ($attendance) {
-            // 時刻を Carbon に正規化するクロージャ
-            $normalizeTime = function ($value): ?Carbon {
-                if (!$value) {
-                    return null;
-                }
+            // 「時刻だけ」に正規化して日付ズレを排除（AttendanceTime が datetime cast のため）:contentReference[oaicite:2]{index=2}
+            $parseTime = function ($value): ?Carbon {
+                if (!$value) return null;
 
                 if ($value instanceof \DateTimeInterface) {
-                    return Carbon::instance($value);
+                    $value = $value->format('H:i:s');
                 }
 
                 try {
-                    // H:i:s 固定の想定
-                    return Carbon::createFromFormat('H:i:s', $value);
+                    return Carbon::createFromFormat('H:i:s', (string)$value);
                 } catch (\Throwable $e) {
                     try {
-                        return Carbon::parse($value);
+                        return Carbon::createFromFormat('H:i', (string)$value);
                     } catch (\Throwable $e2) {
                         return null;
                     }
                 }
             };
 
-            // 出勤・退勤
             $time  = $attendance->time;
-            $start = $normalizeTime($time?->start_time ?? null);
-            $end   = $normalizeTime($time?->end_time   ?? null);
+            $start = $parseTime($time?->start_time ?? null);
+            $end   = $parseTime($time?->end_time ?? null);
 
-            // 休憩合計
-            $breakMinutes = 0;
-            $breaks = $attendance->breaks ?? collect();
-            foreach ($breaks as $break) {
-                $bStart = $normalizeTime($break->start_time ?? null);
-                $bEnd   = $normalizeTime($break->end_time   ?? null);
-
-                if ($bStart && $bEnd) {
-                    $minutes = $bEnd->diffInMinutes($bStart, false);
-                    if ($minutes > 0) {
-                        $breakMinutes += $minutes;
-                    }
-                }
+            // 勤務分（end > start のときだけ）
+            $workMinutes = 0;
+            if ($start && $end && $end->greaterThan($start)) {
+                $workMinutes = $start->diffInMinutes($end);
             }
+
+            // 休憩は minutes カラム合計（ここが最も安定）:contentReference[oaicite:3]{index=3}
+            $breakMinutes = (int) ($attendance->breaks?->sum('minutes') ?? 0);
             $breakMinutes = max(0, $breakMinutes);
 
-            // 実労働時間（分）
-            $workMinutes = null;
-            if ($start && $end) {
-                $totalMinutes = $end->diffInMinutes($start, false);
-                $totalMinutes = max(0, $totalMinutes);
-                $workMinutes  = max(0, $totalMinutes - $breakMinutes);
-            }
+            // 実労働（分）
+            $netMinutes = max(0, $workMinutes - $breakMinutes);
 
             // attendance_totals を更新（無ければ作成）
-            $total = $attendance->total;
-            if (!$total) {
-                $total = new \App\Models\AttendanceTotal();
-                $total->attendance_id = $attendance->id;
-            }
+            $total = $attendance->total ?: new AttendanceTotal([
+                'attendance_id' => $attendance->id,
+            ]);
 
+            $total->attendance_id      = $attendance->id;
             $total->break_minutes      = $breakMinutes;
-            $total->total_work_minutes = $workMinutes;
+            $total->total_work_minutes = $netMinutes;
             $total->save();
         }
 
@@ -314,10 +277,6 @@ class AdminRequestController extends Controller
         // --------------------------------------------------
         $app->status_id = $approvedStatus->id;
         $app->save();
-
-        // ★ここで DB 上は approved になり、
-        //   再度 showApprove() で開いたとき $isApproved = true となる
-        //   → Blade 側で「承認済み」ボタン（disabled）を表示
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
