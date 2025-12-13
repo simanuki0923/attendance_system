@@ -17,26 +17,39 @@ class DatabaseSeeder extends Seeder
             ApplicationStatusSeeder::class,
         ]);
 
-        // ② 管理者デモユーザー（passwordは平文でOK）
-        User::updateOrCreate(
+        // ② 管理者デモユーザー
+        $admin = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
                 'name'     => '管理者デモ',
                 'email'    => 'admin@example.com',
-                'password' => 'admin1234', // ★Hash::makeしない
+                'password' => 'admin1234',
             ]
         );
+        // ★メール認証済みにする（MustVerifyEmail 対策）
+        $admin->forceFill([
+            'email_verified_at' => now(),
+            'is_admin' => true, // usersにis_adminがある :contentReference[oaicite:4]{index=4}
+        ])->save();
 
-        // ③ 一般ユーザーデモ（現状のTest Userを維持）
-        User::updateOrCreate(
+        // ③ 一般ユーザーデモ
+        $user = User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
                 'name'     => 'Test User',
                 'email'    => 'test@example.com',
-                'password' => 'password123', // ★平文
+                'password' => 'password123',
             ]
         );
+        // ★メール認証済みにする
+        $user->forceFill([
+            'email_verified_at' => now(),
+            'is_admin' => false,
+        ])->save();
 
-        // User::factory(10)->create(); は必要なら復活
+        // ④ 勤怠ダミー（あなたが作った AttendanceSeeder 呼び出し）
+        $this->call([
+            AttendanceSeeder::class,
+        ]);
     }
 }
