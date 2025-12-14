@@ -104,7 +104,7 @@ class ListController extends Controller
 
     private function formatMinutes($minutes): string
     {
-        if ($minutes === null || (int)$minutes <= 0) return '';
+        if ($minutes === null || (int) $minutes <= 0) return '';
 
         $minutes = (int) $minutes;
         $hours   = intdiv($minutes, 60);
@@ -113,3 +113,5 @@ class ListController extends Controller
         return sprintf('%d:%02d', $hours, $mins);
     }
 }
+
+

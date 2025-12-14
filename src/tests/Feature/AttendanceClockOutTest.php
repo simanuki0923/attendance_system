@@ -40,7 +40,7 @@ class AttendanceClockOutTest extends TestCase
      * - 勤怠画面に「退勤」ボタンが表示されている
      * - 退勤処理後、画面上のステータスが「退勤済」になる
      */
-    public function test_clock_out_button_works_and_status_changes_to_after_work(): void
+    public function testClockOutButtonWorksAndStatusChangesToAfterWork(): void
     {
         // 今日の日付 & 退勤時刻を固定（18:00）
         Carbon::setTestNow(Carbon::create(2025, 12, 10, 18, 0, 0));
@@ -95,7 +95,7 @@ class AttendanceClockOutTest extends TestCase
      * - 出勤 → 退勤の順で打刻
      * - 勤怠一覧画面で退勤時刻が確認できる
      */
-    public function test_clock_out_time_is_visible_on_attendance_list(): void
+    public function testClockOutTimeIsVisibleOnAttendanceList(): void
     {
         // メール認証済みユーザー
         $user = User::factory()->create([

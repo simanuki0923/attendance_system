@@ -85,7 +85,7 @@ class AdminRequestController extends Controller
      * GET /stamp_correction_request/approve/{attendance_correct_request_id}
      * view: resources/views/admin/detail.blade.php
      */
-    public function showApprove(Request $request, int $attendance_correct_request_id)
+    public function showApprove(Request $request, int $attendanceCorrectRequestId)
     {
         $app = AttendanceApplication::with([
                 'attendance.time',
@@ -93,11 +93,11 @@ class AdminRequestController extends Controller
                 'attendance.user',
                 'status',
             ])
-            ->findOrFail($attendance_correct_request_id);
+            ->findOrFail($attendanceCorrectRequestId);
 
         $attendance = $app->attendance;
 
-        if (!$attendance) {
+        if (! $attendance) {
             abort(404, '対応する勤怠データが存在しません。');
         }
 
@@ -118,7 +118,7 @@ class AdminRequestController extends Controller
 
         // 時刻フォーマット用クロージャ
         $formatTime = function ($value): string {
-            if (!$value) {
+            if (! $value) {
                 return '';
             }
 
@@ -152,12 +152,12 @@ class AdminRequestController extends Controller
         $break2StartLabel = $formatTime($break2?->start_time ?? null);
         $break2EndLabel   = $formatTime($break2?->end_time   ?? null);
 
-        $noteLabel = (string)($attendance->note ?? '');
+        $noteLabel = (string) ($attendance->note ?? '');
 
         $statusCode  = $app->status?->code  ?? null;
         $statusLabel = $app->status?->label ?? '承認待ち';
 
-        $isApproved = ($statusCode === 'approved');
+        $isApproved = ($statusCode === ApplicationStatus::CODE_APPROVED);
 
         $approveUrl = $isApproved
             ? ''
@@ -193,7 +193,7 @@ class AdminRequestController extends Controller
      * 承認時に AttendanceApplication のステータスを approved に変更し、
      * そのタイミングで勤怠合計(AttendanceTotal)を再計算して「確定」させる。
      */
-    public function approve(Request $request, int $attendance_correct_request_id)
+    public function approve(Request $request, int $attendanceCorrectRequestId)
     {
         $app = AttendanceApplication::with([
                 'status',
@@ -201,10 +201,10 @@ class AdminRequestController extends Controller
                 'attendance.breaks',
                 'attendance.total',
             ])
-            ->findOrFail($attendance_correct_request_id);
+            ->findOrFail($attendanceCorrectRequestId);
 
         // すでに pending 以外なら何もしない
-        if (($app->status?->code ?? null) !== 'pending') {
+        if (($app->status?->code ?? null) !== ApplicationStatus::CODE_PENDING) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'ok'      => true,
@@ -217,7 +217,7 @@ class AdminRequestController extends Controller
         }
 
         // 承認ステータス取得（application_statuses.code = 'approved'）
-        $approvedStatus = ApplicationStatus::where('code', 'approved')->firstOrFail();
+        $approvedStatus = ApplicationStatus::where('code', ApplicationStatus::CODE_APPROVED)->firstOrFail();
 
         // --------------------------------------------------
         // 1) 勤怠データの合計を「承認タイミング」で確定計算する（★修正版）
@@ -225,19 +225,20 @@ class AdminRequestController extends Controller
         $attendance = $app->attendance;
 
         if ($attendance) {
-            // 「時刻だけ」に正規化して日付ズレを排除（AttendanceTime が datetime cast のため）:contentReference[oaicite:2]{index=2}
+            // 「時刻だけ」に正規化して日付ズレを排除（AttendanceTime が datetime cast のため）
             $parseTime = function ($value): ?Carbon {
-                if (!$value) return null;
-
+                if (! $value) {
+                    return null;
+                }
                 if ($value instanceof \DateTimeInterface) {
                     $value = $value->format('H:i:s');
                 }
 
                 try {
-                    return Carbon::createFromFormat('H:i:s', (string)$value);
+                    return Carbon::createFromFormat('H:i:s', (string) $value);
                 } catch (\Throwable $e) {
                     try {
-                        return Carbon::createFromFormat('H:i', (string)$value);
+                        return Carbon::createFromFormat('H:i', (string) $value);
                     } catch (\Throwable $e2) {
                         return null;
                     }
@@ -254,7 +255,7 @@ class AdminRequestController extends Controller
                 $workMinutes = $start->diffInMinutes($end);
             }
 
-            // 休憩は minutes カラム合計（ここが最も安定）:contentReference[oaicite:3]{index=3}
+            // 休憩は minutes カラム合計（ここが最も安定）
             $breakMinutes = (int) ($attendance->breaks?->sum('minutes') ?? 0);
             $breakMinutes = max(0, $breakMinutes);
 
@@ -290,3 +291,5 @@ class AdminRequestController extends Controller
         return back()->with('status', '申請を承認しました。');
     }
 }
+
+

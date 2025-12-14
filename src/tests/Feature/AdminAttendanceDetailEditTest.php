@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
@@ -93,7 +92,7 @@ class AdminAttendanceDetailEditTest extends TestCase
         );
     }
 
-    public function test_admin_attendance_detail_page_shows_selected_data(): void
+    public function testAdminAttendanceDetailPageShowsSelectedData(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations([
@@ -130,7 +129,7 @@ class AdminAttendanceDetailEditTest extends TestCase
         $this->assertInputHasTimeHtml($html, 'break2_end', '15:15');
     }
 
-    public function test_start_time_after_end_time_shows_validation_message(): void
+    public function testStartTimeAfterEndTimeShowsValidationMessage(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
@@ -156,7 +155,7 @@ class AdminAttendanceDetailEditTest extends TestCase
             ->assertSee('出勤時間もしくは退勤時間が不適切な値です');
     }
 
-    public function test_break_start_after_end_time_shows_validation_message(): void
+    public function testBreakStartAfterEndTimeShowsValidationMessage(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
@@ -182,7 +181,7 @@ class AdminAttendanceDetailEditTest extends TestCase
             ->assertSee('休憩時間が不適切な値です');
     }
 
-    public function test_break_end_after_end_time_shows_validation_message(): void
+    public function testBreakEndAfterEndTimeShowsValidationMessage(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
@@ -208,7 +207,7 @@ class AdminAttendanceDetailEditTest extends TestCase
             ->assertSee('休憩時間もしくは退勤時間が不適切な値です');
     }
 
-    public function test_note_empty_shows_validation_message(): void
+    public function testNoteEmptyShowsValidationMessage(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();

@@ -28,7 +28,7 @@ class RegisterTest extends TestCase
      * 名前が未入力の場合、バリデーションメッセージが表示される
      * 期待：「お名前を入力してください」
      */
-    public function test_name_is_required(): void
+    public function testNameIsRequired(): void
     {
         $response = $this->post(route('register'),
             $this->validPayload(['name' => ''])
@@ -44,7 +44,7 @@ class RegisterTest extends TestCase
      * メールアドレスが未入力の場合、バリデーションメッセージが表示される
      * 期待：「メールアドレスを入力してください」
      */
-    public function test_email_is_required(): void
+    public function testEmailIsRequired(): void
     {
         $response = $this->post(route('register'),
             $this->validPayload(['email' => ''])
@@ -60,7 +60,7 @@ class RegisterTest extends TestCase
      * パスワードが未入力の場合、バリデーションメッセージが表示される
      * 期待：「パスワードを入力してください」
      */
-    public function test_password_is_required(): void
+    public function testPasswordIsRequired(): void
     {
         $response = $this->post(route('register'),
             $this->validPayload([
@@ -79,7 +79,7 @@ class RegisterTest extends TestCase
      * パスワードが8文字未満の場合、バリデーションメッセージが表示される
      * 期待：「パスワードは8文字以上で入力してください」
      */
-    public function test_password_must_be_at_least_8_characters(): void
+    public function testPasswordMustBeAtLeast8Characters(): void
     {
         $response = $this->post(route('register'),
             $this->validPayload([
@@ -100,7 +100,7 @@ class RegisterTest extends TestCase
      *
      * ※ confirmed のエラーは password に付く想定
      */
-    public function test_password_confirmation_must_match(): void
+    public function testPasswordConfirmationMustMatch(): void
     {
         $response = $this->post(route('register'),
             $this->validPayload([
@@ -119,7 +119,7 @@ class RegisterTest extends TestCase
      * フォームに内容が入力されていた場合、データが正常に保存される
      * 期待：users テーブルに保存される
      */
-    public function test_user_can_register_with_valid_input(): void
+    public function testUserCanRegisterWithValidInput(): void
     {
         // メール認証通知などが動作してもテストが壊れないように
         Notification::fake();

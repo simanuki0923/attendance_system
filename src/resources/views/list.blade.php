@@ -41,7 +41,7 @@
       {{-- 月切替ナビ（CSS に合わせた構造） --}}
       <div class="attendance-list__month-nav">
         {{-- 前月ボタン --}}
-        @if(!empty($prevMonthUrl))
+        @if (! empty($prevMonthUrl))
           <a href="{{ $prevMonthUrl }}" class="month-nav__btn month-nav__btn--prev">
             <span class="month-nav__arrow" aria-hidden="true">&larr;</span>
             前月
@@ -60,7 +60,7 @@
         </div>
 
         {{-- 翌月ボタン（未来すぎる月は null なので disabled） --}}
-        @if(!empty($nextMonthUrl))
+        @if (! empty($nextMonthUrl))
           <a href="{{ $nextMonthUrl }}" class="month-nav__btn month-nav__btn--next">
             翌月
             <span class="month-nav__arrow" aria-hidden="true">&rarr;</span>
@@ -112,7 +112,7 @@
             {{ $row['total_label'] }}
           </div>
           <div class="attendance-list__cell attendance-list__cell--detail">
-            @if(!empty($row['detail_url']))
+            @if (! empty($row['detail_url']))
               <a href="{{ $row['detail_url'] }}" class="attendance-list__detail-link">
                 詳細
               </a>

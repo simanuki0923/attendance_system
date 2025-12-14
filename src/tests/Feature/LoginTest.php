@@ -19,7 +19,7 @@ class LoginTest extends TestCase
      * 2. メールアドレス以外のユーザー情報を入力する
      * 3. ログインの処理を行う
      */
-    public function test_email_is_required_for_login(): void
+    public function testEmailIsRequiredForLogin(): void
     {
         // 1. ユーザーを登録する（メール認証済みにしておく）
         $user = User::factory()->create([
@@ -49,7 +49,7 @@ class LoginTest extends TestCase
      * 2. パスワード以外のユーザー情報を入力する
      * 3. ログインの処理を行う
      */
-    public function test_password_is_required_for_login(): void
+    public function testPasswordIsRequiredForLogin(): void
     {
         // 1. ユーザーを登録する（メール認証済みにしておく）
         $user = User::factory()->create([
@@ -79,7 +79,7 @@ class LoginTest extends TestCase
      * 2. 誤ったメールアドレスのユーザー情報を入力する
      * 3. ログインの処理を行う
      */
-    public function test_login_fails_when_email_does_not_match_registered_user(): void
+    public function testLoginFailsWhenEmailDoesNotMatchRegisteredUser(): void
     {
         // 1. ユーザーを登録する
         // User モデルは password が hashed cast のため平文指定でOK

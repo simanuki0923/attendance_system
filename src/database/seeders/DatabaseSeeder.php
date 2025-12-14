@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
         // ★メール認証済みにする（MustVerifyEmail 対策）
         $admin->forceFill([
             'email_verified_at' => now(),
-            'is_admin' => true, // usersにis_adminがある :contentReference[oaicite:4]{index=4}
+            'is_admin' => true, // usersにis_adminがある 
         ])->save();
 
         // ③ 一般ユーザーデモ

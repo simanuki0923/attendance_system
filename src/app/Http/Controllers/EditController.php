@@ -46,7 +46,7 @@ class EditController extends Controller
 
         $hasPendingApplication = AttendanceApplication::where('attendance_id', $attendance->id)
             ->whereHas('status', function ($q) {
-                $q->where('code', 'pending');
+                $q->where('code', ApplicationStatus::CODE_PENDING);
             })
             ->exists();
 
@@ -117,12 +117,12 @@ class EditController extends Controller
             // 管理者が直接修正した場合、承認待ち申請が残ると整合性が崩れるので却下へ
             $pendingApps = AttendanceApplication::where('attendance_id', $attendance->id)
                 ->whereHas('status', function ($q) {
-                    $q->where('code', 'pending');
+                    $q->where('code', ApplicationStatus::CODE_PENDING);
                 })
                 ->get();
 
             if ($pendingApps->isNotEmpty()) {
-                $rejectedId = ApplicationStatus::where('code', 'rejected')->value('id');
+                $rejectedId = ApplicationStatus::where('code', ApplicationStatus::CODE_REJECTED)->value('id');
 
                 if ($rejectedId) {
                     foreach ($pendingApps as $app) {
@@ -146,16 +146,18 @@ class EditController extends Controller
      */
     private function extractTimeString(mixed $value): ?string
     {
-        if ($value === null) return null;
-
+        if ($value === null) {
+            return null;
+        }
         // Carbon / DateTime
         if ($value instanceof CarbonInterface || $value instanceof DateTimeInterface) {
             return Carbon::instance($value)->format('H:i:s');
         }
 
         $str = trim((string) $value);
-        if ($str === '') return null;
-
+        if ($str === '') {
+            return null;
+        }
         // 末尾の時刻だけ拾う（HH:MM or HH:MM:SS）
         if (preg_match('/(\d{2}:\d{2})(:\d{2})?$/', $str, $m)) {
             return $m[1] . ($m[2] ?? '');
@@ -170,8 +172,9 @@ class EditController extends Controller
     private function normalizeTime(mixed $value): ?string
     {
         $t = $this->extractTimeString($value);
-        if ($t === null) return null;
-
+        if ($t === null) {
+            return null;
+        }
         // HH:MM の場合は秒を付与
         if (preg_match('/^\d{2}:\d{2}$/', $t)) {
             $t .= ':00';
@@ -190,8 +193,9 @@ class EditController extends Controller
     private function parseTime(mixed $value): ?Carbon
     {
         $t = $this->extractTimeString($value);
-        if ($t === null) return null;
-
+        if ($t === null) {
+            return null;
+        }
         if (preg_match('/^\d{2}:\d{2}$/', $t)) {
             $t .= ':00';
         }
@@ -218,7 +222,7 @@ class EditController extends Controller
             return;
         }
 
-        if (!$break) {
+        if (! $break) {
             $break = new AttendanceBreak();
             $break->attendance_id = $attendance->id;
             $break->break_no      = $breakNo;
@@ -273,3 +277,5 @@ class EditController extends Controller
         return $dt ? $dt->format('H:i') : '';
     }
 }
+
+

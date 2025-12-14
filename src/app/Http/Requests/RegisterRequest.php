@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -20,7 +19,7 @@ class RegisterRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
-                'max:100', // users.name(100) に合わせる
+                'max:100',
             ],
             'email' => [
                 'required',
@@ -41,15 +40,10 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            // 1. 未入力の場合
             'name.required'      => 'お名前を入力してください',
             'email.required'     => 'メールアドレスを入力してください',
             'password.required'  => 'パスワードを入力してください',
-
-            // 2. パスワードの入力規則違反の場合
             'password.min'       => 'パスワードは8文字以上で入力してください',
-
-            // 3. 確認用パスワードの入力規則違反の場合
             'password.confirmed' => 'パスワードと一致しません',
         ];
     }

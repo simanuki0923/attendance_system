@@ -55,7 +55,7 @@ class AttendanceController extends Controller
         }
 
         // 勤怠自体ない or 出勤していない
-        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
             return 'before_work';
         }
 
@@ -119,9 +119,9 @@ class AttendanceController extends Controller
      */
     private function ensurePendingApplication(Attendance $attendance, int $userId): void
     {
-        $pendingStatusId = ApplicationStatus::where('code', 'pending')->value('id');
+        $pendingStatusId = ApplicationStatus::where('code', ApplicationStatus::CODE_PENDING)->value('id');
 
-        if (!$pendingStatusId) {
+        if (! $pendingStatusId) {
             // マスタ未設定の場合は致命的なので例外にしておく
             throw new \RuntimeException('application_statuses に pending が存在しません。Seeder を確認してください。');
         }
@@ -160,7 +160,7 @@ class AttendanceController extends Controller
             return redirect()->route('attendance.list');
         }
 
-        if (!$attendanceTime) {
+        if (! $attendanceTime) {
             $attendanceTime = new AttendanceTime();
             $attendanceTime->attendance_id = $attendance->id;
         }
@@ -195,7 +195,7 @@ class AttendanceController extends Controller
             ->first();
 
         // 出勤していなければ処理しない
-        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
@@ -270,7 +270,7 @@ class AttendanceController extends Controller
             ->whereDate('work_date', $today)
             ->first();
 
-        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
@@ -315,7 +315,7 @@ class AttendanceController extends Controller
             ->whereDate('work_date', $today)
             ->first();
 
-        if (!$attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
@@ -326,7 +326,7 @@ class AttendanceController extends Controller
         $breakId    = session('break_id');
         $breakStart = session('break_start_at');
 
-        if (!$breakId || !$breakStart) {
+        if (! $breakId || !$breakStart) {
             session(['attendance_status' => 'working']);
             session()->forget('break_id');
             session()->forget('break_start_at');
@@ -357,3 +357,5 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 }
+
+

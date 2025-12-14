@@ -1,3 +1,4 @@
+
 {{-- resources/views/attendance.blade.php --}}
 @extends('layouts.app')
 

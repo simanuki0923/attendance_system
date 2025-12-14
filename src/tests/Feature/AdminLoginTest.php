@@ -38,7 +38,7 @@ class AdminLoginTest extends TestCase
     /**
      * メールアドレス未入力 → バリデーションメッセージ表示
      */
-    public function test_admin_login_requires_email(): void
+    public function testAdminLoginRequiresEmail(): void
     {
         $this->createAdminUser();
 
@@ -59,7 +59,7 @@ class AdminLoginTest extends TestCase
     /**
      * パスワード未入力 → バリデーションメッセージ表示
      */
-    public function test_admin_login_requires_password(): void
+    public function testAdminLoginRequiresPassword(): void
     {
         $this->createAdminUser();
 
@@ -80,7 +80,7 @@ class AdminLoginTest extends TestCase
     /**
      * 登録内容と一致しない（誤ったメールアドレス） → エラーメッセージ表示
      */
-    public function test_admin_login_shows_error_when_email_is_not_registered(): void
+    public function testAdminLoginShowsErrorWhenEmailIsNotRegistered(): void
     {
         $this->createAdminUser([
             'email' => 'admin@example.com',
@@ -106,7 +106,7 @@ class AdminLoginTest extends TestCase
      * 仕様の3ケースには含まれていないが、
      * ルート/Controllerの整合性確認として入れておくと安全。
      */
-    public function test_admin_can_login_successfully(): void
+    public function testAdminCanLoginSuccessfully(): void
     {
         $admin = $this->createAdminUser([
             'email' => 'admin@example.com',

@@ -75,7 +75,7 @@ class AttendanceListTest extends TestCase
      * 【テスト1】
      * 自分が行った勤怠情報がすべて表示されている
      */
-    public function test_attendance_list_shows_all_attendances_for_logged_in_user(): void
+    public function testAttendanceListShowsAllAttendancesForLoggedInUser(): void
     {
         $user = $this->createVerifiedUser();
 
@@ -137,7 +137,7 @@ class AttendanceListTest extends TestCase
      * 【テスト2】
      * 勤怠一覧画面に遷移した際に現在の月が表示される
      */
-    public function test_attendance_list_displays_current_month_when_month_query_is_absent(): void
+    public function testAttendanceListDisplaysCurrentMonthWhenMonthQueryIsAbsent(): void
     {
         $user = $this->createVerifiedUser();
 
@@ -158,7 +158,7 @@ class AttendanceListTest extends TestCase
      * 実装的には、クエリパラメータ month=YYYY-MM に応じて
      * 対象月が切り替わるので、それを直接叩いて検証する。
      */
-    public function test_prev_month_button_shows_previous_month_attendances(): void
+    public function testPrevMonthButtonShowsPreviousMonthAttendances(): void
     {
         $user = $this->createVerifiedUser();
 
@@ -197,7 +197,7 @@ class AttendanceListTest extends TestCase
      * 2025/11 を「現在の月」とみなし、そこから見た「前月 2025/10」画面に
      * 翌月=2025/11 へのリンクが出るケースを検証する。
      */
-    public function test_next_month_button_shows_next_month_attendances(): void
+    public function testNextMonthButtonShowsNextMonthAttendances(): void
     {
         $user = $this->createVerifiedUser();
 
@@ -243,7 +243,7 @@ class AttendanceListTest extends TestCase
      * 一覧画面で生成される detail_url が /attendance/detail/{id} になっていることと、
      * そのURLにアクセスすると 200 が返ることを確認する。
      */
-    public function test_detail_link_navigates_to_attendance_detail_page(): void
+    public function testDetailLinkNavigatesToAttendanceDetailPage(): void
     {
         $user = $this->createVerifiedUser();
 

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Carbon\Carbon;
-
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
@@ -47,7 +46,7 @@ class AttendanceClockInTest extends TestCase
      * - POST 後、status が working 相当になる
      * - start_time / total / pending application が作られる
      */
-    public function test_clock_in_button_works_and_status_changes_to_working(): void
+    public function testClockInButtonWorksAndStatusChangesToWorking(): void
     {
         Carbon::setTestNow(Carbon::create(2025, 12, 10, 9, 0, 0));
 
@@ -65,7 +64,7 @@ class AttendanceClockInTest extends TestCase
         $post = $this->post(route('attendance.clockIn'));
         $post->assertRedirect(route('attendance.list'));
 
-        // ✅ work_date が date / datetime どちらでも通る取得方法
+        // ? work_date が date / datetime どちらでも通る取得方法
         $attendance = Attendance::where('user_id', $user->id)
             ->whereDate('work_date', Carbon::today())
             ->first();
@@ -109,7 +108,7 @@ class AttendanceClockInTest extends TestCase
      * 期待:
      * - 退勤済ユーザーには「出勤」ボタンが表示されない
      */
-    public function test_clock_in_button_is_not_shown_when_after_work(): void
+    public function testClockInButtonIsNotShownWhenAfterWork(): void
     {
         Carbon::setTestNow(Carbon::create(2025, 12, 10, 18, 0, 0));
 
@@ -149,7 +148,7 @@ class AttendanceClockInTest extends TestCase
      * 期待:
      * - 出勤処理後、勤怠一覧で出勤時刻が表示される
      */
-    public function test_clock_in_time_is_visible_on_user_list_page(): void
+    public function testClockInTimeIsVisibleOnUserListPage(): void
     {
         Carbon::setTestNow(Carbon::create(2025, 12, 10, 9, 0, 0));
 

@@ -1,3 +1,4 @@
+
 {{-- resources/views/detail.blade.php --}}
 
 @extends('layouts.app')
@@ -84,7 +85,7 @@
                 {{ $canEdit ? '' : 'readonly' }}
               >
             </span>
-            <span class="attendance-detail__tilde">〜</span>
+            <span class="attendance-detail__tilde">~</span>
             <span class="attendance-detail__time-input">
               <input
                 type="text"
@@ -118,7 +119,7 @@
                 {{ $canEdit ? '' : 'readonly' }}
               >
             </span>
-            <span class="attendance-detail__tilde">〜</span>
+            <span class="attendance-detail__tilde">~</span>
             <span class="attendance-detail__time-input">
               <input
                 type="text"
@@ -152,7 +153,7 @@
                 {{ $canEdit ? '' : 'readonly' }}
               >
             </span>
-            <span class="attendance-detail__tilde">〜</span>
+            <span class="attendance-detail__tilde">~</span>
             <span class="attendance-detail__time-input">
               <input
                 type="text"
@@ -185,8 +186,8 @@
           @error('note') <p class="form-error">{{ $message }}</p> @enderror
         </dd>
       </dl>
-
-      {{-- 下部エリア --}}
+    </form>
+          {{-- 下部エリア --}}
       <div class="attendance-detail__actions">
         @error('application')
           <p class="attendance-detail__warning">{{ $message }}</p>
@@ -203,9 +204,6 @@
           </button>
         @endif
       </div>
-
-    </form>
-
   </div>
 </main>
 @endsection

@@ -51,7 +51,7 @@ class AttendanceStatusTest extends TestCase
      * 勤務外の場合、勤怠ステータスが正しく表示される
      * 期待挙動：画面上に「勤務外」
      */
-    public function test_status_label_is_before_work_when_user_has_not_clocked_in()
+    public function testStatusLabelIsBeforeWorkWhenUserHasNotClockedIn()
     {
         $user = $this->createVerifiedUser();
 
@@ -67,7 +67,7 @@ class AttendanceStatusTest extends TestCase
      * 出勤中の場合、勤怠ステータスが正しく表示される
      * 期待挙動：画面上に「出勤中」
      */
-    public function test_status_label_is_working_when_user_has_start_time_and_no_open_break()
+    public function testStatusLabelIsWorkingWhenUserHasStartTimeAndNoOpenBreak()
     {
         $user = $this->createVerifiedUser();
 
@@ -91,7 +91,7 @@ class AttendanceStatusTest extends TestCase
      * 休憩中の場合、勤怠ステータスが正しく表示される
      * 期待挙動：画面上に「休憩中」
      */
-    public function test_status_label_is_on_break_when_user_has_open_break()
+    public function testStatusLabelIsOnBreakWhenUserHasOpenBreak()
     {
         $user = $this->createVerifiedUser();
 
@@ -122,7 +122,7 @@ class AttendanceStatusTest extends TestCase
      * 退勤済の場合、勤怠ステータスが正しく表示される
      * 期待挙動：画面上に「退勤済」
      */
-    public function test_status_label_is_after_work_when_user_has_end_time()
+    public function testStatusLabelIsAfterWorkWhenUserHasEndTime()
     {
         $user = $this->createVerifiedUser();
 

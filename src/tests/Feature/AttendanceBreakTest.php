@@ -18,7 +18,7 @@ class AttendanceBreakTest extends TestCase
      * 出勤中ユーザーに「休憩入」ボタンが表示され、
      * 休憩入処理後にステータスが「休憩中」になる
      */
-    public function test_break_in_button_works_and_status_changes_to_on_break(): void
+    public function testBreakInButtonWorksAndStatusChangesToOnBreak(): void
     {
         Carbon::setTestNow('2025-12-10 10:00:00');
 
@@ -57,7 +57,7 @@ class AttendanceBreakTest extends TestCase
      * 休憩は 1 日に何回でもできる（休憩入→休憩戻 後も
      * 再度「休憩入」ボタンが表示される）
      */
-    public function test_break_can_be_taken_multiple_times_in_a_day(): void
+    public function testBreakCanBeTakenMultipleTimesInADay(): void
     {
         Carbon::setTestNow('2025-12-10 10:00:00');
 
@@ -86,7 +86,7 @@ class AttendanceBreakTest extends TestCase
     /**
      * 休憩戻ボタンが正しく機能し、ステータスが「出勤中」に戻る
      */
-    public function test_break_out_button_works_and_status_changes_back_to_working(): void
+    public function testBreakOutButtonWorksAndStatusChangesBackToWorking(): void
     {
         Carbon::setTestNow('2025-12-10 10:00:00');
 
@@ -124,7 +124,7 @@ class AttendanceBreakTest extends TestCase
      * 休憩戻も 1 日に何回でもできる
      * （2 回目の休憩中には「休憩戻」ボタンが表示される）
      */
-    public function test_break_out_can_be_done_multiple_times_in_a_day(): void
+    public function testBreakOutCanBeDoneMultipleTimesInADay(): void
     {
         Carbon::setTestNow('2025-12-10 10:00:00');
 
@@ -160,7 +160,7 @@ class AttendanceBreakTest extends TestCase
      * 休憩時刻が正確に記録されていることを確認
      * （勤怠一覧画面で利用される元データとして DB の休憩時刻を検証）
      */
-    public function test_break_times_are_recorded_correctly_in_database(): void
+    public function testBreakTimesAreRecordedCorrectlyInDatabase(): void
     {
         // 休憩入 12:00
         Carbon::setTestNow('2025-12-10 12:00:00');

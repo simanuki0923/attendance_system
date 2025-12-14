@@ -17,8 +17,8 @@ class AttendanceTime extends Model
     ];
 
     protected $casts = [
-        'start_time' => 'datetime:H:i:s',
-        'end_time'   => 'datetime:H:i:s',
+        'start_time' => 'string',
+        'end_time'   => 'string',
     ];
 
     public function attendance(): BelongsTo

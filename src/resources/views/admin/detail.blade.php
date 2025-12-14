@@ -1,3 +1,4 @@
+
 {{-- resources/views/admin/detail.blade.php --}}
 
 @extends('layouts.app')
@@ -87,7 +88,7 @@
             <span class="attendance-detail__time-input">
               <input type="text" value="{{ $workStartLabel }}" readonly>
             </span>
-            <span class="attendance-detail__tilde">〜</span>
+            <span class="attendance-detail__tilde">~</span>
             <span class="attendance-detail__time-input">
               <input type="text" value="{{ $workEndLabel }}" readonly>
             </span>
@@ -103,7 +104,7 @@
             <span class="attendance-detail__time-input">
               <input type="text" value="{{ $break1StartLabel }}" readonly>
             </span>
-            <span class="attendance-detail__tilde">〜</span>
+            <span class="attendance-detail__tilde">~</span>
             <span class="attendance-detail__time-input">
               <input type="text" value="{{ $break1EndLabel }}" readonly>
             </span>
@@ -119,7 +120,7 @@
             <span class="attendance-detail__time-input">
               <input type="text" value="{{ $break2StartLabel }}" readonly>
             </span>
-            <span class="attendance-detail__tilde">〜</span>
+            <span class="attendance-detail__tilde">~</span>
             <span class="attendance-detail__time-input">
               <input type="text" value="{{ $break2EndLabel }}" readonly>
             </span>

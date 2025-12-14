@@ -2,13 +2,13 @@
 
 namespace App\Actions\Fortify;
 
+use Illuminate\Http\RedirectResponse;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 
 class RegisterResponse implements RegisterResponseContract
 {
-    public function toResponse($request)
+    public function toResponse($request): RedirectResponse
     {
-        // 会員登録完了 → メール認証案内画面へ
         return redirect()->route('verification.notice');
     }
 }

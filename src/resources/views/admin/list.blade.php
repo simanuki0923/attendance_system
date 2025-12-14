@@ -26,7 +26,7 @@
       </h1>
 
       <div class="attendance-list__month-nav">
-        @if(!empty($prevDateUrl))
+        @if (! empty($prevDateUrl))
           <a href="{{ $prevDateUrl }}" class="month-nav__btn month-nav__btn--prev">
             <span class="month-nav__arrow" aria-hidden="true">&larr;</span>
             前日
@@ -43,7 +43,7 @@
           <span class="month-nav__label">{{ $currentDateYmd }}</span>
         </div>
 
-        @if(!empty($nextDateUrl))
+        @if (! empty($nextDateUrl))
           <a href="{{ $nextDateUrl }}" class="month-nav__btn month-nav__btn--next">
             翌日
             <span class="month-nav__arrow" aria-hidden="true">&rarr;</span>
@@ -72,7 +72,7 @@
           $isActive = !empty($row['is_active']);
           $attendanceId = $row['attendance_id'] ?? $row['id'] ?? null;
 
-          // ✅ 管理者詳細：/admin/attendance/{id}
+          // ? 管理者詳細：/admin/attendance/{id}
           $detailUrl = $attendanceId
               ? route('admin.attendance.detail', ['id' => $attendanceId])
               : null;

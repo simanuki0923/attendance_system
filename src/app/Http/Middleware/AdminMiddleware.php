@@ -8,23 +8,24 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         $user = Auth::user();
 
-        // まず未ログイン対策
-        if (! $user) {
+        // 未ログイン対策
+        if ($user === null) {
             return redirect()->route('admin.login');
         }
 
         // is_admin OR ホワイトリスト
-        $isAdmin =
-            (bool) ($user->is_admin ?? false)
-            || in_array($user->email, config('admin.emails', []), true);
+        $adminEmails = config('admin.emails', []);
+
+        $isAdmin = (bool) ($user->is_admin ?? false)
+            || in_array((string) $user->email, $adminEmails, true);
 
         if (! $isAdmin) {
-            // 仕様に寄せて文言は統一
-            return redirect()->route('admin.login')
+            return redirect()
+                ->route('admin.login')
                 ->withErrors(['auth' => 'ログイン情報が登録されていません']);
         }
 

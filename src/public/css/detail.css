@@ -152,7 +152,7 @@
   background: #111111;
   border-radius: 4px;
   text-decoration: none;
-  transform: translate(-50px, -25px);
+  transform: translateY(20px);
 }
 
 .attendance-detail__button:hover {

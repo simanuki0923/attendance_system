@@ -116,8 +116,8 @@ class AdminController extends Controller
 
             // ★勤怠がある時だけ詳細URLを作る（無い時は null）
             $detailUrl = null;
-            if ($a && Route::has('attendance.detail')) {
-                $detailUrl = route('attendance.detail', ['id' => $a->id]);
+            if ($a && Route::has('admin.attendance.detail')) {
+                $detailUrl = route('admin.attendance.detail', ['id' => $a->id]);
             }
 
             return [
@@ -194,3 +194,5 @@ class AdminController extends Controller
         return in_array($user->email, config('admin.emails', []), true);
     }
 }
+
+

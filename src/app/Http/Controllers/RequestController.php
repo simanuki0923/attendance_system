@@ -39,7 +39,7 @@ class RequestController extends Controller
         // -----------------------------
         $status = ApplicationStatus::where('code', $activeTab)->first();
 
-        if (!$status) {
+        if (! $status) {
             // マスタ未設定などの場合は空で返す
             return view('request', [
                 'pageTitle'      => $pageTitle,
@@ -115,3 +115,5 @@ class RequestController extends Controller
         ]);
     }
 }
+
+

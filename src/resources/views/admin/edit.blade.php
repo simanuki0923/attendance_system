@@ -81,18 +81,6 @@
       </p>
     @endif
 
-    {{-- ★NG.pngの原因になる上部の errors->all() は表示しない --}}
-    {{--
-    @if ($errors->any())
-      <div class="attendance-detail__errors">
-        <ul>
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      </div>
-    @endif
-    --}}
 
     <form method="POST" action="{{ $updateAction }}">
       @csrf
@@ -132,7 +120,7 @@
                        {{ $readOnlyAttr }}>
               </div>
 
-              <span class="attendance-detail__tilde">〜</span>
+              <span class="attendance-detail__tilde">~</span>
 
               <div class="attendance-detail__time-input">
                 <input type="text"
@@ -166,7 +154,7 @@
                        {{ $readOnlyAttr }}>
               </div>
 
-              <span class="attendance-detail__tilde">〜</span>
+              <span class="attendance-detail__tilde">~</span>
 
               <div class="attendance-detail__time-input">
                 <input type="text"
@@ -200,7 +188,7 @@
                        {{ $readOnlyAttr }}>
               </div>
 
-              <span class="attendance-detail__tilde">〜</span>
+              <span class="attendance-detail__tilde">~</span>
 
               <div class="attendance-detail__time-input">
                 <input type="text"

@@ -19,7 +19,7 @@ class EmailVerificationTest extends TestCase
      * 2. 認証メールを送信する
      * 期待挙動: 登録したメールアドレス宛に認証メールが送信されている
      */
-    public function test_verification_email_is_sent_after_register(): void
+    public function testVerificationEmailIsSentAfterRegister(): void
     {
         Notification::fake();
 
@@ -48,7 +48,7 @@ class EmailVerificationTest extends TestCase
      * 3. メール認証サイトを表示する
      * 期待挙動: メール認証サイトに遷移する
      */
-    public function test_verify_email_notice_page_has_verify_button(): void
+    public function testVerifyEmailNoticePageHasVerifyButton(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
@@ -71,7 +71,7 @@ class EmailVerificationTest extends TestCase
      * 2. 勤怠登録画面を表示する
      * 期待挙動: 勤怠登録画面に遷移する
      */
-    public function test_after_email_verification_user_can_access_attendance_page(): void
+    public function testAfterEmailVerificationUserCanAccessAttendancePage(): void
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
@@ -109,7 +109,7 @@ class EmailVerificationTest extends TestCase
      * 認証メール再送(verification.send)で VerifyEmail が再送される
      * verify-email.blade.php には再送フォームがあるため、その動作確認
      */
-    public function test_resend_verification_email_sends_notification(): void
+    public function testResendVerificationEmailSendsNotification(): void
     {
         Notification::fake();
 

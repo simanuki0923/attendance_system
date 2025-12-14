@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AttendanceListController;
-use App\Http\Controllers\DetailtController;
+use App\Http\Controllers\DetailController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\StaffController;
@@ -16,7 +16,9 @@ use App\Http\Controllers\EditController;
 // ★管理者判定（is_admin / ホワイトリスト両対応）
 // ======================================================
 $isAdminUser = function ($user): bool {
-    if (! $user) return false;
+    if ($user === null) {
+        return false;
+    }
 
     // DB の is_admin を優先
     if ((bool) ($user->is_admin ?? false)) {
@@ -70,8 +72,8 @@ Route::middleware(['auth'])->get(
             return redirect()->route('verification.notice');
         }
 
-        // 実処理は DetailtController@showByDate へ
-        return app(DetailtController::class)->showByDate($date);
+        // 実処理は DetailController@showByDate へ
+        return app(DetailController::class)->showByDate($date);
     }
 )->name('attendance.detail.byDate');
 
@@ -128,15 +130,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance/list', [AttendanceListController::class, 'index'])
         ->name('attendance.userList');
 
-    // ✅ 一般ユーザーの勤怠詳細（テキスト通り）
-    Route::get('/attendance/detail/{id}', [DetailtController::class, 'show'])
+    // ? 一般ユーザーの勤怠詳細（テキスト通り）
+    Route::get('/attendance/detail/{id}', [DetailController::class, 'show'])
         ->whereNumber('id')
         ->name('attendance.detail');
 
-    // ✅ 一般ユーザーの勤怠詳細 更新（FormRequest を安全に注入するため app()->call）
+    // ? 一般ユーザーの勤怠詳細 更新（FormRequest を安全に注入するため app()->call）
     Route::patch('/attendance/detail/{id}', function (Request $request, int $id) {
         return app()->call(
-            [app(DetailtController::class), 'update'],
+            [app(DetailController::class), 'update'],
             ['id' => $id]
         );
     })
@@ -167,12 +169,12 @@ Route::middleware(['auth', 'admin'])
         Route::get('/attendance/list', [AdminController::class, 'list'])
             ->name('admin.attendance.list');
 
-        // ✅ 勤怠詳細（管理者）テキスト通り：/admin/attendance/{id}
+        // ? 勤怠詳細（管理者）テキスト通り：/admin/attendance/{id}
         Route::get('/attendance/{id}', [EditController::class, 'show'])
             ->whereNumber('id')
             ->name('admin.attendance.detail');
 
-        // ✅ 勤怠詳細 更新（管理者）テキスト通り：PATCH /admin/attendance/{id}
+        // ? 勤怠詳細 更新（管理者）テキスト通り：PATCH /admin/attendance/{id}
         Route::patch('/attendance/{id}', function (Request $request, int $id) {
             return app()->call(
                 [app(EditController::class), 'update'],
@@ -186,7 +188,7 @@ Route::middleware(['auth', 'admin'])
         Route::get('/staff/list', [StaffController::class, 'index'])
             ->name('admin.staff.list');
 
-        // ✅ スタッフ別勤怠一覧（管理者）テキスト通り：/admin/attendance/staff/{id}
+        // ? スタッフ別勤怠一覧（管理者）テキスト通り：/admin/attendance/staff/{id}
         Route::get('/attendance/staff/{id}', [StaffController::class, 'attendance'])
             ->whereNumber('id')
             ->name('admin.attendance.staff');

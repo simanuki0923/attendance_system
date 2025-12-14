@@ -31,7 +31,7 @@
 
       {{-- 月切替ナビ（list.blade.php と同じ構成） --}}
       <div class="attendance-list__month-nav">
-        @if(!empty($prevMonthUrl))
+        @if (! empty($prevMonthUrl))
           <a href="{{ $prevMonthUrl }}" class="month-nav__btn month-nav__btn--prev">
             <span class="month-nav__arrow" aria-hidden="true">&larr;</span>
             前月
@@ -48,7 +48,7 @@
           <span class="month-nav__label">{{ $currentMonthLabel }}</span>
         </div>
 
-        @if(!empty($nextMonthUrl))
+        @if (! empty($nextMonthUrl))
           <a href="{{ $nextMonthUrl }}" class="month-nav__btn month-nav__btn--next">
             翌月
             <span class="month-nav__arrow" aria-hidden="true">&rarr;</span>

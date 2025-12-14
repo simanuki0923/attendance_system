@@ -10,6 +10,10 @@ class ApplicationStatus extends Model
 {
     use HasFactory;
 
+    public const CODE_PENDING  = 'pending';
+    public const CODE_APPROVED = 'approved';
+    public const CODE_REJECTED = 'rejected';
+
     protected $fillable = [
         'code',
         'label',

@@ -12,7 +12,7 @@ use App\Models\ApplicationStatus;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
-class DetailtController extends Controller
+class DetailController extends Controller
 {
     /**
      * 勤怠詳細（一般ユーザー）
@@ -20,7 +20,7 @@ class DetailtController extends Controller
     public function show(int $id)
     {
         $user = Auth::user();
-        if (!$user) {
+        if ($user === null) {
             abort(403);
         }
 
@@ -90,7 +90,7 @@ class DetailtController extends Controller
     public function showByDate(string $date)
     {
         $user = Auth::user();
-        if (!$user) {
+        if ($user === null) {
             abort(403);
         }
 
@@ -104,7 +104,7 @@ class DetailtController extends Controller
             ->whereDate('work_date', $targetDate->toDateString())
             ->first();
 
-        if (!$attendance) {
+        if ($attendance === null) {
             $attendance = Attendance::create([
                 'user_id'   => $user->id,
                 'work_date' => $targetDate->toDateString(),
@@ -136,7 +136,7 @@ class DetailtController extends Controller
     public function update(AttendanceDetailRequest $request, int $id)
     {
         $user = Auth::user();
-        if (!$user) {
+        if ($user === null) {
             abort(403);
         }
 
@@ -262,7 +262,7 @@ class DetailtController extends Controller
             return;
         }
 
-        if (!$break) {
+        if ($break === null) {
             $break = new AttendanceBreak();
             $break->attendance_id = $attendance->id;
             $break->break_no      = $breakNo;

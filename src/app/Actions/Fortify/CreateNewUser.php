@@ -12,8 +12,7 @@ class CreateNewUser implements CreatesNewUsers
 {
     public function create(array $input): User
     {
-        // FormRequestのルールとメッセージを参照してFortify登録を検証
-        $request = new RegisterRequest();
+        $request = app(RegisterRequest::class);
 
         Validator::make(
             $input,

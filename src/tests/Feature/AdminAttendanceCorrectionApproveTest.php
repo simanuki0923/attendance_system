@@ -104,17 +104,17 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
     {
         $admin = $this->makeAdminUser();
 
-        $u1 = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
-        $u2 = User::factory()->create(['name' => '一般B', 'email_verified_at' => now()]);
-        $u3 = User::factory()->create(['name' => '一般C', 'email_verified_at' => now()]);
+        $userA = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
+        $userB = User::factory()->create(['name' => '一般B', 'email_verified_at' => now()]);
+        $userC = User::factory()->create(['name' => '一般C', 'email_verified_at' => now()]);
 
-        $a1 = $this->makeAttendanceWithTimeAndBreaks($u1, '2025-12-01');
-        $a2 = $this->makeAttendanceWithTimeAndBreaks($u2, '2025-12-02');
-        $a3 = $this->makeAttendanceWithTimeAndBreaks($u3, '2025-12-03');
+        $attendanceA = $this->makeAttendanceWithTimeAndBreaks($userA, '2025-12-01');
+        $attendanceB = $this->makeAttendanceWithTimeAndBreaks($userB, '2025-12-02');
+        $attendanceC = $this->makeAttendanceWithTimeAndBreaks($userC, '2025-12-03');
 
-        $this->makeApplication($a1, $u1, $this->pending,  Carbon::parse('2025-12-05 10:00:00'));
-        $this->makeApplication($a2, $u2, $this->pending,  Carbon::parse('2025-12-05 11:00:00'));
-        $this->makeApplication($a3, $u3, $this->approved, Carbon::parse('2025-12-05 12:00:00'));
+        $this->makeApplication($attendanceA, $userA, $this->pending,  Carbon::parse('2025-12-05 10:00:00'));
+        $this->makeApplication($attendanceB, $userB, $this->pending,  Carbon::parse('2025-12-05 11:00:00'));
+        $this->makeApplication($attendanceC, $userC, $this->approved, Carbon::parse('2025-12-05 12:00:00'));
 
         $res = $this->actingAs($admin)->get(route('requests.list', ['tab' => 'pending']));
         $res->assertOk();
@@ -132,14 +132,14 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
     {
         $admin = $this->makeAdminUser();
 
-        $u1 = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
-        $u2 = User::factory()->create(['name' => '一般B', 'email_verified_at' => now()]);
+        $userA = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
+        $userB = User::factory()->create(['name' => '一般B', 'email_verified_at' => now()]);
 
-        $a1 = $this->makeAttendanceWithTimeAndBreaks($u1, '2025-12-01');
-        $a2 = $this->makeAttendanceWithTimeAndBreaks($u2, '2025-12-02');
+        $attendanceA = $this->makeAttendanceWithTimeAndBreaks($userA, '2025-12-01');
+        $attendanceB = $this->makeAttendanceWithTimeAndBreaks($userB, '2025-12-02');
 
-        $this->makeApplication($a1, $u1, $this->approved, Carbon::parse('2025-12-06 10:00:00'));
-        $this->makeApplication($a2, $u2, $this->pending,  Carbon::parse('2025-12-06 11:00:00'));
+        $this->makeApplication($attendanceA, $userA, $this->approved, Carbon::parse('2025-12-06 10:00:00'));
+        $this->makeApplication($attendanceB, $userB, $this->pending,  Carbon::parse('2025-12-06 11:00:00'));
 
         $res = $this->actingAs($admin)->get(route('requests.list', ['tab' => 'approved']));
         $res->assertOk();

@@ -30,7 +30,7 @@ class AttendanceDateTimeTest extends TestCase
      *
      * 確認コード.txt の仕様に対応
      */
-    public function test_attendance_screen_displays_current_datetime_in_ui_format(): void
+    public function testAttendanceScreenDisplaysCurrentDatetimeInUiFormat(): void
     {
         // 1) 現在時刻を固定（テストを安定させる）
         $fixedNow = Carbon::create(2025, 12, 10, 9, 15, 0, config('app.timezone'));
@@ -64,7 +64,7 @@ class AttendanceDateTimeTest extends TestCase
      * 未メール認証ユーザーは勤怠打刻画面にアクセスできない
      * （ルートの verified ミドルウェア仕様の安全確認）
      */
-    public function test_unverified_user_is_redirected_from_attendance_screen(): void
+    public function testUnverifiedUserIsRedirectedFromAttendanceScreen(): void
     {
         $user = User::factory()->create([
             'is_admin' => false,

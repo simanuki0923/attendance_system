@@ -26,7 +26,7 @@ class StaffController extends Controller
             return [
                 'name_label'  => $u->name,
                 'email_label' => $u->email,
-                // ✅ 詳細リンク → /admin/attendance/staff/{id}
+                // ? 詳細リンク → /admin/attendance/staff/{id}
                 'detail_url'  => route('admin.attendance.staff', ['id' => $u->id]),
                 'detail_text' => '詳細',
             ];
@@ -74,7 +74,7 @@ class StaffController extends Controller
             $minutes = (int)($minutes ?? 0);
             $h = intdiv($minutes, 60);
             $m = $minutes % 60;
-            return $h . ':' . str_pad((string)$m, 2, '0', STR_PAD_LEFT);
+            return $h . ':' . str_pad((string) $m, 2, '0', STR_PAD_LEFT);
         };
 
         // 対象月の「全日」配列を作る（勤怠無し日も空欄行）
@@ -102,7 +102,7 @@ class StaffController extends Controller
                 $breakLabel = $fmtMinutes($total?->break_minutes);
                 $workLabel  = $fmtMinutes($total?->total_work_minutes);
 
-                // ✅ 管理者の勤怠詳細：/admin/attendance/{id}
+                // ? 管理者の勤怠詳細：/admin/attendance/{id}
                 $detailUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
             } else {
                 $startLabel = '';
@@ -179,10 +179,12 @@ class StaffController extends Controller
 
         $fmtMinutes = function (?int $minutes): string {
             $minutes = (int)($minutes ?? 0);
-            if ($minutes === 0) return '';
+            if ($minutes === 0) {
+                return '';
+            }
             $h = intdiv($minutes, 60);
             $m = $minutes % 60;
-            return $h . ':' . str_pad((string)$m, 2, '0', STR_PAD_LEFT);
+            return $h . ':' . str_pad((string) $m, 2, '0', STR_PAD_LEFT);
         };
 
         $rows = [];
@@ -227,7 +229,7 @@ class StaffController extends Controller
                 $handle = fopen('php://output', 'w');
                 foreach ($rows as $row) {
                     $converted = array_map(
-                        fn ($v) => mb_convert_encoding((string)$v, 'SJIS-win', 'UTF-8'),
+                        fn ($v) => mb_convert_encoding((string) $v, 'SJIS-win', 'UTF-8'),
                         $row
                     );
                     fputcsv($handle, $converted);
@@ -239,3 +241,4 @@ class StaffController extends Controller
         );
     }
 }
+

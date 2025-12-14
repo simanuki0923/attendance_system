@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
-
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
@@ -53,7 +52,7 @@ class AdminUserInfoTest extends TestCase
      * 管理者が全一般ユーザーの「氏名」「メールアドレス」を確認できる
      * 1) 管理者でログイン 2) スタッフ一覧を開く 期待：全員分表示
      */
-    public function test_admin_can_see_all_staff_names_and_emails_on_staff_list(): void
+    public function testAdminCanSeeAllStaffNamesAndEmailsOnStaffList(): void
     {
         $res = $this->actingAs($this->admin)
             ->get(route('admin.staff.list'));
@@ -79,7 +78,7 @@ class AdminUserInfoTest extends TestCase
      * ユーザーの勤怠情報が正しく表示される
      * 1) 管理者ログイン 2) 選択したユーザーの勤怠一覧を開く 期待：勤怠が正確に表示
      */
-    public function test_admin_can_view_selected_staff_monthly_attendance_list_and_data_is_correct(): void
+    public function testAdminCanViewSelectedStaffMonthlyAttendanceListAndDataIsCorrect(): void
     {
         // 2025-12-10 の勤怠を作成
         $attendance = Attendance::create([
@@ -132,7 +131,7 @@ class AdminUserInfoTest extends TestCase
     /**
      * 「前月」を押下した時に表示月の前月の情報が表示される
      */
-    public function test_prev_month_link_shows_previous_month(): void
+    public function testPrevMonthLinkShowsPreviousMonth(): void
     {
         $dec = $this->actingAs($this->admin)
             ->get(route('admin.staff.attendance', [
@@ -159,7 +158,7 @@ class AdminUserInfoTest extends TestCase
     /**
      * 「翌月」を押下した時に表示月の翌月の情報が表示される
      */
-    public function test_next_month_link_shows_next_month(): void
+    public function testNextMonthLinkShowsNextMonth(): void
     {
         $dec = $this->actingAs($this->admin)
             ->get(route('admin.staff.attendance', [
@@ -186,7 +185,7 @@ class AdminUserInfoTest extends TestCase
     /**
      * 「詳細」を押下すると、その日の勤怠詳細画面に遷移する
      */
-    public function test_detail_link_navigates_to_attendance_detail_page(): void
+    public function testDetailLinkNavigatesToAttendanceDetailPage(): void
     {
         $attendance = Attendance::create([
             'user_id'   => $this->staff1->id,
