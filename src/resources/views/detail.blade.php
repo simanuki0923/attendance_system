@@ -1,4 +1,3 @@
-
 {{-- resources/views/detail.blade.php --}}
 
 @extends('layouts.app')
@@ -31,7 +30,7 @@
     $canEdit = ! $isPending;
 @endphp
 
-<main class="attendance-detail">
+<main class="attendance-detail {{ $isPending ? 'attendance-detail--pending' : '' }}">
   <div class="attendance-detail__inner">
 
     {{-- タイトル --}}
@@ -187,23 +186,25 @@
         </dd>
       </dl>
     </form>
-          {{-- 下部エリア --}}
-      <div class="attendance-detail__actions">
-        @error('application')
-          <p class="attendance-detail__warning">{{ $message }}</p>
-        @enderror
 
-        @if ($isPending)
-          {{-- ★ スクショと同じ赤文字だけを表示 --}}
-          <p class="attendance-detail__warning">
-            ※承認待ちのため修正はできません。
-          </p>
-        @else
-          <button type="submit" class="attendance-detail__button">
-            修正
-          </button>
-        @endif
-      </div>
+    {{-- 下部エリア --}}
+    <div class="attendance-detail__actions">
+      @error('application')
+        <p class="attendance-detail__warning">{{ $message }}</p>
+      @enderror
+
+      @if ($isPending)
+        {{-- ★ スクショと同じ赤文字だけを表示 --}}
+        <p class="attendance-detail__warning">
+          ※承認待ちのため修正はできません。
+        </p>
+      @else
+        <button type="submit" class="attendance-detail__button">
+          修正
+        </button>
+      @endif
+    </div>
+
   </div>
 </main>
 @endsection

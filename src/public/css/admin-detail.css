@@ -58,6 +58,7 @@
   color: #4b5563;
   display: flex;
   align-items: center;
+  transform: translateX(40px);
 }
 
 .attendance-detail__value {

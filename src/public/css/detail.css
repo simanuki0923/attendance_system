@@ -129,6 +129,31 @@
   color: #111827;
 }
 
+/* ======================================================
+   ★追加：承認待ち時は「日付/出勤退勤/休憩/備考」の“枠”を消す
+   ====================================================== */
+
+/* 入力の枠（border）を消す */
+.attendance-detail--pending .attendance-detail__time-input input[readonly],
+.attendance-detail--pending .attendance-detail__note input[readonly] {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* フォーカスしても枠が出ないように（任意） */
+.attendance-detail--pending .attendance-detail__time-input input[readonly]:focus,
+.attendance-detail--pending .attendance-detail__note input[readonly]:focus {
+  outline: none;
+}
+
+/* 行の区切り線（枠っぽさ）も消す：日付/時刻レンジ/備考を含む行 */
+.attendance-detail--pending .attendance-detail__row:has(.attendance-detail__value--date),
+.attendance-detail--pending .attendance-detail__row:has(.attendance-detail__time-range),
+.attendance-detail--pending .attendance-detail__row:has(.attendance-detail__note) {
+  border-top: none;
+}
+
 /* 下部ボタン */
 .attendance-detail__actions {
   margin-top: 24px;

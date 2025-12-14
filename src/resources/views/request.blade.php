@@ -79,9 +79,9 @@
           <tr>
             <th class="request-table__th">状態</th>
             <th class="request-table__th">名前</th>
-            <th class="request-table__th">対象日付</th>
+            <th class="request-table__th">対象日時</th>
             <th class="request-table__th">申請理由</th>
-            <th class="request-table__th">申請日付</th>
+            <th class="request-table__th">申請日時</th>
             <th class="request-table__th request-table__th--narrow">詳細</th>
           </tr>
         </thead>
