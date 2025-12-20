@@ -9,7 +9,6 @@ class RegisterRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // 会員登録は誰でもOK
         return true;
     }
 

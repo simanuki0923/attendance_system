@@ -14,9 +14,6 @@ use Carbon\Carbon;
 
 class DetailController extends Controller
 {
-    /**
-     * 勤怠詳細（一般ユーザー）
-     */
     public function show(int $id)
     {
         $user = Auth::user();
@@ -34,28 +31,18 @@ class DetailController extends Controller
             ->findOrFail($id);
 
         $employeeName = $user->name;
-
-        // 日付
         $workDate      = Carbon::parse($attendance->work_date);
         $dateYearLabel = $workDate->format('Y年');
         $dateDayLabel  = $workDate->format('n月j日');
-
-        // 出勤・退勤
         $time           = $attendance->time;
         $workStartLabel = $this->formatTime($time?->start_time);
         $workEndLabel   = $this->formatTime($time?->end_time);
-
-        // 休憩1 / 休憩2
         $break1 = $attendance->breaks->firstWhere('break_no', 1);
         $break2 = $attendance->breaks->firstWhere('break_no', 2);
-
         $break1StartLabel = $this->formatTime($break1?->start_time);
         $break1EndLabel   = $this->formatTime($break1?->end_time);
-
         $break2StartLabel = $this->formatTime($break2?->start_time);
         $break2EndLabel   = $this->formatTime($break2?->end_time);
-
-        // 最新の申請
         $latestApp = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
@@ -83,10 +70,6 @@ class DetailController extends Controller
         ]);
     }
 
-    /**
-     * 日付指定で詳細表示
-     *  - なければ勤怠レコードを自動作成
-     */
     public function showByDate(string $date)
     {
         $user = Auth::user();
@@ -127,12 +110,6 @@ class DetailController extends Controller
         return $this->show($attendance->id);
     }
 
-    /**
-     * 勤怠詳細更新（一般ユーザー）
-     *  - 修正内容を反映しつつ「修正申請」を pending で作成
-     *
-     * ★バリデーションは FormRequest に移譲
-     */
     public function update(AttendanceDetailRequest $request, int $id)
     {
         $user = Auth::user();
@@ -144,8 +121,6 @@ class DetailController extends Controller
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
-        // 既に pending なら画面・サーバ両方でロック
-        // （FormRequest 側にも同等のガードを置いているなら二重で安全）
         $latestApp = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
@@ -157,8 +132,6 @@ class DetailController extends Controller
         }
 
         $validated = $request->validated();
-
-        // 出勤・退勤
         $time = $attendance->time ?: new AttendanceTime([
             'attendance_id' => $attendance->id,
         ]);
@@ -166,7 +139,6 @@ class DetailController extends Controller
         $time->end_time   = $this->normalizeTime($validated['end_time'] ?? null);
         $time->save();
 
-        // 休憩1 / 休憩2
         $this->saveBreak(
             $attendance,
             1,
@@ -180,15 +152,10 @@ class DetailController extends Controller
             $validated['break2_end'] ?? null
         );
 
-        // 備考
         $attendance->note = $validated['note'] ?? null;
         $attendance->save();
-
-        // 合計再計算
         $attendance->load(['time', 'breaks', 'total']);
         $this->recalculateTotal($attendance);
-
-        // 修正申請（pending）
         $pendingStatus = ApplicationStatus::where('code', 'pending')->first();
 
         AttendanceApplication::create([
@@ -203,8 +170,6 @@ class DetailController extends Controller
             ->route('attendance.detail', ['id' => $attendance->id])
             ->with('status', '修正申請を受け付けました。');
     }
-
-    /* ========= ここからヘルパー ========= */
 
     private function normalizeTime(?string $value): ?string
     {
@@ -251,10 +216,8 @@ class DetailController extends Controller
         $startNorm = $this->normalizeTime($start);
         $endNorm   = $this->normalizeTime($end);
 
-        // 最新状態のコレクションで探す
         $break = $attendance->breaks->firstWhere('break_no', $breakNo);
 
-        // 両方空なら削除
         if ($startNorm === null && $endNorm === null) {
             if ($break) {
                 $break->delete();
@@ -293,7 +256,6 @@ class DetailController extends Controller
             $workMinutes = $start->diffInMinutes($end);
         }
 
-        // 休憩は minutes カラムの合計
         $breakMinutes = (int) $attendance->breaks->sum('minutes');
         $breakMinutes = max(0, $breakMinutes);
 

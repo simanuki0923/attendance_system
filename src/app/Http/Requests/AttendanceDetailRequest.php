@@ -39,18 +39,12 @@ class AttendanceDetailRequest extends FormRequest
             $b1s = $this->parseInputTime($this->input('break1_start'));
             $b2s = $this->parseInputTime($this->input('break2_start'));
 
-            // -----------------------------------------
-            // 出勤 > 退勤
-            // -----------------------------------------
             if ($start && $end && $start->greaterThan($end)) {
                 $msg = '出勤時間もしくは退勤時間が不適切な値です';
                 $v->errors()->add('start_time', $msg);
                 $v->errors()->add('end_time', $msg);
             }
 
-            // -----------------------------------------
-            // 休憩開始が出勤より前 / 退勤より後
-            // -----------------------------------------
             if ($b1s && $start && $b1s->lessThan($start)) {
                 $v->errors()->add('break1_start', '休憩時間が不適切な値です');
             }
@@ -65,9 +59,6 @@ class AttendanceDetailRequest extends FormRequest
                 $v->errors()->add('break2_start', '休憩時間が不適切な値です');
             }
 
-            // -----------------------------------------
-            // 休憩終了が退勤より後
-            // -----------------------------------------
             $b1e = $this->parseInputTime($this->input('break1_end'));
             $b2e = $this->parseInputTime($this->input('break2_end'));
 
@@ -78,7 +69,6 @@ class AttendanceDetailRequest extends FormRequest
                 $v->errors()->add('break2_end', '休憩時間もしくは退勤時間が不適切な値です');
             }
 
-            // 追加の安全策：休憩終了 < 休憩開始
             if ($b1s && $b1e && $b1e->lessThan($b1s)) {
                 $v->errors()->add('break1_start', '休憩時間が不適切な値です');
             }
@@ -88,9 +78,6 @@ class AttendanceDetailRequest extends FormRequest
         });
     }
 
-    /**
-     * H:i の入力を Carbon に
-     */
     private function parseInputTime(mixed $value): ?Carbon
     {
         if ($value === null) {

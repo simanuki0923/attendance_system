@@ -47,21 +47,12 @@
             </div>
         @endif
 
-        {{-- ★ここを admin.login.post に --}}
         <form class="form" action="{{ route('admin.login.post') }}" method="post" novalidate>
             @csrf
 
             <label class="form__group" for="email">
                 <span class="form__label--item">メールアドレス</span>
-                <input
-                    id="email"
-                    type="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    autocomplete="email"
-                    required
-                    inputmode="email"
-                />
+                <input id="email" type="email" name="email" value="{{ old('email') }}" autocomplete="email" required inputmode="email" />
                 @error('email')
                     <span class="form__error" role="alert">{{ $message }}</span>
                 @enderror
@@ -69,13 +60,7 @@
 
             <label class="form__group" for="password">
                 <span class="form__label--item">パスワード</span>
-                <input
-                    id="password"
-                    type="password"
-                    name="password"
-                    autocomplete="current-password"
-                    required
-                />
+                <input id="password" type="password" name="password" autocomplete="current-password" required />
                 @error('password')
                     <span class="form__error" role="alert">{{ $message }}</span>
                 @enderror

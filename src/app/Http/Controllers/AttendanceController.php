@@ -6,26 +6,19 @@ use App\Models\Attendance;
 use App\Models\AttendanceTime;
 use App\Models\AttendanceTotal;
 use App\Models\AttendanceBreak;
-
-// ★ 申請関連
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
-    /**
-     * 勤怠登録画面（打刻画面）表示
-     */
     public function index(Request $request)
     {
         $user  = Auth::user();
         $today = Carbon::today();
 
-        // 今日の勤怠レコードを取得（あれば）
         $attendance = Attendance::with(['time', 'total', 'breaks'])
             ->where('user_id', $user->id)
             ->whereDate('work_date', $today)
@@ -43,28 +36,21 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * 画面用ステータス判定
-     */
     protected function resolveStatus(?Attendance $attendance): string
     {
-        // セッションにあればそれを優先
         $sessionStatus = session('attendance_status');
         if ($sessionStatus) {
             return $sessionStatus;
         }
 
-        // 勤怠自体ない or 出勤していない
         if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
             return 'before_work';
         }
 
-        // 退勤済み
         if ($attendance->time->end_time) {
             return 'after_work';
         }
 
-        // 休憩中かどうか
         $hasOpenBreak = $attendance->breaks
             ? $attendance->breaks->contains(fn($b) => empty($b->end_time))
             : false;
@@ -72,9 +58,6 @@ class AttendanceController extends Controller
         return $hasOpenBreak ? 'on_break' : 'working';
     }
 
-    /**
-     * 当日の勤怠レコードを取得 or 作成
-     */
     protected function getOrCreateTodayAttendanceForUser(int $userId): Attendance
     {
         return Attendance::firstOrCreate(
@@ -88,9 +71,6 @@ class AttendanceController extends Controller
         );
     }
 
-    /**
-     * 合計レコードを取得 or 作成
-     */
     protected function ensureTotal(Attendance $attendance): AttendanceTotal
     {
         return $attendance->total()->firstOrCreate(
@@ -102,27 +82,17 @@ class AttendanceController extends Controller
         );
     }
 
-    /**
-     * 次の休憩Noを採番
-     */
     protected function nextBreakNo(Attendance $attendance): int
     {
         $maxNo = $attendance->breaks()->max('break_no');
         return ($maxNo ?? 0) + 1;
     }
 
-    /**
-     * ★ pending 申請を必ず1件付与する（無ければ作成）
-     *
-     * - application_statuses.code = 'pending' の id を取得
-     * - 対象勤怠 + pending status のレコードが無い場合だけ新規作成
-     */
     private function ensurePendingApplication(Attendance $attendance, int $userId): void
     {
         $pendingStatusId = ApplicationStatus::where('code', ApplicationStatus::CODE_PENDING)->value('id');
 
         if (! $pendingStatusId) {
-            // マスタ未設定の場合は致命的なので例外にしておく
             throw new \RuntimeException('application_statuses に pending が存在しません。Seeder を確認してください。');
         }
 
@@ -143,19 +113,12 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * 出勤ボタン
-     *  - 勤怠レコードを作成/更新
-     *  - 合計レコードを保証
-     *  - pending 申請を自動作成（なければ）
-     */
     public function clockIn(Request $request)
     {
         $user           = Auth::user();
         $attendance     = $this->getOrCreateTodayAttendanceForUser($user->id);
         $attendanceTime = $attendance->time;
 
-        // すでに出勤済みならそのまま一覧へ
         if ($attendanceTime && $attendanceTime->start_time) {
             return redirect()->route('attendance.list');
         }
@@ -168,10 +131,8 @@ class AttendanceController extends Controller
         $attendanceTime->start_time = now()->format('H:i:s');
         $attendanceTime->save();
 
-        // 合計レコードを保証
         $this->ensureTotal($attendance);
 
-        // ★ 出勤時点で pending 申請を必ず1件付与
         $this->ensurePendingApplication($attendance, $user->id);
 
         session(['attendance_status' => 'working']);
@@ -181,9 +142,6 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 
-    /**
-     * 退勤ボタン
-     */
     public function clockOut(Request $request)
     {
         $user  = Auth::user();
@@ -194,12 +152,10 @@ class AttendanceController extends Controller
             ->whereDate('work_date', $today)
             ->first();
 
-        // 出勤していなければ処理しない
         if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
-        // すでに退勤済み
         if ($attendance->time->end_time) {
             session(['attendance_status' => 'after_work']);
             session()->forget('break_start_at');
@@ -209,7 +165,6 @@ class AttendanceController extends Controller
 
         $total = $this->ensureTotal($attendance);
 
-        // 休憩中のまま退勤した場合の整理
         $breakId    = session('break_id');
         $breakStart = session('break_start_at');
 
@@ -233,11 +188,9 @@ class AttendanceController extends Controller
             session()->forget('break_id');
         }
 
-        // 退勤時刻の保存
         $attendance->time->end_time = now()->format('H:i:s');
         $attendance->time->save();
 
-        // 勤務時間（分）を計算
         $startTime = Carbon::parse($attendance->time->start_time);
         $endTime   = Carbon::parse($attendance->time->end_time);
 
@@ -249,7 +202,6 @@ class AttendanceController extends Controller
         $total->total_work_minutes = $workMinutes;
         $total->save();
 
-        // ★ 退勤時点でも pending 申請を保証
         $this->ensurePendingApplication($attendance, $user->id);
 
         session(['attendance_status' => 'after_work']);
@@ -257,9 +209,6 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 
-    /**
-     * 休憩開始ボタン
-     */
     public function breakIn(Request $request)
     {
         $user  = Auth::user();
@@ -278,7 +227,6 @@ class AttendanceController extends Controller
             return redirect()->route('attendance.list');
         }
 
-        // すでに休憩中なら何もしない
         if (session()->has('break_id')) {
             return redirect()->route('attendance.list');
         }
@@ -302,9 +250,6 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 
-    /**
-     * 休憩終了ボタン
-     */
     public function breakOut(Request $request)
     {
         $user  = Auth::user();

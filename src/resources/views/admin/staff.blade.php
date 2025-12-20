@@ -1,6 +1,3 @@
-
-{{-- resources/views/admin/staff.blade.php --}}
-
 @extends('layouts.app')
 
 @section('css')
@@ -10,7 +7,7 @@
 @section('content')
 @php
     $pageTitle = $pageTitle ?? 'スタッフ一覧';
-    $staffList = $staffList ?? collect(); // ★ダミーを削除して Controller の値を使う
+    $staffList = $staffList ?? collect();
 @endphp
 
 <main class="staff-list">

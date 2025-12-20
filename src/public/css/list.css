@@ -1,8 +1,6 @@
-/* public/css/list.css */
-
 .attendance-list {
-  background: #f3f3f6;               /* 画面全体の薄いグレー */
-  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+  background: #f3f3f6;
+  min-height: calc(100vh - 56px);
 }
 
 .attendance-list__inner {
@@ -12,7 +10,6 @@
   border-radius: 4px;
 }
 
-/* タイトル周り */
 .attendance-list__header {
   margin-bottom: 24px;
 }
@@ -33,11 +30,9 @@
   border-radius: 2px;
 }
 
-/* 月切替ナビ（白いピル型＋白黒カレンダー） */
 .attendance-list__month-nav {
   display: flex;
   align-items: center;
-  /* 左右いっぱいを使いつつ、全体は中央に配置 */
   width: 100%;
   max-width: 1000px;
   margin: 0 auto;
@@ -47,7 +42,6 @@
   box-shadow: 0 0 0 1px #e5e7eb;
 }
 
-/* 左右ボタン（前月 / 翌月） */
 .month-nav__btn {
   min-width: auto;
   padding: 0;
@@ -80,19 +74,16 @@
   line-height: 1;
 }
 
-/* 前月ボタンを左端へ */
 .month-nav__btn--prev {
   margin-right: auto;
   font-size: 20px;
 }
 
-/* 翌月ボタンを右端へ */
 .month-nav__btn--next {
   margin-left: auto;
   font-size: 20px;
 }
 
-/* 真ん中のカレンダー表示（中央寄せ） */
 .month-nav__current {
   min-width: auto;
   padding: 0;
@@ -104,17 +95,15 @@
   margin: 0 auto;
 }
 
-/* カレンダーの白黒アイコン */
 .month-nav__icon {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  border: 2px solid #111111;   /* 黒枠 */
+  border: 2px solid #111111;
   position: relative;
   display: inline-block;
 }
 
-/* カレンダー上の線 */
 .month-nav__icon::before {
   content: "";
   position: absolute;
@@ -125,7 +114,6 @@
   border-bottom: 2px solid #111111;
 }
 
-/* カレンダーのリング（上の半円） */
 .month-nav__icon::after {
   content: "";
   position: absolute;
@@ -143,7 +131,6 @@
   color: #111111;
 }
 
-/* 一覧テーブル */
 .attendance-list__table {
   margin-top: 24px;
   background: #f5f5f5;
@@ -152,7 +139,6 @@
   box-shadow: 0 0 0 1px #e5e7eb;
 }
 
-/* 1行あたり 6 カラムのグリッド */
 .attendance-list__row {
   display: grid;
   grid-template-columns: 2.2fr 1.4fr 1.4fr 1.4fr 1.4fr 1fr;
@@ -175,7 +161,6 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* 行の境界線 */
 .attendance-list__row + .attendance-list__row {
   border-top: 1px solid #e5e7eb;
 }
@@ -196,13 +181,11 @@
   text-align: left;
 }
 
-/* 選択中の日付（青枠） */
 .attendance-list__row--active {
   position: relative;
   background: #f0f7ff;
 }
 
-/* 詳細リンク */
 .attendance-list__detail-link {
   font-size: 13px;
   color: #111827;
@@ -218,7 +201,6 @@
   cursor: default;
 }
 
-/* データ無しメッセージ */
 .attendance-list__empty {
   margin: 0;
   padding: 24px 20px;
@@ -227,23 +209,19 @@
   background: #ffffff;
 }
 
-/* ======================================================
-   PCレスポンシブ（1400px - 1540px）
-   - 元デザインを崩さないため、幅/余白だけ最小調整
-   ====================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
   .attendance-list__inner {
-    max-width: 1040px;          /* 960px → 少しだけ広げる */
-    padding: 32px 48px 40px;    /* 横余白をわずかに拡張 */
+    max-width: 1040px;
+    padding: 32px 48px 40px;/
   }
 
   .attendance-list__month-nav {
-    max-width: 1080px;          /* innerとバランスを取る */
-    padding: 12px 32px;         /* ピルの余白を少しだけ増やす */
+    max-width: 1080px;
+    padding: 12px 32px;
   }
 
   .attendance-list__cell {
-    padding: 10px 22px;         /* 横詰まり/間延びの中間に調整 */
+    padding: 10px 22px;
   }
 }

@@ -1,8 +1,6 @@
-/* public/css/detail.css */
-
 .attendance-detail {
-  background: #f3f3f6;               /* 画面全体の薄いグレー */
-  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+  background: #f3f3f6;
+  min-height: calc(100vh - 56px);
 }
 
 .attendance-detail__inner {
@@ -11,7 +9,6 @@
   padding: 0 24px;
 }
 
-/* タイトル周り */
 .attendance-detail__header {
   margin-bottom: 24px;
 }
@@ -32,7 +29,6 @@
   border-radius: 2px;
 }
 
-/* 白いカード全体 */
 .attendance-detail__card {
   background: #ffffff;
   border-radius: 4px;
@@ -40,7 +36,6 @@
   overflow: hidden;
 }
 
-/* 1行ごとのレイアウト */
 .attendance-detail__row {
   display: flex;
   align-items: stretch;
@@ -69,18 +64,15 @@
   align-items: center;
 }
 
-/* 日付行 */
 .attendance-detail__value--date {
   justify-content: center;
-  gap: 120px; /* 年と月日の間隔をスクショに近づける */
+  gap: 120px;
 }
 
-/* 表示用テキスト */
 .attendance-detail__text {
   font-weight: 600;
 }
 
-/* 時刻レンジ */
 .attendance-detail__time-range {
   display: inline-flex;
   align-items: center;
@@ -108,7 +100,6 @@
   color: #6b7280;
 }
 
-/* 備考欄（ベース） */
 .attendance-detail__row--note .attendance-detail__value {
   align-items: stretch;
 }
@@ -129,11 +120,6 @@
   color: #111827;
 }
 
-/* ======================================================
-   ★追加：承認待ち時は「日付/出勤退勤/休憩/備考」の“枠”を消す
-   ====================================================== */
-
-/* 入力の枠（border）を消す */
 .attendance-detail--pending .attendance-detail__time-input input[readonly],
 .attendance-detail--pending .attendance-detail__note input[readonly] {
   border: none;
@@ -141,20 +127,17 @@
   box-shadow: none;
 }
 
-/* フォーカスしても枠が出ないように（任意） */
 .attendance-detail--pending .attendance-detail__time-input input[readonly]:focus,
 .attendance-detail--pending .attendance-detail__note input[readonly]:focus {
   outline: none;
 }
 
-/* 行の区切り線（枠っぽさ）も消す：日付/時刻レンジ/備考を含む行 */
 .attendance-detail--pending .attendance-detail__row:has(.attendance-detail__value--date),
 .attendance-detail--pending .attendance-detail__row:has(.attendance-detail__time-range),
 .attendance-detail--pending .attendance-detail__row:has(.attendance-detail__note) {
   border-top: none;
 }
 
-/* 下部ボタン */
 .attendance-detail__actions {
   margin-top: 24px;
   display: flex;
@@ -163,7 +146,6 @@
   gap: 10px;
 }
 
-/* ボタン */
 .attendance-detail__button {
   display: inline-flex;
   align-items: center;
@@ -184,9 +166,6 @@
   opacity: 0.85;
 }
 
-/* ======================================================
-   ★ エラーメッセージ（Bladeの form-error を活かす）
-   ====================================================== */
 
 .form-error {
   margin: 6px 0 0;
@@ -197,42 +176,30 @@
   text-align: center;
 }
 
-/* ★時刻レンジがある行だけ縦積みにして、自然に下へ */
 .attendance-detail__row:has(.attendance-detail__time-range) .attendance-detail__value {
   flex-direction: column;
   align-items: center;
 }
 
-/* 2行エラーが詰まらないように */
 .attendance-detail__row:has(.attendance-detail__time-range) .form-error {
   white-space: nowrap;
 }
 
-/* ======================================================
-   ★今回の本題：備考エラーが右に寄る問題を修正
-   ====================================================== */
-
-/* 備考行の dd を縦積みにする */
 .attendance-detail__row--note .attendance-detail__value {
   flex-direction: column;
   align-items: flex-start;
 }
 
-/* 備考入力コンテナの横幅100%を解除して押し出しを防ぐ */
 .attendance-detail__row--note .attendance-detail__note {
   width: auto;
   align-items: flex-start;
 }
 
-/* 備考のエラーは左寄せで input の下に */
 .attendance-detail__row--note .form-error {
   text-align: left;
   white-space: normal;
 }
 
-/* ======================================================
-   ★承認待ち警告
-   ====================================================== */
 
 .attendance-detail__warning {
   margin: 0 16px 8px 0;
@@ -242,42 +209,32 @@
   white-space: nowrap;
 }
 
-/* ======================================================
-   ★ optional：Blade側で is-invalid を付けた場合
-   ====================================================== */
 
 .attendance-detail__time-input input.is-invalid,
 .attendance-detail__note input.is-invalid {
   border-color: #e11d48;
 }
 
-/* ======================================================
-   ★ レスポンシブ（PC 1400px - 1540px）
-   - 元のデザインを崩さず、内側幅と余白を微調整
-   ====================================================== */
 
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
   .attendance-detail__inner {
-    max-width: 900px;   /* 840 → 900 で“広すぎず狭すぎず” */
-    padding: 0 32px;    /* 24 → 32 で余白のバランスを微調整 */
+    max-width: 900px;
+    padding: 0 32px;
   }
 
-  /* 日付行は画面に合わせて間を少し広げる */
   .attendance-detail__value--date {
-    gap: 140px;         /* 120 → 140 */
+    gap: 140px;
   }
 
-  /* 入力幅はごく軽く増やす（見た目の密度維持） */
   .attendance-detail__time-input input {
-    width: 100px;       /* 96 → 100 */
+    width: 100px;
   }
 
   .attendance-detail__note input {
-    width: 220px;       /* 200 → 220 */
+    width: 220px;
   }
 
-  /* 右寄せボタンの視覚的ズレを軽く抑える */
   .attendance-detail__button {
-    transform: translate(-40px, -22px); /* -50/-25 → -40/-22 */
+    transform: translate(-40px, -22px);
   }
 }

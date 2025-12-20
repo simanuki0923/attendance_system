@@ -1,8 +1,6 @@
-/* public/css/admin-edit.css */
-
 .attendance-detail {
-  background: #f3f3f6;               /* 画面全体の薄いグレー */
-  min-height: calc(100vh - 56px);    /* 画面全体の高さ調整 */
+  background: #f3f3f6;
+  min-height: calc(100vh - 56px);
 }
 
 .attendance-detail__inner {
@@ -11,7 +9,6 @@
   padding: 0 24px;
 }
 
-/* タイトル周り */
 .attendance-detail__header {
   margin-bottom: 24px;
 }
@@ -32,7 +29,6 @@
   border-radius: 2px;
 }
 
-/* 白いカード全体 */
 .attendance-detail__card {
   background: #ffffff;
   border-radius: 4px;
@@ -40,7 +36,6 @@
   overflow: hidden;
 }
 
-/* 1行ごとのレイアウト */
 .attendance-detail__row {
   display: flex;
   align-items: stretch;
@@ -69,18 +64,15 @@
   align-items: center;
 }
 
-/* 日付行 */
 .attendance-detail__value--date {
   justify-content: center;
-  gap: 120px; /* 年と月日の間隔をスクショに近づける */
+  gap: 120px;
 }
 
-/* 表示用テキスト */
 .attendance-detail__text {
   font-weight: 600;
 }
 
-/* 時刻レンジ */
 .attendance-detail__time-range {
   display: inline-flex;
   align-items: center;
@@ -108,7 +100,6 @@
   color: #6b7280;
 }
 
-/* 備考欄（ベース） */
 .attendance-detail__row--note .attendance-detail__value {
   align-items: stretch;
 }
@@ -129,7 +120,6 @@
   color: #111827;
 }
 
-/* 下部ボタン */
 .attendance-detail__actions {
   margin-top: 24px;
   display: flex;
@@ -138,7 +128,6 @@
   gap: 10px;
 }
 
-/* ボタン */
 .attendance-detail__button {
   display: inline-flex;
   align-items: center;
@@ -159,9 +148,6 @@
   opacity: 0.85;
 }
 
-/* ======================================================
-   ★ エラーメッセージ（Bladeの form-error を活かす）
-   ====================================================== */
 
 .form-error {
   margin: 6px 0 0;
@@ -171,42 +157,29 @@
   font-weight: 500;
 }
 
-/* ★時刻レンジがある行だけ縦積みにして、自然に下へ */
 .attendance-detail__row:has(.attendance-detail__time-range) .attendance-detail__value {
   flex-direction: column;
   align-items: center;
 }
 
-/* 2行エラーが詰まらないように */
 .attendance-detail__row:has(.attendance-detail__time-range) .form-error {
   white-space: nowrap;
 }
 
-/* ======================================================
-   ★今回の本題：備考エラーが右に寄る問題を修正
-   ====================================================== */
-
-/* 備考行の dd を縦積みにする */
 .attendance-detail__row--note .attendance-detail__value {
   flex-direction: column;
   align-items: flex-start;
 }
 
-/* 備考入力コンテナの横幅100%を解除して押し出しを防ぐ */
 .attendance-detail__row--note .attendance-detail__note {
   width: auto;
   align-items: flex-start;
 }
 
-/* 備考のエラーは左寄せで input の下に */
 .attendance-detail__row--note .form-error {
   text-align: left;
   white-space: normal;
 }
-
-/* ======================================================
-   ★承認待ち警告
-   ====================================================== */
 
 .attendance-detail__warning {
   margin: 0 16px 8px 0;
@@ -216,40 +189,30 @@
   white-space: nowrap;
 }
 
-/* ======================================================
-   ★レスポンシブ（PC: 1400px - 1540px）
-   - 元の見た目を崩さず、横幅・余白・間隔のみ微調整
-   ====================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
-  /* 画面が広いPC帯では、カードが細すぎて見えないよう少しだけ広げる */
   .attendance-detail__inner {
     max-width: 900px;
     padding: 0 32px;
   }
 
-  /* ラベルと値のバランスを軽く最適化（内側余白中心） */
   .attendance-detail__label,
   .attendance-detail__value {
     padding: 22px 28px;
   }
 
-  /* 日付の左右間隔を画面幅に合わせて微調整 */
   .attendance-detail__value--date {
     gap: 140px;
   }
 
-  /* 時刻入力はサイズ感を変えすぎない範囲で少しだけ余裕 */
   .attendance-detail__time-input input {
     width: 100px;
   }
 
-  /* 備考入力も同様に少しだけ幅を広げ、窮屈さを回避 */
   .attendance-detail__note input {
     width: 220px;
   }
 
-  /* ボタン群の余白感を維持しつつ、右側に自然に収まるよう微調整 */
   .attendance-detail__actions {
     gap: 12px;
   }

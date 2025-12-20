@@ -1,7 +1,5 @@
-/* attendance.css */
-
 .attendance {
-  min-height: calc(100vh - 56px); /* ヘッダー分を引いた高さ想定 */
+  min-height: calc(100vh - 56px);
   padding: 40px 16px 60px;
 }
 
@@ -15,7 +13,6 @@
   justify-content: center;
 }
 
-/* ステータスバッジ */
 .attendance__badge {
   display: inline-flex;
   align-items: center;
@@ -30,12 +27,6 @@
   background: rgb(155, 154, 154);
   color: #d8d8d8;
 }
-
-/* 状態ごとに色変えたい場合はここで上書きしてもOK */
-.attendance__badge--before_work { }
-.attendance__badge--working { }
-.attendance__badge--on_break { }
-.attendance__badge--after_work { }
 
 .attendance__date {
   font-size: 30px;
@@ -52,7 +43,6 @@
   color: #111827;
 }
 
-/* ボタンエリア */
 .attendance__actions {
   display: flex;
   justify-content: center;
@@ -71,7 +61,6 @@
   min-width: 160px;
 }
 
-/* ボタン共通 */
 .attendance__btn {
   display: inline-flex;
   align-items: center;
@@ -85,20 +74,17 @@
   outline: none;
 }
 
-/* 黒ボタン */
 .attendance__btn--primary {
   background: #111111;
   color: #ffffff;
 }
 
-/* 白ボタン */
 .attendance__btn--secondary {
   background: #ffffff;
   color: #111111;
   border-color: #d1d5db;
 }
 
-/* 退勤後メッセージ */
 .attendance__message {
   margin-top: 32px;
   font-size: 16px;
@@ -106,19 +92,13 @@
 }
 
 
-/* =====================================================
-   PCレスポンシブ（1400px - 1540px）
-   - 既存デザインを崩さず、余白と横幅をわずかに最適化
-   ===================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
   .attendance {
-    /* 画面が広い分、上下の余白を少しだけ増やして中心感を維持 */
     padding: 48px 24px 72px;
   }
 
   .attendance__inner {
-    /* 既存の見た目を保ちつつ、少しだけ横幅を広げる */
     max-width: 1040px;
     min-height: 460px;
   }

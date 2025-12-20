@@ -1,22 +1,14 @@
-/* public/css/staff-id.css */
-
-/* ==================================================
-   全体レイアウト
-================================================== */
 .attendance-list {
   background: #f3f3f6;
   min-height: calc(100vh - 56px);
 }
 
 .attendance-list__inner {
-  max-width: 820px;            /* スクショ側の中心幅に合わせる */
+  max-width: 820px;
   margin: 28px auto 64px;
   padding: 0 20px;
 }
 
-/* ==================================================
-   タイトル
-================================================== */
 .attendance-list__header {
   margin-bottom: 10px;
 }
@@ -29,7 +21,7 @@
   font-size: 20px;
   font-weight: 700;
   color: #111;
-  transform: none;            /* 既存の上下ズレ要因を無効化 */
+  transform: none;
 }
 
 .attendance-list__title-bar {
@@ -39,9 +31,6 @@
   border-radius: 2px;
 }
 
-/* ==================================================
-   月ナビ（白いピル型のバー）
-================================================== */
 .attendance-list__month-nav {
   width: 100%;
   background: #fff;
@@ -113,9 +102,6 @@
   letter-spacing: .03em;
 }
 
-/* ==================================================
-   テーブルカード
-================================================== */
 .attendance-list__table--staff {
   margin-top: 14px;
   background: #fff;
@@ -126,49 +112,40 @@
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
 }
 
-/* 1行 = グリッド（スクショの比率） */
 .attendance-list__row {
   display: grid;
   grid-template-columns: 1.9fr repeat(4, 1fr) .9fr;
   align-items: center;
   min-height: 44px;
-
-  /* ★下線ズレ根絶：セルではなく行に1本引く */
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* 最終行は下線なし */
 .attendance-list__row:last-child {
   border-bottom: none;
 }
 
-/* ヘッダー行 */
 .attendance-list__row--head {
   background: #f9fafb;
   font-weight: 700;
 }
 
-/* セル（下線は行側で引くのでセルは引かない） */
 .attendance-list__cell {
   padding: 8px 12px;
   text-align: center;
   white-space: nowrap;
-  border-bottom: none;     /* ★ここがズレの原因なので完全OFF */
+  border-bottom: none;
 }
 
-/* 日付だけ左寄せ */
 .attendance-list__cell--date {
   text-align: left;
   padding-left: 14px;
 }
 
-/* 今日の行を青く強調 */
 .attendance-list__row--active {
   background: #eff6ff;
   position: relative;
 }
 
-/* 詳細リンク */
 .attendance-list__cell--detail {
   text-align: center;
 }
@@ -185,16 +162,12 @@
   cursor: default;
 }
 
-/* データ無し */
 .attendance-list__empty {
   padding: 18px 12px;
   font-size: 11px;
   text-align: center;
 }
 
-/* ==================================================
-   CSVボタン（スクショ右下）
-================================================== */
 .attendance-list__footer {
   margin-top: 22px;
   display: flex;
@@ -211,46 +184,37 @@
   font-size: 12px;
   letter-spacing: .08em;
   cursor: pointer;
-  transform: none;      /* 既存の強制移動は無効化 */
+  transform: none;
 }
 
 .attendance-list__csv-btn:hover {
   opacity: .9;
 }
 
-/* ==================================================
-   PCレスポンシブ（1400px - 1540px）
-   - 現状の比率/デザインを崩さず
-   - 中心カラムの呼吸だけ少し広げる
-================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
   .attendance-list__inner {
-    /* 画面が広い帯なので、中央の情報量を少しだけ増やす */
     max-width: 900px;
     padding: 0 24px;
   }
 
   .attendance-list__title {
-    /* タイトルの視認性だけほんの少し調整 */
     font-size: 21px;
   }
 
   .attendance-list__month-nav {
-    /* ピルの左右余白を少し増やして窮屈感を消す */
     padding: 12px 26px;
   }
 
   .month-nav__btn {
-    font-size: 18px; /* 既存と同等だが明示してブレ防止 */
+    font-size: 18px;
   }
 
   .month-nav__current {
-    font-size: 20px; /* 既存と同等 */
+    font-size: 20px;
   }
 
   .attendance-list__table--staff {
-    /* テーブルカードの可読性を最小限アップ */
     font-size: 12.5px;
   }
 
@@ -263,7 +227,6 @@
   }
 
   .attendance-list__csv-btn {
-    /* ボタンのサイズ感は維持しつつ余白だけ微増 */
     padding: 9px 20px;
   }
 }

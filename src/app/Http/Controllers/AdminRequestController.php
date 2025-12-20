@@ -10,30 +10,15 @@ use App\Models\AttendanceTotal;
 
 class AdminRequestController extends Controller
 {
-    /**
-     * 管理者用 申請一覧
-     * view: resources/views/admin/request.blade.php
-     *
-     * クエリ:
-     *   ?tab=pending  → 承認待ち
-     *   ?tab=approved → 承認済み
-     */
     public function index(Request $request)
     {
-        // ------------------------
-        // どのタブを表示するか
-        // ------------------------
         $activeTab = $request->query('tab', 'pending');
         if (!in_array($activeTab, ['pending', 'approved'], true)) {
             $activeTab = 'pending';
         }
 
-        // application_statuses.code と対応
-        $statusCode = $activeTab; // 'pending' or 'approved'
+        $statusCode = $activeTab;
 
-        // ------------------------
-        // 対象ステータスの申請一覧を取得
-        // ------------------------
         $apps = AttendanceApplication::with([
                 'attendance.time',
                 'attendance.breaks',
@@ -47,9 +32,6 @@ class AdminRequestController extends Controller
             ->orderByDesc('applied_at')
             ->get();
 
-        // ------------------------
-        // Blade が扱いやすい形に整形
-        // ------------------------
         $requests = $apps->map(function (AttendanceApplication $app) {
             $att = $app->attendance;
 
@@ -79,12 +61,6 @@ class AdminRequestController extends Controller
         ]);
     }
 
-    /**
-     * 修正申請承認画面 表示（管理者）
-     *
-     * GET /stamp_correction_request/approve/{attendance_correct_request_id}
-     * view: resources/views/admin/detail.blade.php
-     */
     public function showApprove(Request $request, int $attendanceCorrectRequestId)
     {
         $app = AttendanceApplication::with([
@@ -104,7 +80,6 @@ class AdminRequestController extends Controller
         $user         = $attendance->user;
         $employeeName = $user?->name ?? '不明';
 
-        // 日付ラベル
         $dateYearLabel = '';
         $dateDayLabel  = '';
         if ($attendance->work_date) {
@@ -116,7 +91,6 @@ class AdminRequestController extends Controller
             $dateDayLabel  = $workDate->format('n月j日');
         }
 
-        // 時刻フォーマット用クロージャ
         $formatTime = function ($value): string {
             if (! $value) {
                 return '';
@@ -137,28 +111,20 @@ class AdminRequestController extends Controller
             }
         };
 
-        // 出勤・退勤
         $time           = $attendance->time;
         $workStartLabel = $formatTime($time?->start_time ?? null);
         $workEndLabel   = $formatTime($time?->end_time ?? null);
-
-        // 休憩1 / 休憩2
         $breaks = $attendance->breaks ?? collect();
         $break1 = $breaks->firstWhere('break_no', 1);
         $break2 = $breaks->firstWhere('break_no', 2);
-
         $break1StartLabel = $formatTime($break1?->start_time ?? null);
         $break1EndLabel   = $formatTime($break1?->end_time   ?? null);
         $break2StartLabel = $formatTime($break2?->start_time ?? null);
         $break2EndLabel   = $formatTime($break2?->end_time   ?? null);
-
         $noteLabel = (string) ($attendance->note ?? '');
-
         $statusCode  = $app->status?->code  ?? null;
         $statusLabel = $app->status?->label ?? '承認待ち';
-
         $isApproved = ($statusCode === ApplicationStatus::CODE_APPROVED);
-
         $approveUrl = $isApproved
             ? ''
             : route('stamp_correction_request.approve', [
@@ -185,14 +151,6 @@ class AdminRequestController extends Controller
         ]);
     }
 
-    /**
-     * 承認実行（管理者）
-     *
-     * POST /stamp_correction_request/approve/{attendance_correct_request_id}
-     *
-     * 承認時に AttendanceApplication のステータスを approved に変更し、
-     * そのタイミングで勤怠合計(AttendanceTotal)を再計算して「確定」させる。
-     */
     public function approve(Request $request, int $attendanceCorrectRequestId)
     {
         $app = AttendanceApplication::with([
@@ -203,7 +161,6 @@ class AdminRequestController extends Controller
             ])
             ->findOrFail($attendanceCorrectRequestId);
 
-        // すでに pending 以外なら何もしない
         if (($app->status?->code ?? null) !== ApplicationStatus::CODE_PENDING) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -216,16 +173,10 @@ class AdminRequestController extends Controller
             return back()->with('status', 'この申請は既に処理済みです。');
         }
 
-        // 承認ステータス取得（application_statuses.code = 'approved'）
         $approvedStatus = ApplicationStatus::where('code', ApplicationStatus::CODE_APPROVED)->firstOrFail();
-
-        // --------------------------------------------------
-        // 1) 勤怠データの合計を「承認タイミング」で確定計算する（★修正版）
-        // --------------------------------------------------
         $attendance = $app->attendance;
 
         if ($attendance) {
-            // 「時刻だけ」に正規化して日付ズレを排除（AttendanceTime が datetime cast のため）
             $parseTime = function ($value): ?Carbon {
                 if (! $value) {
                     return null;
@@ -249,20 +200,14 @@ class AdminRequestController extends Controller
             $start = $parseTime($time?->start_time ?? null);
             $end   = $parseTime($time?->end_time ?? null);
 
-            // 勤務分（end > start のときだけ）
             $workMinutes = 0;
             if ($start && $end && $end->greaterThan($start)) {
                 $workMinutes = $start->diffInMinutes($end);
             }
 
-            // 休憩は minutes カラム合計（ここが最も安定）
             $breakMinutes = (int) ($attendance->breaks?->sum('minutes') ?? 0);
             $breakMinutes = max(0, $breakMinutes);
-
-            // 実労働（分）
             $netMinutes = max(0, $workMinutes - $breakMinutes);
-
-            // attendance_totals を更新（無ければ作成）
             $total = $attendance->total ?: new AttendanceTotal([
                 'attendance_id' => $attendance->id,
             ]);
@@ -273,9 +218,6 @@ class AdminRequestController extends Controller
             $total->save();
         }
 
-        // --------------------------------------------------
-        // 2) 申請ステータスを approved に更新
-        // --------------------------------------------------
         $app->status_id = $approvedStatus->id;
         $app->save();
 

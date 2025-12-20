@@ -1,8 +1,6 @@
-/* public/css/request.css */
-
 .request-list {
-  background: #f3f3f6;               /* 全体の薄いグレー */
-  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+  background: #f3f3f6;
+  min-height: calc(100vh - 56px);
 }
 
 .request-list__inner {
@@ -12,7 +10,6 @@
   border-radius: 4px;
 }
 
-/* タイトル周り */
 .request-list__header {
   margin-bottom: 24px;
 }
@@ -36,7 +33,6 @@
   font-weight: 700;
 }
 
-/* タブ（承認待ち / 承認済み） */
 .request-list__tabs {
   display: flex;
   gap: 40px;
@@ -59,8 +55,6 @@
   font-weight: 600;
 }
 
-
-/* テーブル */
 .request-list__table-wrapper {
   margin-top: 8px;
 }
@@ -74,7 +68,6 @@
   overflow: hidden;
 }
 
-/* ▼ ヘッダー行の下にも横線 */
 .request-table thead tr {
   background: #f3f4f6;
   border-bottom: 1px solid #d1d5db;
@@ -88,12 +81,10 @@
   background: #ffffff;
 }
 
-/* ▼ 本文行ごとの横線 */
 .request-table tbody tr {
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* 最後の行だけボーダーなしにしたい場合（好みで） */
 .request-table tbody tr:last-child {
   border-bottom: none;
 }
@@ -104,7 +95,6 @@
   width: 80px;
 }
 
-/* 行背景（必要ならそのまま利用） */
 .request-table tbody tr:nth-child(even) {
   background: #fafafa;
 }
@@ -113,7 +103,6 @@
   background: #f1f5f9;
 }
 
-/* 詳細リンク */
 .request-table__detail-link {
   font-size: 12px;
   font-weight: 700;
@@ -130,22 +119,16 @@
   pointer-events: none;
 }
 
-/* データなし行 */
 .request-table__td--empty {
   text-align: center;
   padding: 20px 16px;
 }
 
-/* =====================================================
-   PCレスポンシブ（1400px〜1540px）
-   - 元のトーンを維持しつつ、余白と可読性だけ微調整
-   - レイアウト崩れ防止が目的
-===================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
   .request-list__inner {
-    max-width: 1040px;          /* 画面が広い帯では少しだけ器を広げる */
-    padding: 36px 48px 44px;    /* 余白をわずかに増やして窮屈さを回避 */
+    max-width: 1040px;
+    padding: 36px 48px 44px;
   }
 
   .request-list__header {
@@ -153,7 +136,7 @@
   }
 
   .request-list__title-text {
-    font-size: 21px;            /* 1px〜程度の微増で違和感なし */
+    font-size: 21px;
   }
 
   .request-list__tabs {

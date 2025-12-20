@@ -1,5 +1,3 @@
-/* login.css */
-
 html, body { height: 100%; }
 body {
   margin: 0;
@@ -111,28 +109,22 @@ main {
   text-decoration: underline;
 }
 
-/* =====================================================
-   レスポンシブ（PC: 1400px - 1540px）
-   - 元のデザインを崩さない微調整
-   - input の固定幅を親幅追従にして崩れ防止
-===================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
   main {
-    padding: 56px 24px; /* 余白を少しだけ広げる */
+    padding: 56px 24px;
   }
 
   .login__content {
-    width: min(600px, 100%); /* 見た目をほぼ維持しつつ少しだけゆとり */
+    width: min(600px, 100%);
   }
 
   .form input[type="email"],
   .form input[type="password"] {
-    width: 100%; /* 親(.login__content)に合わせて自然に伸縮 */
+    width: 100%;
   }
 
-  /* 必須ではないが、見た目のバランス調整（好みでOK） */
   .login-form__heading {
-    font-size: 30px; /* 元を崩さないため据え置き */
+    font-size: 30px;
   }
 }

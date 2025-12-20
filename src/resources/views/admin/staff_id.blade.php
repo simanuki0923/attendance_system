@@ -1,5 +1,3 @@
-{{-- resources/views/admin/staff_id.blade.php --}}
-
 @extends('layouts.app')
 
 @section('css')
@@ -13,14 +11,12 @@
     $prevMonthUrl      = $prevMonthUrl      ?? null;
     $nextMonthUrl      = $nextMonthUrl      ?? null;
     $attendances       = $attendances       ?? collect();
-    // ★追加：CSVダウンロード用URL（コントローラーから渡す）
     $csvDownloadUrl    = $csvDownloadUrl    ?? null;
 @endphp
 
 <main class="attendance-list attendance-list--staff">
   <div class="attendance-list__inner">
 
-    {{-- タイトル --}}
     <header class="attendance-list__header">
       <h1 class="attendance-list__title">
         <span class="attendance-list__title-bar"></span>
@@ -29,7 +25,6 @@
         </span>
       </h1>
 
-      {{-- 月切替ナビ（list.blade.php と同じ構成） --}}
       <div class="attendance-list__month-nav">
         @if (! empty($prevMonthUrl))
           <a href="{{ $prevMonthUrl }}" class="month-nav__btn month-nav__btn--prev">
@@ -62,10 +57,8 @@
       </div>
     </header>
 
-    {{-- 一覧テーブル --}}
     <section class="attendance-list__table attendance-list__table--staff" aria-label="スタッフ別勤怠一覧">
 
-      {{-- ヘッダー行 --}}
       <div class="attendance-list__row attendance-list__row--head">
         <div class="attendance-list__cell attendance-list__cell--date">日付</div>
         <div class="attendance-list__cell">出勤</div>
@@ -75,7 +68,6 @@
         <div class="attendance-list__cell attendance-list__cell--detail">詳細</div>
       </div>
 
-      {{-- データ行 --}}
       @forelse($attendances as $row)
         @php $isActive = !empty($row['is_active']); @endphp
 
@@ -112,20 +104,13 @@
       @endforelse
     </section>
 
-    {{-- CSVボタン：見た目はそのまま、機能だけ実装 --}}
     <div class="attendance-list__footer">
       @if (!empty($csvDownloadUrl))
-        <a href="{{ $csvDownloadUrl }}" class="attendance-list__csv-btn">
-          CSV出力
-        </a>
+        <a href="{{ $csvDownloadUrl }}" class="attendance-list__csv-btn">CSV出力</a>
       @else
-        {{-- 想定外でURLが渡っていない場合の保険（disabled表示） --}}
-        <button type="button" class="attendance-list__csv-btn" disabled>
-          CSV出力
-        </button>
+        <button type="button" class="attendance-list__csv-btn" disabled>CSV出力</button>
       @endif
     </div>
-
   </div>
 </main>
 @endsection

@@ -9,7 +9,6 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
     /**
@@ -21,7 +20,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
-        'is_admin', // ★追加：管理者フラグ
+        'is_admin',
     ];
 
     /**
@@ -44,21 +43,15 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
-            'is_admin'          => 'boolean', // ★追加：true/falseで扱う
+            'is_admin'          => 'boolean',
         ];
     }
 
-    /**
-     * 勤怠（1:N）
-     */
     public function attendances()
     {
         return $this->hasMany(\App\Models\Attendance::class);
     }
 
-    /**
-     * 勤怠修正申請（1:N）
-     */
     public function attendanceApplications()
     {
         return $this->hasMany(\App\Models\AttendanceApplication::class, 'applicant_user_id');

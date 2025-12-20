@@ -1,5 +1,3 @@
-{{-- resources/views/admin/list.blade.php --}}
-
 @extends('layouts.app')
 
 @section('css')

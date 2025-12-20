@@ -66,7 +66,6 @@ class ListController extends Controller
             $breakLabel = $this->formatMinutes($total?->break_minutes ?? null);
             $totalLabel = $this->formatMinutes($total?->total_work_minutes ?? null);
 
-            // ★ {id} に合わせる
             $detailUrl = route('attendance.detail', [
                 'id' => $attendance->id,
             ]);

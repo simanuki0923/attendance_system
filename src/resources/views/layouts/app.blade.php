@@ -6,14 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'COACHTECH')</title>
 
-    {{-- 共通CSS --}}
     <link rel="stylesheet" href="{{ asset('css/sanitize.css') }}">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     @yield('css')
 </head>
 <body>
 @php
-    /** @var \App\Models\User|null $user */
     $user = auth()->user();
 
     $headerType = trim($__env->yieldContent('header_type'));
@@ -22,7 +20,6 @@
         return \Illuminate\Support\Facades\Route::has($primary) ? $primary : $fallback;
     };
 
-    // ★FIX: 管理者判定（is_admin / whitelist 両対応で統一）
     $isAdmin = false;
     if ($user) {
         $isAdmin =
@@ -30,10 +27,9 @@
             || in_array($user->email, config('admin.emails', []), true);
     }
 
-    // ★FIX: バナー（ロゴ）の遷移先も管理者/一般で分岐
     $homeRouteName = $isAdmin
         ? $safeRoute('admin.attendance.list', 'attendance.list')
-        : $safeRoute('home', 'attendance.list'); // 一般は従来通り /home 経由でOK
+        : $safeRoute('home', 'attendance.list');
 
     $logoutRoute = $isAdmin
         ? $safeRoute('admin.logout', 'logout')
@@ -43,16 +39,13 @@
 <header class="header">
     <div class="header__inner">
 
-        {{-- ★FIX: 管理者は admin 勤怠一覧へ --}}
         <a href="{{ route($homeRouteName) }}" class="header__logo">
             <img src="{{ asset('img/logo.svg') }}" alt="COACHTECHロゴ">
         </a>
 
         @if (Route::is(['login', 'register', 'verification.notice', 'admin.login']))
-            {{-- ナビ非表示 --}}
         @elseif ($user)
             @php
-                // 1) 管理者メニュー
                 if ($isAdmin) {
                     $menu = [
                         [
@@ -70,7 +63,6 @@
                     ];
                 }
 
-                // 2) 一般ユーザー 退勤後
                 elseif ($headerType === 'after_work') {
                     $menu = [
                         [
@@ -84,7 +76,6 @@
                     ];
                 }
 
-                // 3) 一般ユーザー
                 else {
                     $menu = [
                         [

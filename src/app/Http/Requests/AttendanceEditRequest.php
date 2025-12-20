@@ -11,7 +11,6 @@ class AttendanceEditRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // ルート/ミドルウェアで管理者制御している前提。
         return true;
     }
 
@@ -27,7 +26,6 @@ class AttendanceEditRequest extends FormRequest
             'break2_start' => ['nullable', 'date_format:H:i'],
             'break2_end'   => ['nullable', 'date_format:H:i'],
 
-            // ★仕様：備考必須
             'note'         => ['required', 'string', 'max:1000'],
         ];
     }
@@ -51,14 +49,12 @@ class AttendanceEditRequest extends FormRequest
             $b2s = $this->toCarbon($this->input('break2_start'));
             $b2e = $this->toCarbon($this->input('break2_end'));
 
-            // 出勤 > 退勤
             if ($start && $end && $start->gt($end)) {
                 $msg = '出勤時間もしくは退勤時間が不適切な値です';
                 $v->errors()->add('start_time', $msg);
                 $v->errors()->add('end_time', $msg);
             }
 
-            // 休憩開始が出勤より前 / 退勤より後
             if ($b1s && $start && $b1s->lt($start)) {
                 $v->errors()->add('break1_start', '休憩時間が不適切な値です');
             }
@@ -73,7 +69,6 @@ class AttendanceEditRequest extends FormRequest
                 $v->errors()->add('break2_start', '休憩時間が不適切な値です');
             }
 
-            // 休憩終了が退勤より後
             if ($b1e && $end && $b1e->gt($end)) {
                 $v->errors()->add('break1_end', '休憩時間もしくは退勤時間が不適切な値です');
             }
@@ -81,7 +76,6 @@ class AttendanceEditRequest extends FormRequest
                 $v->errors()->add('break2_end', '休憩時間もしくは退勤時間が不適切な値です');
             }
 
-            // 追加の安全策：休憩終了 < 休憩開始
             if ($b1s && $b1e && $b1e->lt($b1s)) {
                 $v->errors()->add('break1_start', '休憩時間が不適切な値です');
             }

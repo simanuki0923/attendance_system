@@ -1,8 +1,6 @@
-/* public/css/staff.css */
-
 .staff-list {
-  background: #f3f3f6;               /* 画面全体の薄いグレー */
-  min-height: calc(100vh - 56px);    /* ヘッダー分をざっくり差し引き */
+  background: #f3f3f6;
+  min-height: calc(100vh - 56px);
 }
 
 .staff-list__inner {
@@ -11,7 +9,6 @@
   padding: 0 24px;
 }
 
-/* タイトル周り */
 .staff-list__header {
   margin-bottom: 24px;
   transform: translateX(100px);
@@ -36,7 +33,6 @@
   font-weight: 700;
 }
 
-/* 白いカード＋テーブル */
 .staff-list__card {
   max-width: 720px;
   margin: 0 auto;
@@ -74,7 +70,6 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
-/* 列幅の調整（スクショっぽく中央寄せの細めテーブル） */
 .staff-list__th--name,
 .staff-list__td--name {
   width: 30%;
@@ -94,7 +89,6 @@
   transform: translateX(-80px);
 }
 
-/* 「詳細」リンク */
 .staff-list__detail-link {
   font-size: 12px;
   font-weight: 600;
@@ -111,30 +105,22 @@
   font-weight: 600;
 }
 
-/* データなし行 */
 .staff-list__td--empty {
   text-align: center;
   color: #6b7280;
 }
 
-/* =====================================================
-   PC レスポンシブ（1400px - 1540px）
-   - 元デザインを崩さず、余白と視認性だけ微調整
-   ===================================================== */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
-  /* 画面が広い分、外側の余白で窮屈感を減らす */
   .staff-list__inner {
-    max-width: 1000px;  /* 960px → 少しだけ拡張 */
-    padding: 0 32px;    /* 24px → 少しだけ拡張 */
+    max-width: 1000px;
+    padding: 0 32px;
   }
 
-  /* カード幅は大きく変えない（transform前提のため安全優先） */
   .staff-list__card {
     max-width: 720px;
   }
 
-  /* テーブルの文字が広い画面で小さく見えすぎないように微調整 */
   .staff-list__table {
     font-size: 13.5px;
   }

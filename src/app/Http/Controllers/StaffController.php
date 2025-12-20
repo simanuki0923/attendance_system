@@ -9,10 +9,6 @@ use Carbon\Carbon;
 
 class StaffController extends Controller
 {
-    /**
-     * GET /admin/staff/list
-     * 管理者用 スタッフ一覧
-     */
     public function index()
     {
         $adminEmails = config('admin.emails', []);
@@ -26,7 +22,6 @@ class StaffController extends Controller
             return [
                 'name_label'  => $u->name,
                 'email_label' => $u->email,
-                // ? 詳細リンク → /admin/attendance/staff/{id}
                 'detail_url'  => route('admin.attendance.staff', ['id' => $u->id]),
                 'detail_text' => '詳細',
             ];
@@ -38,16 +33,10 @@ class StaffController extends Controller
         ]);
     }
 
-    /**
-     * GET /admin/attendance/staff/{id}?month=YYYY-MM
-     * 管理者用 スタッフ別勤怠一覧（月次）
-     */
     public function attendance(Request $request, int $id)
     {
-        // 対象スタッフ
         $staff = User::findOrFail($id);
 
-        // 対象月の決定（?month=YYYY-MM）
         $rawMonth = $request->query('month');
         if ($rawMonth) {
             try {
@@ -62,14 +51,12 @@ class StaffController extends Controller
         $startOfMonth = $targetMonth->copy()->startOfMonth();
         $endOfMonth   = $targetMonth->copy()->endOfMonth();
 
-        // その月に存在する勤怠だけ取得して日付キー化
         $recordsByDate = Attendance::with(['time', 'total', 'breaks'])
             ->where('user_id', $staff->id)
             ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
             ->get()
             ->keyBy(fn (Attendance $a) => Carbon::parse($a->work_date)->format('Y-m-d'));
 
-        // 分を H:MM にする補助
         $fmtMinutes = function (?int $minutes): string {
             $minutes = (int)($minutes ?? 0);
             $h = intdiv($minutes, 60);
@@ -77,7 +64,6 @@ class StaffController extends Controller
             return $h . ':' . str_pad((string) $m, 2, '0', STR_PAD_LEFT);
         };
 
-        // 対象月の「全日」配列を作る（勤怠無し日も空欄行）
         $attendances = collect();
         $cursor = $startOfMonth->copy();
 
@@ -102,7 +88,6 @@ class StaffController extends Controller
                 $breakLabel = $fmtMinutes($total?->break_minutes);
                 $workLabel  = $fmtMinutes($total?->total_work_minutes);
 
-                // ? 管理者の勤怠詳細：/admin/attendance/{id}
                 $detailUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
             } else {
                 $startLabel = '';
@@ -125,7 +110,6 @@ class StaffController extends Controller
             $cursor->addDay();
         }
 
-        // 月ナビURL
         $prevMonth = $targetMonth->copy()->subMonth()->format('Y-m');
         $nextMonth = $targetMonth->copy()->addMonth()->format('Y-m');
 
@@ -148,15 +132,10 @@ class StaffController extends Controller
         ]);
     }
 
-    /**
-     * GET /admin/attendance/staff/{id}/csv?month=YYYY-MM
-     * スタッフ別勤怠一覧（月次）の CSV ダウンロード
-     */
     public function attendanceCsv(Request $request, int $id)
     {
         $staff = User::findOrFail($id);
 
-        // 対象月の決定（?month=YYYY-MM）
         $rawMonth = $request->query('month');
         if ($rawMonth) {
             try {

@@ -1,5 +1,3 @@
-/* public/css/register.css */
-
 :root {
   --bg: #f2f2f2;
   --card-bg: #ffffff;
@@ -146,29 +144,19 @@ main {
   color: #3a3a3a;
 }
 
-/* =======================================================
-   PCレスポンシブ（1400px - 1540px）
-   - 既存デザインを崩さないために
-     “余白とコンテナ幅だけ”を穏やかに調整
-   ======================================================= */
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
 
   main {
-    /* 大きい画面で上下左右に少し余裕を持たせる */
     padding: 32px 24px 64px;
   }
 
   .register__content {
-    /* 中央カードの見え方だけ少しゆったり */
     max-width: 600px;
     padding: 32px 32px 36px;
     margin-top: 28px;
   }
 
   .register-form__heading {
-    /* 見出しが小さく見えすぎない程度に微調整 */
     font-size: 36px;
   }
-
-  /* ラベル/入力/ボタン等のレイアウト構造は触らない */
 }

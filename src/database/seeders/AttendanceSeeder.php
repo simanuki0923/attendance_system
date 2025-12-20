@@ -17,21 +17,17 @@ class AttendanceSeeder extends Seeder
 
     public function run(): void
     {
-        // 一般ユーザー（勤怠ダミーを紐づける対象）
         $user = User::where('email', 'test@example.com')->first();
 
         if (!$user) {
             return;
         }
 
-        // 直近7日分の勤怠ダミー
         $base = Carbon::today();
         $days = 7;
 
         for ($i = 0; $i < $days; $i++) {
             $date = $base->copy()->subDays($i)->toDateString();
-
-            // 勤務パターンを日ごとに変える
             $pattern = $i % 3;
 
             if ($pattern === 0) {
@@ -59,7 +55,6 @@ class AttendanceSeeder extends Seeder
                 $note = 'ダミー：短め勤務(9:30-17:30)';
             }
 
-            // 1) attendances（(user_id, work_date) はユニーク） 
             $attendance = Attendance::updateOrCreate(
                 [
                     'user_id'   => $user->id,
@@ -70,13 +65,11 @@ class AttendanceSeeder extends Seeder
                 ]
             );
 
-            // 2) attendance_times（attendance_id はユニーク） 
             AttendanceTime::updateOrCreate(
                 ['attendance_id' => $attendance->id],
                 ['start_time' => $start, 'end_time' => $end]
             );
 
-            // 3) attendance_breaks（(attendance_id, break_no) はユニーク） 
             $totalBreakMinutes = 0;
 
             foreach ($breaks as $b) {
@@ -96,7 +89,6 @@ class AttendanceSeeder extends Seeder
                 );
             }
 
-            // 4) attendance_totals（attendance_id はユニーク） 
             $workMinutes      = $this->minutesBetween($start, $end);
             $totalWorkMinutes = max($workMinutes - $totalBreakMinutes, 0);
 

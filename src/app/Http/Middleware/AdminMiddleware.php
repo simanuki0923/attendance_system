@@ -12,12 +12,10 @@ class AdminMiddleware
     {
         $user = Auth::user();
 
-        // 未ログイン対策
         if ($user === null) {
             return redirect()->route('admin.login');
         }
 
-        // is_admin OR ホワイトリスト
         $adminEmails = config('admin.emails', []);
 
         $isAdmin = (bool) ($user->is_admin ?? false)

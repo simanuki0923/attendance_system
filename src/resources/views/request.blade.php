@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('css')
@@ -7,27 +6,9 @@
 
 @section('content')
 @php
-    /**
-     * 申請一覧画面 想定パラメータ
-     *
-     * @var string $pageTitle
-     * @var string $activeTab           'pending' | 'approved'
-     * @var string|null $pendingTabUrl
-     * @var string|null $approvedTabUrl
-     *
-     * @var \Illuminate\Support\Collection|array<array{
-     *   status_label:string,
-     *   name_label:string,
-     *   target_date_label:string,
-     *   reason_label:string,
-     *   applied_date_label:string,
-     *   detail_url:string|null
-     * }> $requests
-     */
 
     $pageTitle = $pageTitle ?? '申請一覧';
     $activeTab = $activeTab ?? 'pending';
-
     $pendingTabUrl  = $pendingTabUrl  ?? '#';
     $approvedTabUrl = $approvedTabUrl ?? '#';
 
@@ -48,7 +29,6 @@
 <main class="request-list">
   <div class="request-list__inner">
 
-    {{-- タイトル --}}
     <header class="request-list__header">
       <h1 class="request-list__title">
         <span class="request-list__title-bar"></span>
@@ -56,23 +36,15 @@
       </h1>
     </header>
 
-    {{-- タブ（承認待ち / 承認済み） --}}
     <nav class="request-list__tabs" aria-label="申請ステータス切替">
-      <a
-        href="{{ $pendingTabUrl }}"
-        class="request-list__tab {{ $activeTab === 'pending' ? 'is-active' : '' }}"
-      >
+      <a href="{{ $pendingTabUrl }}" class="request-list__tab {{ $activeTab === 'pending' ? 'is-active' : '' }}">
         承認待ち
       </a>
-      <a
-        href="{{ $approvedTabUrl }}"
-        class="request-list__tab {{ $activeTab === 'approved' ? 'is-active' : '' }}"
-      >
+      <a href="{{ $approvedTabUrl }}" class="request-list__tab {{ $activeTab === 'approved' ? 'is-active' : '' }}">
         承認済み
       </a>
     </nav>
 
-    {{-- 一覧テーブル --}}
     <section class="request-list__table-wrapper">
       <table class="request-table">
         <thead>
