@@ -9,11 +9,11 @@ Laravel + Docker（Nginx / PHP / MySQL）で動く勤怠管理アプリです。
 - name: 一般ユーザー
 - email: test@example.com
 - password: password123
--------------------------
 - name: 管理者ユーザー
 - email: admin@example.com
 - password: admin1234
--------------------------
+
+---
 
 
 ## 環境構築
@@ -28,7 +28,6 @@ Laravel + Docker（Nginx / PHP / MySQL）で動く勤怠管理アプリです。
 git clone https://github.com/simanuki0923/attendance_system.git
 cd attendance_system
 docker compose up -d --build
-
 ```
 
 ### Laravel環境構築
@@ -43,7 +42,6 @@ php artisan key:generate
 php artisan migrate
 php artisan db:seed
 exit
-
 ```
 
 ---
@@ -165,12 +163,11 @@ MAIL_FROM_ADDRESSは任意のメールアドレスを入力してください。
 ## ER図
 ![alt text](img/ER図.png)
 
-```
-
-## PHPUnitテスト
 ---
 
+## PHPUnitテスト
+
+```
 docker compose exec php bash
 php artisan test tests/Feature
-
 ```
