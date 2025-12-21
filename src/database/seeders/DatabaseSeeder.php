@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
         $admin = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'name'     => '管理者デモ',
+                'name'     => '管理者ユーザー',
                 'email'    => 'admin@example.com',
                 'password' => 'admin1234',
             ]
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
         $user = User::updateOrCreate(
             ['email' => 'test@example.com'],
             [
-                'name'     => 'Test User',
+                'name'     => '一般ユーザー',
                 'email'    => 'test@example.com',
                 'password' => 'password123',
             ]
