@@ -66,7 +66,8 @@
 }
 
 .attendance-detail__value--date {
-  justify-content: center;
+  justify-content: left;
+  transform: translateX(130px);
   gap: 120px;
 }
 
@@ -81,6 +82,7 @@
   margin: 0 auto;
 }
 
+/* 通常（編集可能を想定）：枠あり */
 .attendance-detail__time-input input {
   width: 96px;
   height: 36px;
@@ -92,8 +94,19 @@
   padding: 0 8px;
 }
 
+/* ✅ readonly のとき：枠を消して「テキスト表示」に寄せる */
 .attendance-detail__time-input input[readonly] {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 600;
   cursor: default;
+  outline: none;
 }
 
 .attendance-detail__tilde {
@@ -105,12 +118,16 @@
   align-items: stretch;
 }
 
+/* 備考も中央寄せに寄せる */
 .attendance-detail__note {
   width: 100%;
   display: flex;
   align-items: center;
+  justify-content: left;
+  transform: translateX(130px);
 }
 
+/* 通常（編集可能を想定）：枠あり */
 .attendance-detail__note input {
   width: 200px;
   height: 60px;
@@ -119,6 +136,21 @@
   font-size: 13px;
   padding: 0 12px;
   color: #111827;
+}
+
+/* ✅ readonly のとき：枠を消して「テキスト表示」に寄せる */
+.attendance-detail__note input[readonly] {
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  cursor: default;
 }
 
 .attendance-detail__actions {
@@ -170,6 +202,7 @@
     gap: 140px;
   }
 
+  /* readonly で width:auto にするので、ここは残しても実害なし */
   .attendance-detail__time-input input {
     width: 100px;
   }
