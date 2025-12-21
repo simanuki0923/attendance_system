@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
@@ -67,14 +68,12 @@ class AdminAttendanceDetailEditTest extends TestCase
     {
         $expectedHms = $expectedHm . ':00';
 
-        // 1) name が一致する <input ...> を全部抜き出す（改行含めて）
         $patternFindInput = '/<input\b[^>]*\bname\s*=\s*([\'"])' . preg_quote($name, '/') . '\1[^>]*>/si';
 
         if (!preg_match_all($patternFindInput, $html, $matches)) {
             $this->fail("input[name={$name}] がHTML内に見つかりません。");
         }
 
-        // 2) 抜き出した input タグの中に value="09:00" or "09:00:00" があるか
         $ok = false;
         foreach ($matches[0] as $inputTag) {
             $patternValueHm  = '/\bvalue\s*=\s*([\'"])' . preg_quote($expectedHm, '/')  . '\1/i';
@@ -92,9 +91,10 @@ class AdminAttendanceDetailEditTest extends TestCase
         );
     }
 
-    public function testAdminAttendanceDetailPageShowsSelectedData(): void
+    public function test_admin_attendance_detail_page_shows_selected_data(): void
     {
         $admin = $this->createAdminUser();
+
         $attendance = $this->createAttendanceWithRelations([
             'employee_name'   => '山田 太郎',
             'work_date'       => '2025-12-01',
@@ -107,7 +107,9 @@ class AdminAttendanceDetailEditTest extends TestCase
             'break2_end_db'   => '15:15:00',
         ]);
 
-        $url = "/attendance/detail/{$attendance->id}";
+        // ✅ 管理者の勤怠詳細ルートに合わせる（/admin/attendance/{id}）
+        $url = route('admin.attendance.detail', ['id' => $attendance->id]);
+
         $response = $this->actingAs($admin)->get($url);
 
         $response->assertOk();
@@ -129,12 +131,13 @@ class AdminAttendanceDetailEditTest extends TestCase
         $this->assertInputHasTimeHtml($html, 'break2_end', '15:15');
     }
 
-    public function testStartTimeAfterEndTimeShowsValidationMessage(): void
+    public function test_start_time_after_end_time_shows_validation_message(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
 
-        $url = "/attendance/detail/{$attendance->id}";
+        $showUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
+        $updateUrl = route('admin.attendance.detail.update', ['id' => $attendance->id]);
 
         $payload = [
             'start_time'    => '19:00',
@@ -146,21 +149,22 @@ class AdminAttendanceDetailEditTest extends TestCase
             'note'          => '更新テスト',
         ];
 
-        $response = $this->actingAs($admin)->from($url)->patch($url, $payload);
+        $response = $this->actingAs($admin)->from($showUrl)->patch($updateUrl, $payload);
 
-        $response->assertRedirect($url);
+        $response->assertRedirect($showUrl);
         $response->assertSessionHasErrors();
 
         $this->followRedirects($response)
             ->assertSee('出勤時間もしくは退勤時間が不適切な値です');
     }
 
-    public function testBreakStartAfterEndTimeShowsValidationMessage(): void
+    public function test_break_start_after_end_time_shows_validation_message(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
 
-        $url = "/attendance/detail/{$attendance->id}";
+        $showUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
+        $updateUrl = route('admin.attendance.detail.update', ['id' => $attendance->id]);
 
         $payload = [
             'start_time'    => '09:00',
@@ -172,21 +176,22 @@ class AdminAttendanceDetailEditTest extends TestCase
             'note'          => '更新テスト',
         ];
 
-        $response = $this->actingAs($admin)->from($url)->patch($url, $payload);
+        $response = $this->actingAs($admin)->from($showUrl)->patch($updateUrl, $payload);
 
-        $response->assertRedirect($url);
+        $response->assertRedirect($showUrl);
         $response->assertSessionHasErrors();
 
         $this->followRedirects($response)
             ->assertSee('休憩時間が不適切な値です');
     }
 
-    public function testBreakEndAfterEndTimeShowsValidationMessage(): void
+    public function test_break_end_after_end_time_shows_validation_message(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
 
-        $url = "/attendance/detail/{$attendance->id}";
+        $showUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
+        $updateUrl = route('admin.attendance.detail.update', ['id' => $attendance->id]);
 
         $payload = [
             'start_time'    => '09:00',
@@ -198,21 +203,22 @@ class AdminAttendanceDetailEditTest extends TestCase
             'note'          => '更新テスト',
         ];
 
-        $response = $this->actingAs($admin)->from($url)->patch($url, $payload);
+        $response = $this->actingAs($admin)->from($showUrl)->patch($updateUrl, $payload);
 
-        $response->assertRedirect($url);
+        $response->assertRedirect($showUrl);
         $response->assertSessionHasErrors();
 
         $this->followRedirects($response)
             ->assertSee('休憩時間もしくは退勤時間が不適切な値です');
     }
 
-    public function testNoteEmptyShowsValidationMessage(): void
+    public function test_note_empty_shows_validation_message(): void
     {
         $admin = $this->createAdminUser();
         $attendance = $this->createAttendanceWithRelations();
 
-        $url = "/attendance/detail/{$attendance->id}";
+        $showUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
+        $updateUrl = route('admin.attendance.detail.update', ['id' => $attendance->id]);
 
         $payload = [
             'start_time'    => '09:00',
@@ -224,9 +230,9 @@ class AdminAttendanceDetailEditTest extends TestCase
             'note'          => '',
         ];
 
-        $response = $this->actingAs($admin)->from($url)->patch($url, $payload);
+        $response = $this->actingAs($admin)->from($showUrl)->patch($updateUrl, $payload);
 
-        $response->assertRedirect($url);
+        $response->assertRedirect($showUrl);
         $response->assertSessionHasErrors();
 
         $this->followRedirects($response)
