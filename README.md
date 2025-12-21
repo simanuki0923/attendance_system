@@ -1,20 +1,18 @@
 # 勤怠管理システム（attendance_system）
 
-Laravel + Docker（Nginx / PHP / MySQL）で動く勤怠管理アプリです。  
+Laravel + Docker（Nginx / PHP / MySQL）で動く勤怠管理アプリです。
 一般ユーザーの勤怠登録・修正申請、管理者の承認などを想定しています。
 
 ---
 
----
-
 ## テストアカウント
-name: 一般ユーザー  
-email: test@example.com
-password: password123
+- name: 一般ユーザー
+- email: test@example.com
+- password: password123
 -------------------------
-name: 管理者ユーザー 
-email: admin@example.com
-password: admin1234
+- name: 管理者ユーザー
+- email: admin@example.com
+- password: admin1234
 -------------------------
 
 
@@ -25,20 +23,29 @@ password: admin1234
 - 管理者ログイン画面 http://localhost/admin/login
 
 ### Dockerビルド
-- git clone https://github.com/simanuki0923/attendance_system.git
-- cd attendance_system
-- docker compose up -d --build
+
+```
+git clone https://github.com/simanuki0923/attendance_system.git
+cd attendance_system
+docker compose up -d --build
+
+```
 
 ### Laravel環境構築
-- sudo chmod -R 777 src/*
-- cp src/.env.local src/.env
-- sudo chmod -R 777 src/.env
-- docker-compose exec php bash
-- composer install
-- php artisan key:generate
-- php artisan migrate
-- php artisan db:seed
-- exit
+
+```
+sudo chmod -R 777 src/*
+cp src/.env.local src/.env
+sudo chmod -R 777 src/.env
+docker-compose exec php bash
+composer install
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+exit
+
+```
+
 ---
 
 ## メール認証
@@ -160,9 +167,8 @@ MAIL_FROM_ADDRESSは任意のメールアドレスを入力してください。
 
 ```
 
----
-
 ## PHPUnitテスト
+---
 
 docker compose exec php bash
 php artisan test tests/Feature
