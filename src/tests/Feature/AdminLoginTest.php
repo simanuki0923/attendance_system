@@ -11,12 +11,6 @@ class AdminLoginTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * 管理者ユーザーを作成する
-     * ※ Userモデルの $fillable に is_admin が含まれていないため
-     *   factory の配列指定だけだと反映されない可能性があるので
-     *   forceFill で確実に true にする。
-     */
     private function createAdminUser(array $overrides = []): User
     {
         $email = $overrides['email'] ?? 'admin@example.com';
@@ -35,9 +29,6 @@ class AdminLoginTest extends TestCase
         return $user;
     }
 
-    /**
-     * メールアドレス未入力 → バリデーションメッセージ表示
-     */
     public function testAdminLoginRequiresEmail(): void
     {
         $this->createAdminUser();
@@ -56,9 +47,6 @@ class AdminLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    /**
-     * パスワード未入力 → バリデーションメッセージ表示
-     */
     public function testAdminLoginRequiresPassword(): void
     {
         $this->createAdminUser();
@@ -77,9 +65,6 @@ class AdminLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    /**
-     * 登録内容と一致しない（誤ったメールアドレス） → エラーメッセージ表示
-     */
     public function testAdminLoginShowsErrorWhenEmailIsNotRegistered(): void
     {
         $this->createAdminUser([
@@ -101,11 +86,6 @@ class AdminLoginTest extends TestCase
         $this->assertGuest();
     }
 
-    /**
-     * （任意）正常に管理者ログインできること
-     * 仕様の3ケースには含まれていないが、
-     * ルート/Controllerの整合性確認として入れておくと安全。
-     */
     public function testAdminCanLoginSuccessfully(): void
     {
         $admin = $this->createAdminUser([

@@ -11,9 +11,6 @@ class RegisterTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * 正常系のベース入力
-     */
     private function validPayload(array $overrides = []): array
     {
         return array_merge([
@@ -24,10 +21,6 @@ class RegisterTest extends TestCase
         ], $overrides);
     }
 
-    /**
-     * 名前が未入力の場合、バリデーションメッセージが表示される
-     * 期待：「お名前を入力してください」
-     */
     public function testNameIsRequired(): void
     {
         $response = $this->post(route('register'),
@@ -40,10 +33,6 @@ class RegisterTest extends TestCase
         ]);
     }
 
-    /**
-     * メールアドレスが未入力の場合、バリデーションメッセージが表示される
-     * 期待：「メールアドレスを入力してください」
-     */
     public function testEmailIsRequired(): void
     {
         $response = $this->post(route('register'),
@@ -56,10 +45,6 @@ class RegisterTest extends TestCase
         ]);
     }
 
-    /**
-     * パスワードが未入力の場合、バリデーションメッセージが表示される
-     * 期待：「パスワードを入力してください」
-     */
     public function testPasswordIsRequired(): void
     {
         $response = $this->post(route('register'),
@@ -75,10 +60,6 @@ class RegisterTest extends TestCase
         ]);
     }
 
-    /**
-     * パスワードが8文字未満の場合、バリデーションメッセージが表示される
-     * 期待：「パスワードは8文字以上で入力してください」
-     */
     public function testPasswordMustBeAtLeast8Characters(): void
     {
         $response = $this->post(route('register'),
@@ -94,12 +75,6 @@ class RegisterTest extends TestCase
         ]);
     }
 
-    /**
-     * パスワードが一致しない場合、バリデーションメッセージが表示される
-     * 期待：「パスワードと一致しません」
-     *
-     * ※ confirmed のエラーは password に付く想定
-     */
     public function testPasswordConfirmationMustMatch(): void
     {
         $response = $this->post(route('register'),
@@ -115,13 +90,8 @@ class RegisterTest extends TestCase
         ]);
     }
 
-    /**
-     * フォームに内容が入力されていた場合、データが正常に保存される
-     * 期待：users テーブルに保存される
-     */
     public function testUserCanRegisterWithValidInput(): void
     {
-        // メール認証通知などが動作してもテストが壊れないように
         Notification::fake();
 
         $payload = $this->validPayload([
@@ -134,7 +104,6 @@ class RegisterTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionDoesntHaveErrors();
 
-        // is_admin default false を前提（あなたの users 設計に合わせる）
         $this->assertDatabaseHas('users', [
             'name' => 'テスト太郎',
             'email' => 'valid@example.com',

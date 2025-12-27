@@ -8,7 +8,6 @@ class ExampleTest extends TestCase
 {
     public function test_the_application_returns_a_successful_response(): void
     {
-        // web.php で "/" は login へ redirect する
         $response = $this->get('/');
 
         $response->assertStatus(302);
