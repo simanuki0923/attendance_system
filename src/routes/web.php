@@ -11,7 +11,9 @@ use App\Http\Controllers\EditController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\StaffController;
 
-Route::get('/', static fn () => redirect()->route('login'));
+Route::get('/', function () {
+    return redirect()->route('login');
+});
 
 Route::prefix('admin')->group(function () {
     Route::middleware('guest')->group(function () {
@@ -44,6 +46,14 @@ Route::prefix('admin')->group(function () {
             ->whereNumber('id')
             ->name('admin.attendance.staff.csv');
     });
+});
+
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/stamp_correction_request/approve/{attendance_correct_request_id}', [AdminRequestController::class, 'showApprove'])
+        ->name('stamp_correction_request.approve.show');
+
+    Route::post('/stamp_correction_request/approve/{attendance_correct_request_id}', [AdminRequestController::class, 'approve'])
+        ->name('stamp_correction_request.approve');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -79,20 +89,4 @@ Route::middleware('auth')->get('/stamp_correction_request/list', static function
         : app(RequestController::class)->index($request);
 })->name('requests.list');
 
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/stamp_correction_request/approve/{attendance_correct_request_id}', [AdminRequestController::class, 'showApprove'])
-        ->name('stamp_correction_request.approve.show');
-
-    Route::post('/stamp_correction_request/approve/{attendance_correct_request_id}', [AdminRequestController::class, 'approve'])
-        ->name('stamp_correction_request.approve');
-});
-
-Route::middleware('auth')->get('/home', static function () {
-    $user = auth()->user();
-    $isAdmin = (bool) ($user->is_admin ?? false) || in_array($user->email, config('admin.emails', []), true);
-
-    return $isAdmin
-        ? redirect()->route('admin.attendance.list')
-        : redirect()->route('attendance.list');
-})->name('home');
 
