@@ -25,21 +25,24 @@ class AdminController extends Controller
 
         $user = User::where('email', $email)->first();
 
+        // メールアドレスが存在しない
         if (! $user) {
             throw ValidationException::withMessages([
                 'email' => 'ログイン情報が登録されていません',
             ]);
         }
 
+        // パスワード不一致
         if (! Hash::check($password, (string) $user->password)) {
             throw ValidationException::withMessages([
                 'password' => 'ログイン情報が登録されていません',
             ]);
         }
 
+        // 管理者ではない（ここが今回のポイント：authではなく email に寄せる）
         if (! $this->isAdminUser($user)) {
             throw ValidationException::withMessages([
-                'auth' => 'ログイン情報が登録されていません',
+                'email' => 'ログイン情報が登録されていません',
             ]);
         }
 
@@ -52,6 +55,7 @@ class AdminController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

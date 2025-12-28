@@ -25,6 +25,7 @@ class AdminLoginRequest extends FormRequest
             'email.required'    => 'メールアドレスを入力してください',
             'email.email'       => 'メールアドレスを正しい形式で入力してください',
             'password.required' => 'パスワードを入力してください',
+            'email.email'       => 'ログイン情報が登録されていません',
         ];
     }
 }
