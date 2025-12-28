@@ -43,7 +43,13 @@ php artisan migrate
 php artisan db:seed
 exit
 ```
-
+## 使用技術
+- docker
+- Laravel 12.X
+- PHP 8.x
+- mysql 8.4
+- nginx 1.28
+- fortify1.30
 
 ## テーブル仕様
 
