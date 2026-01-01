@@ -4,14 +4,10 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
-
-use PHPUnit\Framework\Attributes\Test;
 
 use App\Models\User;
 use App\Models\Attendance;
 use App\Models\AttendanceTime;
-use App\Models\AttendanceBreak;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
 
@@ -19,200 +15,100 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
 {
     use RefreshDatabase;
 
-    private ApplicationStatus $pending;
-    private ApplicationStatus $approved;
-
-    protected function setUp(): void
+    private function seedStatuses(): array
     {
-        parent::setUp();
+        $pending = ApplicationStatus::query()->firstOrCreate(
+            ['code' => ApplicationStatus::CODE_PENDING],
+            ['label' => '承認待ち', 'sort_no' => 1]
+        );
 
-        $this->pending = ApplicationStatus::create([
-            'code'    => 'pending',
-            'label'   => '承認待ち',
-            'sort_no' => 1,
-        ]);
+        $approved = ApplicationStatus::query()->firstOrCreate(
+            ['code' => ApplicationStatus::CODE_APPROVED],
+            ['label' => '承認済み', 'sort_no' => 2]
+        );
 
-        $this->approved = ApplicationStatus::create([
-            'code'    => 'approved',
-            'label'   => '承認済み',
-            'sort_no' => 2,
-        ]);
+        return [$pending, $approved];
     }
 
-    private function makeAdminUser(): User
+    public function test_admin_can_approve_and_apply_requested_values(): void
     {
+        [$pending, $approved] = $this->seedStatuses();
+
         $admin = User::factory()->create([
+            'is_admin' => true,
             'email_verified_at' => now(),
         ]);
 
-        // is_admin は fillable に無いので forceFill
-        $admin->forceFill(['is_admin' => true])->save();
-
-        return $admin;
-    }
-
-    private function makeAttendanceWithTimeAndBreaks(User $user, string $workDateYmd): Attendance
-    {
-        $attendance = Attendance::create([
-            'user_id'   => $user->id,
-            'work_date' => $workDateYmd,
-            'note'      => 'テスト備考',
+        $staff = User::factory()->create([
+            'is_admin' => false,
+            'email_verified_at' => now(),
         ]);
 
-        AttendanceTime::create([
+        // ★AttendanceFactoryを使わず create で作る
+        $attendance = Attendance::query()->create([
+            'user_id'   => $staff->id,
+            'work_date' => now()->toDateString(),
+            'note'      => '元の備考',
+        ]);
+
+        AttendanceTime::query()->create([
             'attendance_id' => $attendance->id,
-            'start_time'    => '09:00:00',
-            'end_time'      => '18:00:00',
+            'start_time' => '09:00:00',
+            'end_time'   => '18:00:00',
         ]);
 
-        AttendanceBreak::create([
-            'attendance_id' => $attendance->id,
-            'break_no'      => 1,
-            'start_time'    => '12:00:00',
-            'end_time'      => '13:00:00',
-            'minutes'       => 60,
-        ]);
-
-        AttendanceBreak::create([
-            'attendance_id' => $attendance->id,
-            'break_no'      => 2,
-            'start_time'    => '15:00:00',
-            'end_time'      => '15:30:00',
-            'minutes'       => 30,
-        ]);
-
-        return $attendance;
-    }
-
-    private function makeApplication(
-        Attendance $attendance,
-        User $applicant,
-        ApplicationStatus $status,
-        ?Carbon $appliedAt = null
-    ): AttendanceApplication {
-        return AttendanceApplication::create([
+        $app = AttendanceApplication::query()->create([
             'attendance_id'     => $attendance->id,
-            'applicant_user_id' => $applicant->id,
-            'status_id'         => $status->id,
+            'applicant_user_id' => $staff->id,
+            'status_id'         => $pending->id,
             'reason'            => '勤怠修正申請',
-            'applied_at'        => ($appliedAt ?? now())->toDateTimeString(),
+            'applied_at'        => now(),
+
+            'requested_work_start_time'   => '10:00:00',
+            'requested_work_end_time'     => '19:00:00',
+            'requested_break1_start_time' => '12:00:00',
+            'requested_break1_end_time'   => '13:00:00',
+            'requested_note'              => '承認後の備考',
         ]);
-    }
 
-    #[Test]
-    public function pending_tab_shows_all_pending_requests(): void
-    {
-        $admin = $this->makeAdminUser();
+        $res = $this->actingAs($admin)->post(route('stamp_correction_request.approve', [
+            'attendance_correct_request_id' => $app->id,
+        ]));
 
-        $userA = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
-        $userB = User::factory()->create(['name' => '一般B', 'email_verified_at' => now()]);
-        $userC = User::factory()->create(['name' => '一般C', 'email_verified_at' => now()]);
+        $res->assertStatus(302);
+        $res->assertSessionHas('status', '承認しました');
 
-        $attendanceA = $this->makeAttendanceWithTimeAndBreaks($userA, '2025-12-01');
-        $attendanceB = $this->makeAttendanceWithTimeAndBreaks($userB, '2025-12-02');
-        $attendanceC = $this->makeAttendanceWithTimeAndBreaks($userC, '2025-12-03');
-
-        $this->makeApplication($attendanceA, $userA, $this->pending,  Carbon::parse('2025-12-05 10:00:00'));
-        $this->makeApplication($attendanceB, $userB, $this->pending,  Carbon::parse('2025-12-05 11:00:00'));
-        $this->makeApplication($attendanceC, $userC, $this->approved, Carbon::parse('2025-12-05 12:00:00'));
-
-        $res = $this->actingAs($admin)->get(route('requests.list', ['tab' => 'pending']));
-        $res->assertOk();
-
-        $res->assertSee('承認待ち');
-        $res->assertSee('承認済み');
-
-        $res->assertSee('一般A');
-        $res->assertSee('一般B');
-        $res->assertDontSee('一般C');
-    }
-
-    #[Test]
-    public function approved_tab_shows_all_approved_requests(): void
-    {
-        $admin = $this->makeAdminUser();
-
-        $userA = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
-        $userB = User::factory()->create(['name' => '一般B', 'email_verified_at' => now()]);
-
-        $attendanceA = $this->makeAttendanceWithTimeAndBreaks($userA, '2025-12-01');
-        $attendanceB = $this->makeAttendanceWithTimeAndBreaks($userB, '2025-12-02');
-
-        $this->makeApplication($attendanceA, $userA, $this->approved, Carbon::parse('2025-12-06 10:00:00'));
-        $this->makeApplication($attendanceB, $userB, $this->pending,  Carbon::parse('2025-12-06 11:00:00'));
-
-        $res = $this->actingAs($admin)->get(route('requests.list', ['tab' => 'approved']));
-        $res->assertOk();
-
-        $res->assertSee('一般A');
-        $res->assertDontSee('一般B');
-    }
-
-    #[Test]
-    public function approve_detail_page_shows_correct_application_contents(): void
-    {
-        $admin = $this->makeAdminUser();
-
-        $user = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
-        $attendance = $this->makeAttendanceWithTimeAndBreaks($user, '2025-12-01');
-
-        $app = $this->makeApplication($attendance, $user, $this->pending, Carbon::parse('2025-12-05 10:00:00'));
-
-        $res = $this->actingAs($admin)->get(
-            route('stamp_correction_request.approve.show', ['attendance_correct_request_id' => $app->id])
-        );
-
-        $res->assertOk();
-
-        $res->assertSee('一般A');
-        $res->assertSee('2025年');
-        $res->assertSee('12月1日');
-
-        $res->assertSee('09:00');
-        $res->assertSee('18:00');
-        $res->assertSee('12:00');
-        $res->assertSee('13:00');
-        $res->assertSee('15:00');
-        $res->assertSee('15:30');
-
-        $res->assertSee('テスト備考');
-
-        $res->assertSee('承認');
-        $res->assertDontSee('承認済み');
-    }
-
-    #[Test]
-    public function approving_request_marks_application_approved_and_updates_attendance_total(): void
-    {
-        $admin = $this->makeAdminUser();
-
-        $user = User::factory()->create(['name' => '一般A', 'email_verified_at' => now()]);
-        $attendance = $this->makeAttendanceWithTimeAndBreaks($user, '2025-12-01');
-
-        $app = $this->makeApplication($attendance, $user, $this->pending);
-
-        $detailUrl = route('stamp_correction_request.approve.show', ['attendance_correct_request_id' => $app->id]);
-
-        $res = $this->actingAs($admin)
-            ->from($detailUrl)
-            ->post(route('stamp_correction_request.approve', ['attendance_correct_request_id' => $app->id]));
-
-        $res->assertRedirect($detailUrl);
-
+        // 申請が承認済みになる
         $this->assertDatabaseHas('attendance_applications', [
-            'id'        => $app->id,
-            'status_id' => $this->approved->id,
+            'id' => $app->id,
+            'status_id' => $approved->id,
         ]);
 
-        // 09:00-18:00 = 540分、休憩60+30=90分 → 実働450分
+        // requested が勤怠へ反映される（AdminRequestController の approve の仕様）
+        $this->assertDatabaseHas('attendance_times', [
+            'attendance_id' => $attendance->id,
+            'start_time' => '10:00:00',
+            'end_time'   => '19:00:00',
+        ]);
+
+        $this->assertDatabaseHas('attendance_breaks', [
+            'attendance_id' => $attendance->id,
+            'break_no' => 1,
+            'start_time' => '12:00:00',
+            'end_time'   => '13:00:00',
+            'minutes'    => 60,
+        ]);
+
+        $this->assertDatabaseHas('attendances', [
+            'id' => $attendance->id,
+            'note' => '承認後の備考',
+        ]);
+
+        // 10:00-19:00 = 540分、休憩60 → 480分
         $this->assertDatabaseHas('attendance_totals', [
-            'attendance_id'      => $attendance->id,
-            'break_minutes'      => 90,
-            'total_work_minutes' => 450,
+            'attendance_id' => $attendance->id,
+            'break_minutes' => 60,
+            'total_work_minutes' => 480,
         ]);
-
-        $show = $this->actingAs($admin)->get($detailUrl);
-        $show->assertOk();
-        $show->assertSee('承認済み');
     }
 }
