@@ -1,4 +1,3 @@
-
 {{-- resources/views/admin/detail.blade.php --}}
 
 @extends('layouts.app')
@@ -23,6 +22,9 @@
     $statusCode        = $statusCode        ?? null;
     $approveUrl        = $approveUrl        ?? '';
     $isApproved        = (bool)($isApproved ?? false);
+
+    // approveUrl が空なら承認不可扱い（画面崩さない）
+    $canApprove = (!$isApproved && is_string($approveUrl) && $approveUrl !== '');
 @endphp
 
 <main class="attendance-detail">
@@ -108,16 +110,24 @@
 
     <div class="attendance-detail__actions">
       @if ($isApproved)
-        <button type="button" class="attendance-detail__button attendance-detail__button--disabled" disabled>承認済み</button>
+        <button type="button"
+                class="attendance-detail__button attendance-detail__button--disabled"
+                disabled>承認済み</button>
       @else
-        @if ($approveUrl !== '')
+        @if ($canApprove)
           <form method="POST" action="{{ $approveUrl }}">
             @csrf
             <button type="submit" class="attendance-detail__button">承認</button>
           </form>
+        @else
+          {{-- approveUrl が渡ってこない/承認不可のときもレイアウトを崩さない --}}
+          <button type="button"
+                  class="attendance-detail__button attendance-detail__button--disabled"
+                  disabled>承認不可</button>
         @endif
       @endif
     </div>
+
   </div>
 </main>
 @endsection
