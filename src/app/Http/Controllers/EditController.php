@@ -9,78 +9,81 @@ use App\Models\AttendanceBreak;
 use App\Models\AttendanceTotal;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use DateTimeInterface;
+use Illuminate\Support\Facades\DB;
 
 class EditController extends Controller
 {
     public function show(int $id)
     {
-        $attendance = Attendance::with(['user', 'time', 'total', 'breaks'])
+        $attendance = Attendance::with(['user', 'time', 'breaks', 'applications.status'])
             ->findOrFail($id);
 
-        $user = $attendance->user;
+        $employeeName = $attendance->user?->name ?? '';
 
-        $workDate      = Carbon::parse($attendance->work_date);
-        $dateYearLabel = $workDate->format('Y年');
-        $dateDayLabel  = $workDate->format('n月j日');
+        $workDate = $attendance->work_date instanceof DateTimeInterface
+            ? Carbon::instance($attendance->work_date)
+            : Carbon::parse($attendance->work_date);
 
-        $time           = $attendance->time;
+        $dateYearLabel = $workDate->format('Y年n月j日');
+        $dateDayLabel  = '(' . $workDate->locale('ja')->isoFormat('ddd') . ')';
+
+        $time = $attendance->time;
         $workStartLabel = $this->formatTime($time?->start_time);
         $workEndLabel   = $this->formatTime($time?->end_time);
 
-        $break1 = $attendance->breaks->firstWhere('break_no', 1);
-        $break2 = $attendance->breaks->firstWhere('break_no', 2);
+        $b1 = $attendance->breaks->firstWhere('break_no', 1);
+        $b2 = $attendance->breaks->firstWhere('break_no', 2);
 
-        $break1StartLabel = $this->formatTime($break1?->start_time);
-        $break1EndLabel   = $this->formatTime($break1?->end_time);
-        $break2StartLabel = $this->formatTime($break2?->start_time);
-        $break2EndLabel   = $this->formatTime($break2?->end_time);
+        $break1StartLabel = $this->formatTime($b1?->start_time);
+        $break1EndLabel   = $this->formatTime($b1?->end_time);
+        $break2StartLabel = $this->formatTime($b2?->start_time);
+        $break2EndLabel   = $this->formatTime($b2?->end_time);
 
         $noteLabel = $attendance->note ?? '';
 
-        $hasPendingApplication = AttendanceApplication::where('attendance_id', $attendance->id)
-            ->whereHas('status', function ($q) {
-                $q->where('code', ApplicationStatus::CODE_PENDING);
-            })
-            ->exists();
+        $latestApp = $attendance->applications
+            ->sortByDesc('applied_at')
+            ->first();
 
-        $lockByPending = false;
+        $lockByPending = $latestApp && (($latestApp->status?->code ?? null) === ApplicationStatus::CODE_PENDING);
 
         return view('admin.edit', [
-            'attendance'            => $attendance,
-            'employeeName'          => $user?->name ?? '',
-            'dateYearLabel'         => $dateYearLabel,
-            'dateDayLabel'          => $dateDayLabel,
-            'workStartLabel'        => $workStartLabel,
-            'workEndLabel'          => $workEndLabel,
-            'break1StartLabel'      => $break1StartLabel,
-            'break1EndLabel'        => $break1EndLabel,
-            'break2StartLabel'      => $break2StartLabel,
-            'break2EndLabel'        => $break2EndLabel,
-            'noteLabel'             => $noteLabel,
-            'hasPendingApplication' => $hasPendingApplication,
-            'lockByPending'         => $lockByPending,
+            'attendance'       => $attendance,
+            'attendanceId'     => $attendance->id,
+            'employeeName'     => $employeeName,
+            'dateYearLabel'    => $dateYearLabel,
+            'dateDayLabel'     => $dateDayLabel,
+            'workStartLabel'   => $workStartLabel,
+            'workEndLabel'     => $workEndLabel,
+            'break1StartLabel' => $break1StartLabel,
+            'break1EndLabel'   => $break1EndLabel,
+            'break2StartLabel' => $break2StartLabel,
+            'break2EndLabel'   => $break2EndLabel,
+            'noteLabel'        => $noteLabel,
+            'lockByPending'    => $lockByPending,
         ]);
     }
 
     public function update(AttendanceEditRequest $request, int $id)
     {
-        $attendance = Attendance::with(['time', 'total', 'breaks'])
+        $attendance = Attendance::with(['time', 'breaks', 'total'])
             ->findOrFail($id);
 
         $validated = $request->validated();
 
         DB::transaction(function () use ($attendance, $validated) {
 
+            // time
             $time = $attendance->time ?: new AttendanceTime([
                 'attendance_id' => $attendance->id,
             ]);
 
-            $time->start_time = $this->normalizeTime($validated['start_time'] ?? null);
-            $time->end_time   = $this->normalizeTime($validated['end_time'] ?? null);
+            $time->attendance_id = $attendance->id;
+            $time->start_time    = $this->normalizeTime($validated['start_time'] ?? null);
+            $time->end_time      = $this->normalizeTime($validated['end_time'] ?? null);
             $time->save();
 
             $this->updateBreak(
@@ -97,12 +100,14 @@ class EditController extends Controller
                 $validated['break2_end'] ?? null
             );
 
-            $attendance->note = $validated['note'] ?? null;
+            // note（必須）
+            $attendance->note = $validated['note'];
             $attendance->save();
 
-            $attendance->load(['time', 'breaks', 'total']);
+            // ★修正：breaksのin-memoryではなくDB集計で再計算する
             $this->recalculateTotal($attendance);
 
+            // pending申請があればrejectへ（仕様外の運用だが現行維持）
             $pendingApps = AttendanceApplication::where('attendance_id', $attendance->id)
                 ->whereHas('status', function ($q) {
                     $q->where('code', ApplicationStatus::CODE_PENDING);
@@ -134,15 +139,10 @@ class EditController extends Controller
         if ($value instanceof CarbonInterface || $value instanceof DateTimeInterface) {
             return Carbon::instance($value)->format('H:i:s');
         }
-
-        $str = trim((string) $value);
-        if ($str === '') {
-            return null;
+        if (is_string($value)) {
+            $v = trim($value);
+            return $v === '' ? null : $v;
         }
-        if (preg_match('/(\d{2}:\d{2})(:\d{2})?$/', $str, $m)) {
-            return $m[1] . ($m[2] ?? '');
-        }
-
         return null;
     }
 
@@ -185,14 +185,9 @@ class EditController extends Controller
         $startNorm = $this->normalizeTime($start);
         $endNorm   = $this->normalizeTime($end);
 
-        $break = $attendance->breaks->firstWhere('break_no', $breakNo);
-
-        if ($startNorm === null && $endNorm === null) {
-            if ($break) {
-                $break->delete();
-            }
-            return;
-        }
+        $break = AttendanceBreak::where('attendance_id', $attendance->id)
+            ->where('break_no', $breakNo)
+            ->first();
 
         if (! $break) {
             $break = new AttendanceBreak();
@@ -206,7 +201,7 @@ class EditController extends Controller
         if ($startNorm && $endNorm) {
             $s = Carbon::createFromFormat('H:i:s', $startNorm);
             $e = Carbon::createFromFormat('H:i:s', $endNorm);
-            $break->minutes = max(0, $e->diffInMinutes($s));
+            $break->minutes = max(0, $s->diffInMinutes($e));
         } else {
             $break->minutes = 0;
         }
@@ -225,7 +220,8 @@ class EditController extends Controller
             $workMinutes = $start->diffInMinutes($end);
         }
 
-        $breakMinutes = (int) $attendance->breaks->sum('minutes');
+        // ★修正：DBから集計（relationの古い値に引っ張られない）
+        $breakMinutes = (int) AttendanceBreak::where('attendance_id', $attendance->id)->sum('minutes');
         $breakMinutes = max(0, $breakMinutes);
 
         $netMinutes = max(0, $workMinutes - $breakMinutes);
@@ -246,5 +242,3 @@ class EditController extends Controller
         return $dt ? $dt->format('H:i') : '';
     }
 }
-
-
