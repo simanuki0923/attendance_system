@@ -139,13 +139,9 @@
       @enderror
 
       @if ($isPending)
-        <p class="attendance-detail__warning">承認待ちのため、修正申請はできません。</p>
+        <p class="attendance-detail__warning">承認待ちのため修正はできません。</p>
       @else
-        <button
-          type="submit"
-          class="attendance-detail__button"
-          form="attendance-detail-form"
-        >
+        <button type="submit" class="attendance-detail__button" form="attendance-detail-form">
           修正
         </button>
       @endif

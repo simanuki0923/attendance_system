@@ -4,9 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AttendanceDetailRequest;
 use App\Models\Attendance;
-use App\Models\AttendanceTime;
-use App\Models\AttendanceTotal;
-use App\Models\AttendanceBreak;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
 use Illuminate\Support\Facades\Auth;
@@ -34,22 +31,26 @@ class DetailController extends Controller
         $workDate      = Carbon::parse($attendance->work_date);
         $dateYearLabel = $workDate->format('Y年');
         $dateDayLabel  = $workDate->format('n月j日');
+
         $time           = $attendance->time;
         $workStartLabel = $this->formatTime($time?->start_time);
         $workEndLabel   = $this->formatTime($time?->end_time);
+
         $break1 = $attendance->breaks->firstWhere('break_no', 1);
         $break2 = $attendance->breaks->firstWhere('break_no', 2);
+
         $break1StartLabel = $this->formatTime($break1?->start_time);
         $break1EndLabel   = $this->formatTime($break1?->end_time);
         $break2StartLabel = $this->formatTime($break2?->start_time);
         $break2EndLabel   = $this->formatTime($break2?->end_time);
+
         $latestApp = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
 
         $statusCode  = $latestApp?->status?->code ?? null;
         $statusLabel = $latestApp?->status?->label ?? '未申請';
-        $isPending   = $statusCode === 'pending';
+        $isPending   = $statusCode === ApplicationStatus::CODE_PENDING; // 'pending'
 
         return view('detail', [
             'attendance'        => $attendance,
@@ -70,46 +71,6 @@ class DetailController extends Controller
         ]);
     }
 
-    public function showByDate(string $date)
-    {
-        $user = Auth::user();
-        if ($user === null) {
-            abort(403);
-        }
-
-        try {
-            $targetDate = Carbon::createFromFormat('Y-m-d', $date)->startOfDay();
-        } catch (\Throwable $e) {
-            abort(404);
-        }
-
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('work_date', $targetDate->toDateString())
-            ->first();
-
-        if ($attendance === null) {
-            $attendance = Attendance::create([
-                'user_id'   => $user->id,
-                'work_date' => $targetDate->toDateString(),
-                'note'      => null,
-            ]);
-
-            AttendanceTime::create([
-                'attendance_id' => $attendance->id,
-                'start_time'    => null,
-                'end_time'      => null,
-            ]);
-
-            AttendanceTotal::create([
-                'attendance_id'      => $attendance->id,
-                'break_minutes'      => 0,
-                'total_work_minutes' => 0,
-            ]);
-        }
-
-        return $this->show($attendance->id);
-    }
-
     public function update(AttendanceDetailRequest $request, int $id)
     {
         $user = Auth::user();
@@ -117,158 +78,70 @@ class DetailController extends Controller
             abort(403);
         }
 
-        $attendance = Attendance::with(['time', 'total', 'breaks', 'applications.status'])
+        $attendance = Attendance::with(['applications.status'])
             ->where('user_id', $user->id)
             ->findOrFail($id);
 
+        // 承認待ちは修正不可
         $latestApp = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
 
-        if ($latestApp && $latestApp->status && $latestApp->status->code === 'pending') {
+        $statusCode = $latestApp?->status?->code ?? null;
+
+        if ($statusCode === ApplicationStatus::CODE_PENDING) {
             return back()
                 ->withErrors(['application' => '承認待ちのため修正はできません。'])
                 ->withInput();
         }
 
-        $validated = $request->validated();
-        $time = $attendance->time ?: new AttendanceTime([
-            'attendance_id' => $attendance->id,
-        ]);
-        $time->start_time = $this->normalizeTime($validated['start_time'] ?? null);
-        $time->end_time   = $this->normalizeTime($validated['end_time'] ?? null);
-        $time->save();
+        $pendingStatus = ApplicationStatus::where('code', ApplicationStatus::CODE_PENDING)->firstOrFail();
 
-        $this->saveBreak(
-            $attendance,
-            1,
-            $validated['break1_start'] ?? null,
-            $validated['break1_end'] ?? null
-        );
-        $this->saveBreak(
-            $attendance,
-            2,
-            $validated['break2_start'] ?? null,
-            $validated['break2_end'] ?? null
-        );
-
-        $attendance->note = $validated['note'] ?? null;
-        $attendance->save();
-        $attendance->load(['time', 'breaks', 'total']);
-        $this->recalculateTotal($attendance);
-        $pendingStatus = ApplicationStatus::where('code', 'pending')->first();
-
+        // ★ここが重要：勤怠(attendance_times / breaks / totals)は更新しない。申請だけ作る
         AttendanceApplication::create([
-            'attendance_id'     => $attendance->id,
-            'applicant_user_id' => $user->id,
-            'status_id'         => $pendingStatus?->id,
-            'reason'            => '勤怠修正申請',
-            'applied_at'        => Carbon::now(),
+            'attendance_id'              => $attendance->id,
+            'applicant_user_id'          => $user->id,
+            'status_id'                  => $pendingStatus->id,
+            'reason'                     => '勤怠修正申請',
+            'applied_at'                 => now(),
+
+            'requested_work_start_time'  => $this->normalizeTime($request->input('start_time')),
+            'requested_work_end_time'    => $this->normalizeTime($request->input('end_time')),
+            'requested_break1_start_time'=> $this->normalizeTime($request->input('break1_start')),
+            'requested_break1_end_time'  => $this->normalizeTime($request->input('break1_end')),
+            'requested_break2_start_time'=> $this->normalizeTime($request->input('break2_start')),
+            'requested_break2_end_time'  => $this->normalizeTime($request->input('break2_end')),
+            'requested_note'             => $request->input('note'),
         ]);
 
         return redirect()
             ->route('attendance.detail', ['id' => $attendance->id])
-            ->with('status', '修正申請を受け付けました。');
-    }
-
-    private function normalizeTime(?string $value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-        $value = trim($value);
-        if ($value === '') {
-            return null;
-        }
-
-        try {
-            $dt = Carbon::createFromFormat('H:i', $value);
-        } catch (\Throwable $e) {
-            try {
-                $dt = Carbon::createFromFormat('H:i:s', $value);
-            } catch (\Throwable $e2) {
-                return null;
-            }
-        }
-
-        return $dt->format('H:i:s');
+            ->with('success', '修正申請を受け付けました。');
     }
 
     private function parseTime(?string $value): ?Carbon
     {
-        if ($value === null || $value === '') {
-            return null;
-        }
+        if ($value === null) return null;
+        $v = trim($value);
+        if ($v === '') return null;
 
         try {
-            return Carbon::createFromFormat('H:i:s', $value);
+            if (preg_match('/^\d{1,2}:\d{2}$/', $v)) {
+                return Carbon::createFromFormat('H:i', $v);
+            }
+            if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $v)) {
+                return Carbon::createFromFormat('H:i:s', $v);
+            }
+            return Carbon::parse($v);
         } catch (\Throwable $e) {
-            try {
-                return Carbon::createFromFormat('H:i', $value);
-            } catch (\Throwable $e2) {
-                return null;
-            }
+            return null;
         }
     }
 
-    private function saveBreak(Attendance $attendance, int $breakNo, ?string $start, ?string $end): void
+    private function normalizeTime(?string $value): ?string
     {
-        $startNorm = $this->normalizeTime($start);
-        $endNorm   = $this->normalizeTime($end);
-
-        $break = $attendance->breaks->firstWhere('break_no', $breakNo);
-
-        if ($startNorm === null && $endNorm === null) {
-            if ($break) {
-                $break->delete();
-            }
-            return;
-        }
-
-        if ($break === null) {
-            $break = new AttendanceBreak();
-            $break->attendance_id = $attendance->id;
-            $break->break_no      = $breakNo;
-        }
-
-        $break->start_time = $startNorm;
-        $break->end_time   = $endNorm;
-
-        if ($startNorm && $endNorm) {
-            $s = Carbon::createFromFormat('H:i:s', $startNorm);
-            $e = Carbon::createFromFormat('H:i:s', $endNorm);
-            $break->minutes = max(0, $e->diffInMinutes($s));
-        } else {
-            $break->minutes = 0;
-        }
-
-        $break->save();
-    }
-
-    private function recalculateTotal(Attendance $attendance): void
-    {
-        $time  = $attendance->time;
-        $start = $this->parseTime($time?->start_time);
-        $end   = $this->parseTime($time?->end_time);
-
-        $workMinutes = 0;
-        if ($start && $end && $end->greaterThan($start)) {
-            $workMinutes = $start->diffInMinutes($end);
-        }
-
-        $breakMinutes = (int) $attendance->breaks->sum('minutes');
-        $breakMinutes = max(0, $breakMinutes);
-
-        $netMinutes = max(0, $workMinutes - $breakMinutes);
-
-        $total = $attendance->total ?: new AttendanceTotal([
-            'attendance_id' => $attendance->id,
-        ]);
-
-        $total->attendance_id      = $attendance->id;
-        $total->break_minutes      = $breakMinutes;
-        $total->total_work_minutes = $netMinutes;
-        $total->save();
+        $dt = $this->parseTime($value);
+        return $dt ? $dt->format('H:i:s') : null;
     }
 
     private function formatTime(?string $value): string
