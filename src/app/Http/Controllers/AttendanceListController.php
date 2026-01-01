@@ -16,7 +16,6 @@ class AttendanceListController extends Controller
             abort(403);
         }
 
-        // 表示対象月（Y-m）
         $rawMonth = (string) $request->query('month', '');
 
         try {
@@ -41,7 +40,6 @@ class AttendanceListController extends Controller
 
         $currentMonthLabel = $targetMonth->format('Y/m');
 
-        // ★仕様通り：前月/翌月は常に遷移できる（データ有無で止めない）
         $prevMonthUrl = route('attendance.userList', [
             'month' => $targetMonth->copy()->subMonthNoOverflow()->format('Y-m'),
         ]);

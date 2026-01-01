@@ -34,8 +34,6 @@ class RequestsListTest extends TestCase
     {
         [$pending, $approved] = $this->seedStatuses();
 
-        // user側一覧は middleware(['auth','verified']) ではなく、
-        // closure側で「admin以外は verified 必須」判定をしている :contentReference[oaicite:11]{index=11}
         $user = User::factory()->create([
             'is_admin'          => false,
             'email_verified_at' => now(),

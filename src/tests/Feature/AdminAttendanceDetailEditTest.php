@@ -58,12 +58,6 @@ class AdminAttendanceDetailEditTest extends TestCase
         return Attendance::with(['user', 'time', 'breaks'])->findOrFail($attendance->id);
     }
 
-    /**
-     * name属性で対象inputタグを抜き、valueが期待値(09:00 or 09:00:00)で入っているか確認する
-     * - 改行OK
-     * - 属性順OK
-     * - quote( ' or " ) OK
-     */
     private function assertInputHasTimeHtml(string $html, string $name, string $expectedHm): void
     {
         $expectedHms = $expectedHm . ':00';
@@ -107,7 +101,6 @@ class AdminAttendanceDetailEditTest extends TestCase
             'break2_end_db'   => '15:15:00',
         ]);
 
-        // ✅ 管理者の勤怠詳細ルートに合わせる（/admin/attendance/{id}）
         $url = route('admin.attendance.detail', ['id' => $attendance->id]);
 
         $response = $this->actingAs($admin)->get($url);

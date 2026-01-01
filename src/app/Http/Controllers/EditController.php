@@ -76,7 +76,6 @@ class EditController extends Controller
 
         DB::transaction(function () use ($attendance, $validated) {
 
-            // time
             $time = $attendance->time ?: new AttendanceTime([
                 'attendance_id' => $attendance->id,
             ]);
@@ -100,14 +99,11 @@ class EditController extends Controller
                 $validated['break2_end'] ?? null
             );
 
-            // note（必須）
             $attendance->note = $validated['note'];
             $attendance->save();
 
-            // ★修正：breaksのin-memoryではなくDB集計で再計算する
             $this->recalculateTotal($attendance);
 
-            // pending申請があればrejectへ（仕様外の運用だが現行維持）
             $pendingApps = AttendanceApplication::where('attendance_id', $attendance->id)
                 ->whereHas('status', function ($q) {
                     $q->where('code', ApplicationStatus::CODE_PENDING);
@@ -220,7 +216,6 @@ class EditController extends Controller
             $workMinutes = $start->diffInMinutes($end);
         }
 
-        // ★修正：DBから集計（relationの古い値に引っ張られない）
         $breakMinutes = (int) AttendanceBreak::where('attendance_id', $attendance->id)->sum('minutes');
         $breakMinutes = max(0, $breakMinutes);
 

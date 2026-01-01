@@ -32,23 +32,18 @@ class DetailController extends Controller
         $workDate      = Carbon::parse($attendance->work_date);
         $dateYearLabel = $workDate->format('Y年');
         $dateDayLabel  = $workDate->format('n月j日');
-
-        // 最新申請
         $latestApp = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
 
         $statusCode  = $latestApp?->status?->code ?? null;
         $statusLabel = $latestApp?->status?->label ?? '未申請';
-
-        // 定数がある/ない両対応
         $pendingCode = defined(ApplicationStatus::class . '::CODE_PENDING')
             ? ApplicationStatus::CODE_PENDING
             : 'pending';
 
         $isPending = ($statusCode === $pendingCode);
 
-        // 現状値（勤怠本体）
         $time = $attendance->time;
 
         $b1 = $attendance->breaks->firstWhere('break_no', 1);
@@ -65,12 +60,10 @@ class DetailController extends Controller
 
         $currentNote = (string)($attendance->note ?? '');
 
-        // ★表示値：承認待ちなら申請中(requested_*)を優先表示（勤怠本体は更新しない）
         if ($isPending && $latestApp) {
             $workStartLabel = $this->formatTime($latestApp->requested_work_start_time) ?: $currentWorkStart;
             $workEndLabel   = $this->formatTime($latestApp->requested_work_end_time)   ?: $currentWorkEnd;
 
-            // 休憩：両方nullは「削除申請」＝空表示
             if ($latestApp->requested_break1_start_time === null && $latestApp->requested_break1_end_time === null) {
                 $break1StartLabel = '';
                 $break1EndLabel   = '';
@@ -87,7 +80,6 @@ class DetailController extends Controller
                 $break2EndLabel   = $this->formatTime($latestApp->requested_break2_end_time)   ?: $currentB2End;
             }
 
-            // 備考：requested_note が null の場合は現状表示（=未入力申請として扱いたいなら空に変えてOK）
             $noteLabel = ($latestApp->requested_note !== null) ? (string)$latestApp->requested_note : $currentNote;
         } else {
             $workStartLabel   = $currentWorkStart;
@@ -106,7 +98,6 @@ class DetailController extends Controller
             'dateYearLabel'     => $dateYearLabel,
             'dateDayLabel'      => $dateDayLabel,
 
-            // 画面表示用（pending時はrequested_*）
             'workStartLabel'    => $workStartLabel,
             'workEndLabel'      => $workEndLabel,
             'break1StartLabel'  => $break1StartLabel,
@@ -115,7 +106,6 @@ class DetailController extends Controller
             'break2EndLabel'    => $break2EndLabel,
             'noteLabel'         => $noteLabel,
 
-            // ロック/表示制御用
             'statusCode'        => $statusCode,
             'statusLabel'       => $statusLabel,
             'isPending'         => $isPending,
@@ -133,7 +123,6 @@ class DetailController extends Controller
             ->where('user_id', $userId)
             ->findOrFail($id);
 
-        // 最新申請が承認待ちなら再申請不可（サーバ側ロック）
         $latestApp = $attendance->applications->sortByDesc('applied_at')->first();
 
         $pendingCode = defined(ApplicationStatus::class . '::CODE_PENDING')
@@ -146,7 +135,6 @@ class DetailController extends Controller
                 ->withInput();
         }
 
-        // pending status_id を取得
         $pendingStatusId = ApplicationStatus::where('code', $pendingCode)->value('id');
         if (!$pendingStatusId) {
             return back()
@@ -156,7 +144,6 @@ class DetailController extends Controller
 
         $v = $request->validated();
 
-        // ★重要：勤怠本体は更新しない。申請だけ作る。
         AttendanceApplication::create([
             'attendance_id'     => $attendance->id,
             'applicant_user_id' => $userId,
@@ -173,7 +160,6 @@ class DetailController extends Controller
             'requested_note'              => $v['note'] ?? null,
         ]);
 
-        // show側で requested_* が表示され、かつロックされる
         return redirect()
             ->route('attendance.detail', ['id' => $attendance->id])
             ->with('status', '修正申請を送信しました（承認待ち）');
@@ -189,13 +175,11 @@ class DetailController extends Controller
             return null;
         }
 
-        // "H:i" → "H:i:s"
         if (preg_match('/^\d{1,2}:\d{2}$/', $value)) {
             $dt = Carbon::createFromFormat('H:i', $value);
             return $dt->format('H:i:s');
         }
 
-        // "H:i:s"
         if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $value)) {
             $dt = Carbon::createFromFormat('H:i:s', $value);
             return $dt->format('H:i:s');
@@ -210,7 +194,6 @@ class DetailController extends Controller
             return '';
         }
         try {
-            // "H:i:s" / "H:i" を吸収
             $str = (string)$value;
             if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $str)) {
                 return Carbon::createFromFormat('H:i:s', $str)->format('H:i');

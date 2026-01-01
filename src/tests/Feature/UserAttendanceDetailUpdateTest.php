@@ -17,7 +17,6 @@ class UserAttendanceDetailUpdateTest extends TestCase
 
     private function seedStatuses(): ApplicationStatus
     {
-        // pending / approved が無いと status_id が作れないのでテスト内で作る
         ApplicationStatus::query()->firstOrCreate(
             ['code' => ApplicationStatus::CODE_PENDING],
             ['label' => '承認待ち', 'sort_no' => 1]
@@ -41,7 +40,6 @@ class UserAttendanceDetailUpdateTest extends TestCase
 
     private function createAttendanceFor(User $user): Attendance
     {
-        // ★AttendanceFactoryを使わず create で作る
         $attendance = Attendance::query()->create([
             'user_id'   => $user->id,
             'work_date' => now()->toDateString(),
@@ -74,7 +72,6 @@ class UserAttendanceDetailUpdateTest extends TestCase
         ]);
 
         $res->assertStatus(302);
-        // AttendanceDetailRequest は start_time にエラーを積む
         $res->assertSessionHasErrors(['start_time']);
     }
 
@@ -131,7 +128,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'break1_end'   => null,
             'break2_start' => null,
             'break2_end'   => null,
-            'note'         => '', // 必須
+            'note'         => '',
         ]);
 
         $res->assertStatus(302);
@@ -157,19 +154,14 @@ class UserAttendanceDetailUpdateTest extends TestCase
         ]);
 
         $res->assertStatus(302);
-
-        // ★実装は with('status', ...) を返す前提に合わせる
-        // 文言まで固定したい場合は、実装側の文言に合わせて第2引数を調整してください
         $res->assertSessionHas('status');
 
-        // ★勤怠実データ(attendance_times)は変わらない前提（申請だけ作る設計）
         $this->assertDatabaseHas('attendance_times', [
             'attendance_id' => $attendance->id,
             'start_time' => '09:00:00',
             'end_time'   => '18:00:00',
         ]);
 
-        // ★申請が作成される（requested_* を持つ設計）
         $this->assertDatabaseHas('attendance_applications', [
             'attendance_id'     => $attendance->id,
             'applicant_user_id' => $user->id,

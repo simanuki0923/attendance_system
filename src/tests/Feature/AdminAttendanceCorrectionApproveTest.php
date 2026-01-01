@@ -44,7 +44,6 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        // ★AttendanceFactoryを使わず create で作る
         $attendance = Attendance::query()->create([
             'user_id'   => $staff->id,
             'work_date' => now()->toDateString(),
@@ -78,13 +77,11 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
         $res->assertStatus(302);
         $res->assertSessionHas('status', '承認しました');
 
-        // 申請が承認済みになる
         $this->assertDatabaseHas('attendance_applications', [
             'id' => $app->id,
             'status_id' => $approved->id,
         ]);
 
-        // requested が勤怠へ反映される（AdminRequestController の approve の仕様）
         $this->assertDatabaseHas('attendance_times', [
             'attendance_id' => $attendance->id,
             'start_time' => '10:00:00',
@@ -104,7 +101,6 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
             'note' => '承認後の備考',
         ]);
 
-        // 10:00-19:00 = 540分、休憩60 → 480分
         $this->assertDatabaseHas('attendance_totals', [
             'attendance_id' => $attendance->id,
             'break_minutes' => 60,

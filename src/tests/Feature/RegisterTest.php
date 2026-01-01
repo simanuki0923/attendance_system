@@ -64,7 +64,7 @@ class RegisterTest extends TestCase
     {
         $response = $this->post(route('register'),
             $this->validPayload([
-                'password' => 'short7', // 7文字未満想定
+                'password' => 'short7',
                 'password_confirmation' => 'short7',
             ])
         );

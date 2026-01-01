@@ -14,10 +14,6 @@ use Illuminate\Support\Facades\DB;
 
 class AdminRequestController extends Controller
 {
-    /**
-     * 管理者：申請一覧（承認待ち / 承認済み）
-     * ルート：requests.list（管理者の場合にこのindexが呼ばれる）
-     */
     public function index(Request $request)
     {
         $activeTab = (string) $request->query('tab', ApplicationStatus::CODE_PENDING);
@@ -68,10 +64,6 @@ class AdminRequestController extends Controller
         ]);
     }
 
-    /**
-     * 管理者：承認画面表示
-     * ★修正ポイント：申請内容（requested_*）を優先表示する
-     */
     public function showApprove(Request $request, int $attendanceCorrectRequestId)
     {
         $app = AttendanceApplication::with([
@@ -96,7 +88,6 @@ class AdminRequestController extends Controller
         $dateYearLabel = $workDate->format('Y年');
         $dateDayLabel  = $workDate->format('n月j日');
 
-        // 現状値（attendance側）
         $time = $attendance->time;
 
         $b1 = $attendance->breaks->firstWhere('break_no', 1);
@@ -110,12 +101,9 @@ class AdminRequestController extends Controller
         $currentB2End     = $b2?->end_time;
         $currentNote      = $attendance->note;
 
-        // ★申請値（requested_*）があれば優先表示。nullは「空（クリア）」として扱えるよう、そのまま採用。
-        // （画面上は formatTime が空を返す）
         $workStartLabel = $this->formatTime($app->requested_work_start_time ?? $currentWorkStart);
         $workEndLabel   = $this->formatTime($app->requested_work_end_time   ?? $currentWorkEnd);
 
-        // 休憩：requested_* が「両方null」なら “休憩なし（削除）” の申請として表示を空に
         if ($app->requested_break1_start_time === null && $app->requested_break1_end_time === null) {
             $break1StartLabel = '';
             $break1EndLabel   = '';
@@ -132,7 +120,6 @@ class AdminRequestController extends Controller
             $break2EndLabel   = $this->formatTime($app->requested_break2_end_time   ?? $currentB2End);
         }
 
-        // 備考：requested_note が null の場合は “現状維持” として現状値を表示
         $noteLabel = (string) (($app->requested_note !== null) ? $app->requested_note : ($currentNote ?? ''));
 
         $statusCode  = $app->status?->code ?? ApplicationStatus::CODE_PENDING;
@@ -161,10 +148,6 @@ class AdminRequestController extends Controller
         ]);
     }
 
-    /**
-     * 管理者：承認
-     * requested_* を勤怠へ反映 → totals再計算 → statusをapprovedへ
-     */
     public function approve(Request $request, int $attendanceCorrectRequestId)
     {
         $app = AttendanceApplication::with([
@@ -192,32 +175,26 @@ class AdminRequestController extends Controller
         DB::transaction(function () use ($app, $approvedStatus) {
             $attendance = $app->attendance;
 
-            // 勤怠が無い場合：申請だけ承認済みにして終了
             if (!$attendance) {
                 $app->status_id = $approvedStatus->id;
                 $app->save();
                 return;
             }
 
-            // 1) 勤務時間反映（nullも含めて反映＝クリアを許容）
             $time = $attendance->time ?: new AttendanceTime(['attendance_id' => $attendance->id]);
             $time->attendance_id = $attendance->id;
             $time->start_time    = $this->normalizeTime($app->requested_work_start_time);
             $time->end_time      = $this->normalizeTime($app->requested_work_end_time);
             $time->save();
 
-            // 2) 休憩反映（requestedが両方nullなら削除＝休憩なし）
             $this->applyBreak($attendance->id, 1, $app->requested_break1_start_time, $app->requested_break1_end_time);
             $this->applyBreak($attendance->id, 2, $app->requested_break2_start_time, $app->requested_break2_end_time);
 
-            // 3) 備考反映（nullも含めて反映＝クリアを許容）
             $attendance->note = $app->requested_note;
             $attendance->save();
 
-            // 4) 合計再計算（DB集計で確実に）
             $this->recalculateTotalDb($attendance->id);
 
-            // 5) 申請ステータス更新
             $app->status_id = $approvedStatus->id;
             $app->save();
         });
@@ -239,7 +216,6 @@ class AdminRequestController extends Controller
         $start = $this->normalizeTime($start);
         $end   = $this->normalizeTime($end);
 
-        // 両方null＝休憩なし（削除）
         if ($start === null && $end === null) {
             AttendanceBreak::where('attendance_id', $attendanceId)
                 ->where('break_no', $breakNo)
@@ -297,7 +273,6 @@ class AdminRequestController extends Controller
             return null;
         }
 
-        // H:i:s / H:i を許容
         try {
             return Carbon::createFromFormat('H:i:s', $value)->format('H:i:s');
         } catch (\Throwable $e) {

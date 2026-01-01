@@ -32,7 +32,6 @@
       </h1>
     </header>
 
-    {{-- ✅ formにidを付与 --}}
     <form
       id="attendance-detail-form"
       class="attendance-detail__card"
@@ -132,7 +131,6 @@
       </dl>
     </form>
 
-    {{-- ✅ ボタンはform外のままでも、form属性で紐付ければ送信できる --}}
     <div class="attendance-detail__actions">
       @error('application')
         <p class="attendance-detail__warning">{{ $message }}</p>

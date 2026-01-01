@@ -66,7 +66,7 @@ class RequestController extends Controller
             }
 
             return [
-                'status_label'       => $app->status?->label ?? '承認待ち',  // '承認待ち' / '承認済み'
+                'status_label'       => $app->status?->label ?? '承認待ち',
                 'name_label'         => $owner?->name ?? '',
                 'target_date_label'  => $targetDateLabel,
                 'reason_label'       => $app->reason ?? '',
