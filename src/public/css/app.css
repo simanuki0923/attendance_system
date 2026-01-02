@@ -12,15 +12,16 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
 
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-               Roboto, "Helvetica Neue", Arial, "Noto Sans JP",
-               "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    Roboto, "Helvetica Neue", Arial, "Noto Sans JP",
+    "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
   color: var(--text);
   background: var(--bg);
 }
@@ -44,7 +45,7 @@ body {
 .header__logo img {
   display: block;
   height: 26px;
-  transform:translateX(-150px);
+  transform: translateX(-300px);
 }
 
 .header__nav {
@@ -58,6 +59,7 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
+  transform: translateX(280px);
 }
 
 .header__nav-item {
@@ -81,8 +83,7 @@ body {
   opacity: 0.7;
 }
 
-.header__nav-link--logout {
-}
+.header__nav-link--logout {}
 
 .main {
   max-width: var(--container);
@@ -128,5 +129,13 @@ body {
   .banner-page__button,
   .banner-page__card {
     max-width: 100%;
+  }
+
+  .header__logo img {
+    transform: translateX(-100px);
+  }
+
+  .header__nav-list {
+    transform: translateX(-100px);
   }
 }
