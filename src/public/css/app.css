@@ -136,6 +136,6 @@ body {
   }
 
   .header__nav-list {
-    transform: translateX(-100px);
+    transform: translateX(70px);
   }
 }
