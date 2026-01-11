@@ -4,19 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\AttendanceEditRequest;
 use App\Models\Attendance;
-use App\Models\AttendanceTime;
 use App\Models\AttendanceBreak;
+use App\Models\AttendanceTime;
 use App\Models\AttendanceTotal;
-use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
 use Carbon\Carbon;
-use Carbon\CarbonInterface;
 use DateTimeInterface;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class EditController extends Controller
 {
-    public function show(int $id)
+    public function show(int $id): View
     {
         $attendance = Attendance::with(['user', 'time', 'breaks', 'applications.status'])
             ->findOrFail($id);
@@ -28,27 +28,19 @@ class EditController extends Controller
             : Carbon::parse($attendance->work_date);
 
         $dateYearLabel = $workDate->format('Y年n月j日');
-        $dateDayLabel  = '(' . $workDate->locale('ja')->isoFormat('ddd') . ')';
+        $dateDayLabel = '(' . $workDate->locale('ja')->isoFormat('ddd') . ')';
 
-        $time = $attendance->time;
-        $workStartLabel = $this->formatTime($time?->start_time);
-        $workEndLabel   = $this->formatTime($time?->end_time);
+        $attendanceTime = $attendance->time;
 
-        $b1 = $attendance->breaks->firstWhere('break_no', 1);
-        $b2 = $attendance->breaks->firstWhere('break_no', 2);
+        $breakOne = $attendance->breaks->firstWhere('break_no', 1);
+        $breakTwo = $attendance->breaks->firstWhere('break_no', 2);
 
-        $break1StartLabel = $this->formatTime($b1?->start_time);
-        $break1EndLabel   = $this->formatTime($b1?->end_time);
-        $break2StartLabel = $this->formatTime($b2?->start_time);
-        $break2EndLabel   = $this->formatTime($b2?->end_time);
+        $latestApplication = $attendance->applications->sortByDesc('applied_at')->first();
+        $lockByPending = false;
 
-        $noteLabel = $attendance->note ?? '';
-
-        $latestApp = $attendance->applications
-            ->sortByDesc('applied_at')
-            ->first();
-
-        $lockByPending = $latestApp && (($latestApp->status?->code ?? null) === ApplicationStatus::CODE_PENDING);
+        if ($latestApplication) {
+            $lockByPending = (($latestApplication->status?->code ?? null) === ApplicationStatus::CODE_PENDING);
+        }
 
         return view('admin.edit', [
             'attendance'       => $attendance,
@@ -56,184 +48,147 @@ class EditController extends Controller
             'employeeName'     => $employeeName,
             'dateYearLabel'    => $dateYearLabel,
             'dateDayLabel'     => $dateDayLabel,
-            'workStartLabel'   => $workStartLabel,
-            'workEndLabel'     => $workEndLabel,
-            'break1StartLabel' => $break1StartLabel,
-            'break1EndLabel'   => $break1EndLabel,
-            'break2StartLabel' => $break2StartLabel,
-            'break2EndLabel'   => $break2EndLabel,
-            'noteLabel'        => $noteLabel,
+            'workStartLabel'   => $this->formatTime($attendanceTime?->start_time),
+            'workEndLabel'     => $this->formatTime($attendanceTime?->end_time),
+            'break1StartLabel' => $this->formatTime($breakOne?->start_time),
+            'break1EndLabel'   => $this->formatTime($breakOne?->end_time),
+            'break2StartLabel' => $this->formatTime($breakTwo?->start_time),
+            'break2EndLabel'   => $this->formatTime($breakTwo?->end_time),
+            'noteLabel'        => (string) ($attendance->note ?? ''),
             'lockByPending'    => $lockByPending,
         ]);
     }
 
-    public function update(AttendanceEditRequest $request, int $id)
+    public function update(AttendanceEditRequest $request, int $id): RedirectResponse
     {
-        $attendance = Attendance::with(['time', 'breaks', 'total'])
-            ->findOrFail($id);
-
+        $attendance = Attendance::with(['time', 'breaks', 'total'])->findOrFail($id);
         $validated = $request->validated();
 
-        DB::transaction(function () use ($attendance, $validated) {
+        DB::transaction(function () use ($attendance, $validated): void {
+            $attendanceTime = $attendance->time ?: new AttendanceTime(['attendance_id' => $attendance->id]);
+            $attendanceTime->attendance_id = $attendance->id;
+            $attendanceTime->start_time = $this->normalizeTime($validated['start_time'] ?? null);
+            $attendanceTime->end_time = $this->normalizeTime($validated['end_time'] ?? null);
+            $attendanceTime->save();
 
-            $time = $attendance->time ?: new AttendanceTime([
-                'attendance_id' => $attendance->id,
-            ]);
+            $this->updateBreak($attendance->id, 1, $validated['break1_start'] ?? null, $validated['break1_end'] ?? null);
+            $this->updateBreak($attendance->id, 2, $validated['break2_start'] ?? null, $validated['break2_end'] ?? null);
 
-            $time->attendance_id = $attendance->id;
-            $time->start_time    = $this->normalizeTime($validated['start_time'] ?? null);
-            $time->end_time      = $this->normalizeTime($validated['end_time'] ?? null);
-            $time->save();
-
-            $this->updateBreak(
-                $attendance,
-                1,
-                $validated['break1_start'] ?? null,
-                $validated['break1_end'] ?? null
-            );
-
-            $this->updateBreak(
-                $attendance,
-                2,
-                $validated['break2_start'] ?? null,
-                $validated['break2_end'] ?? null
-            );
-
-            $attendance->note = $validated['note'];
+            $attendance->note = $validated['note'] ?? '';
             $attendance->save();
 
-            $this->recalculateTotal($attendance);
-
-            $pendingApps = AttendanceApplication::where('attendance_id', $attendance->id)
-                ->whereHas('status', function ($q) {
-                    $q->where('code', ApplicationStatus::CODE_PENDING);
-                })
-                ->get();
-
-            if ($pendingApps->isNotEmpty()) {
-                $rejectedId = ApplicationStatus::where('code', ApplicationStatus::CODE_REJECTED)->value('id');
-
-                if ($rejectedId) {
-                    foreach ($pendingApps as $app) {
-                        $app->status_id = $rejectedId;
-                        $app->save();
-                    }
-                }
-            }
+            $this->recalculateTotalDb($attendance->id);
         });
 
         return redirect()
-            ->route('admin.attendance.list')
-            ->with('success', '勤怠を修正しました。');
+            ->route('admin.attendance.detail', ['id' => $attendance->id])
+            ->with('status', '勤怠詳細を更新しました。');
     }
 
-    private function extractTimeString(mixed $value): ?string
+    private function updateBreak(int $attendanceId, int $breakNo, mixed $start, mixed $end): void
     {
-        if ($value === null) {
-            return null;
+        $startTime = $this->normalizeTime($start);
+        $endTime = $this->normalizeTime($end);
+
+        if ($startTime === null && $endTime === null) {
+            AttendanceBreak::query()
+                ->where('attendance_id', $attendanceId)
+                ->where('break_no', $breakNo)
+                ->delete();
+
+            return;
         }
-        if ($value instanceof CarbonInterface || $value instanceof DateTimeInterface) {
-            return Carbon::instance($value)->format('H:i:s');
+
+        $minutes = 0;
+        $startCarbon = $startTime ? Carbon::createFromFormat('H:i:s', $startTime) : null;
+        $endCarbon = $endTime ? Carbon::createFromFormat('H:i:s', $endTime) : null;
+
+        if ($startCarbon && $endCarbon && $endCarbon->greaterThan($startCarbon)) {
+            $minutes = $startCarbon->diffInMinutes($endCarbon);
         }
-        if (is_string($value)) {
-            $v = trim($value);
-            return $v === '' ? null : $v;
-        }
-        return null;
+
+        AttendanceBreak::query()->updateOrCreate(
+            [
+                'attendance_id' => $attendanceId,
+                'break_no' => $breakNo,
+            ],
+            [
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'minutes' => $minutes,
+            ]
+        );
     }
 
-    private function normalizeTime(mixed $value): ?string
+    private function recalculateTotalDb(int $attendanceId): void
     {
-        $t = $this->extractTimeString($value);
-        if ($t === null) {
-            return null;
-        }
-        if (preg_match('/^\d{2}:\d{2}$/', $t)) {
-            $t .= ':00';
-        }
-
-        try {
-            return Carbon::createFromFormat('H:i:s', $t)->format('H:i:s');
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-
-    private function parseTime(mixed $value): ?Carbon
-    {
-        $t = $this->extractTimeString($value);
-        if ($t === null) {
-            return null;
-        }
-        if (preg_match('/^\d{2}:\d{2}$/', $t)) {
-            $t .= ':00';
-        }
-
-        try {
-            return Carbon::createFromFormat('H:i:s', $t);
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-
-    private function updateBreak(Attendance $attendance, int $breakNo, mixed $start, mixed $end): void
-    {
-        $startNorm = $this->normalizeTime($start);
-        $endNorm   = $this->normalizeTime($end);
-
-        $break = AttendanceBreak::where('attendance_id', $attendance->id)
-            ->where('break_no', $breakNo)
-            ->first();
-
-        if (! $break) {
-            $break = new AttendanceBreak();
-            $break->attendance_id = $attendance->id;
-            $break->break_no      = $breakNo;
-        }
-
-        $break->start_time = $startNorm;
-        $break->end_time   = $endNorm;
-
-        if ($startNorm && $endNorm) {
-            $s = Carbon::createFromFormat('H:i:s', $startNorm);
-            $e = Carbon::createFromFormat('H:i:s', $endNorm);
-            $break->minutes = max(0, $s->diffInMinutes($e));
-        } else {
-            $break->minutes = 0;
-        }
-
-        $break->save();
-    }
-
-    private function recalculateTotal(Attendance $attendance): void
-    {
-        $time  = $attendance->time;
-        $start = $this->parseTime($time?->start_time);
-        $end   = $this->parseTime($time?->end_time);
+        $time = AttendanceTime::query()->where('attendance_id', $attendanceId)->first();
 
         $workMinutes = 0;
+
+        $start = $time?->start_time ? Carbon::createFromFormat('H:i:s', $time->start_time) : null;
+        $end = $time?->end_time ? Carbon::createFromFormat('H:i:s', $time->end_time) : null;
+
         if ($start && $end && $end->greaterThan($start)) {
             $workMinutes = $start->diffInMinutes($end);
         }
 
-        $breakMinutes = (int) AttendanceBreak::where('attendance_id', $attendance->id)->sum('minutes');
+        $breakMinutes = (int) AttendanceBreak::query()->where('attendance_id', $attendanceId)->sum('minutes');
         $breakMinutes = max(0, $breakMinutes);
 
         $netMinutes = max(0, $workMinutes - $breakMinutes);
 
-        $total = $attendance->total ?: new AttendanceTotal([
-            'attendance_id' => $attendance->id,
-        ]);
+        AttendanceTotal::query()->updateOrCreate(
+            ['attendance_id' => $attendanceId],
+            [
+                'break_minutes' => $breakMinutes,
+                'total_work_minutes' => $netMinutes,
+            ]
+        );
+    }
 
-        $total->attendance_id      = $attendance->id;
-        $total->break_minutes      = $breakMinutes;
-        $total->total_work_minutes = $netMinutes;
-        $total->save();
+    private function normalizeTime(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = trim((string) $value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (preg_match('/^\d{1,2}:\d{2}$/', $trimmed)) {
+            return Carbon::createFromFormat('H:i', $trimmed)->format('H:i:s');
+        }
+
+        if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $trimmed)) {
+            return Carbon::createFromFormat('H:i:s', $trimmed)->format('H:i:s');
+        }
+
+        return null;
     }
 
     private function formatTime(mixed $value): string
     {
-        $dt = $this->parseTime($value);
-        return $dt ? $dt->format('H:i') : '';
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        try {
+            $stringValue = (string) $value;
+
+            if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $stringValue)) {
+                return Carbon::createFromFormat('H:i:s', $stringValue)->format('H:i');
+            }
+
+            if (preg_match('/^\d{1,2}:\d{2}$/', $stringValue)) {
+                return Carbon::createFromFormat('H:i', $stringValue)->format('H:i');
+            }
+
+            return Carbon::parse($stringValue)->format('H:i');
+        } catch (\Throwable $throwable) {
+            return '';
+        }
     }
 }

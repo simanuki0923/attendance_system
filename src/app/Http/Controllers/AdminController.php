@@ -6,40 +6,43 @@ use App\Http\Requests\AdminLoginRequest;
 use App\Models\Attendance;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    public function showLoginForm()
+    public function showLoginForm(): View
     {
         return view('admin.login');
     }
 
-    public function login(AdminLoginRequest $request)
+    public function login(AdminLoginRequest $request): RedirectResponse
     {
-        $email    = (string) $request->input('email');
+        $email = (string) $request->input('email');
         $password = (string) $request->input('password');
 
-        $user = User::where('email', $email)->first();
+        $user = User::query()->where('email', $email)->first();
 
-        if (! $user) {
+        if ($user === null) {
             throw ValidationException::withMessages([
-                'email' => 'ログイン情報が登録されていません',
+                'email' => ['ログイン情報が登録されていません'],
             ]);
         }
 
         if (! Hash::check($password, (string) $user->password)) {
             throw ValidationException::withMessages([
-                'password' => 'ログイン情報が登録されていません',
+                'password' => ['ログイン情報が登録されていません'],
             ]);
         }
 
         if (! $this->isAdminUser($user)) {
             throw ValidationException::withMessages([
-                'email' => 'ログイン情報が登録されていません',
+                'email' => ['ログイン情報が登録されていません'],
             ]);
         }
 
@@ -49,7 +52,7 @@ class AdminController extends Controller
         return redirect()->route('admin.attendance.list');
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): RedirectResponse
     {
         Auth::logout();
 
@@ -59,78 +62,116 @@ class AdminController extends Controller
         return redirect()->route('admin.login');
     }
 
-    public function list(Request $request)
+    public function list(Request $request): View
     {
         $rawDate = $request->query('date');
 
-        try {
-            $targetDate = $rawDate
-                ? Carbon::createFromFormat('Y-m-d', (string) $rawDate)->startOfDay()
-                : Carbon::today();
-        } catch (\Throwable $e) {
-            $targetDate = Carbon::today();
-        }
+        $targetDate = $this->resolveTargetDate($rawDate);
 
-        $adminEmails = config('admin.emails', []);
-
-        $staffUsers = User::query()
-            ->where('is_admin', false)
-            ->when(! empty($adminEmails), fn ($q) => $q->whereNotIn('email', $adminEmails))
-            ->orderBy('id')
-            ->get();
-
-        $records = Attendance::with(['time', 'total'])
-            ->whereDate('work_date', $targetDate->toDateString())
-            ->get()
-            ->keyBy('user_id');
-
-        $attendances = $staffUsers->map(function (User $u) use ($records) {
-            $a     = $records->get($u->id);
-            $time  = $a?->time;
-            $total = $a?->total;
-
-            $detailUrl = $a ? route('admin.attendance.detail', ['id' => $a->id]) : null;
-
-            return [
-                'attendance_id' => $a?->id,
-                'name_label'    => $u->name ?? '',
-                'start_label'   => $time?->start_time ? Carbon::parse($time->start_time)->format('H:i') : '',
-                'end_label'     => $time?->end_time ? Carbon::parse($time->end_time)->format('H:i') : '',
-                'break_label'   => $total ? $this->minutesToHhmm((int) $total->break_minutes) : '',
-                'total_label'   => $total ? $this->minutesToHhmm((int) $total->total_work_minutes) : '',
-                'detail_url'    => $detailUrl,
-            ];
-        });
-
-        $currentDateLabel = $targetDate->copy()
-            ->locale('ja')
-            ->isoFormat('YYYY年M月D日(ddd)');
-
-        $currentDateYmd = $targetDate->format('Y/m/d');
+        $prevDate = $targetDate->copy()->subDay();
+        $nextDate = $targetDate->copy()->addDay();
 
         $prevDateUrl = route('admin.attendance.list', [
-            'date' => $targetDate->copy()->subDay()->format('Y-m-d'),
+            'date' => $prevDate->toDateString(),
         ]);
 
         $nextDateUrl = route('admin.attendance.list', [
-            'date' => $targetDate->copy()->addDay()->format('Y-m-d'),
+            'date' => $nextDate->toDateString(),
         ]);
 
-        return view('admin.list', compact(
-            'currentDateLabel',
-            'currentDateYmd',
-            'attendances',
-            'prevDateUrl',
-            'nextDateUrl'
-        ));
+        $adminEmails = (array) config('admin.emails', []);
+
+        $staffUsers = User::query()
+            ->when(! empty($adminEmails), function (Builder $query) use ($adminEmails): Builder {
+                return $query->whereNotIn('email', $adminEmails);
+            })
+            ->orderBy('id')
+            ->get();
+
+        $attendancesByUserId = Attendance::query()
+            ->whereDate('work_date', $targetDate->toDateString())
+            ->whereIn('user_id', $staffUsers->pluck('id')->all())
+            ->with(['time', 'total'])
+            ->get()
+            ->keyBy('user_id');
+
+        $rows = $staffUsers->map(function (User $user) use ($attendancesByUserId): array {
+            $attendance = $attendancesByUserId->get($user->id);
+
+            $attendanceId = $attendance?->id;
+
+            $startTime = $attendance?->time?->start_time;
+            $endTime = $attendance?->time?->end_time;
+
+            $breakMinutes = $attendance?->total?->break_minutes;
+            $totalWorkMinutes = $attendance?->total?->total_work_minutes;
+
+            $startLabel = $this->formatTimeHm($startTime);
+            $endLabel = $this->formatTimeHm($endTime);
+
+            $breakLabel = $breakMinutes === null
+                ? ''
+                : $this->formatMinutesToHourMinute((int) $breakMinutes);
+
+            $totalLabel = $totalWorkMinutes === null
+                ? ''
+                : $this->formatMinutesToHourMinute((int) $totalWorkMinutes);
+
+            return [
+                'attendance_id' => $attendanceId,
+                'is_active' => false,
+                'name_label' => (string) $user->name,
+                'start_label' => $startLabel,
+                'end_label' => $endLabel,
+                'break_label' => $breakLabel,
+                'total_label' => $totalLabel,
+            ];
+        });
+
+        $currentDateLabel = $targetDate->copy()->locale('ja')->isoFormat('YYYY年M月D日');
+        $currentDateYmd = $targetDate->format('Y/m/d');
+
+        return view('admin.list', [
+            'currentDateLabel' => $currentDateLabel,
+            'currentDateYmd' => $currentDateYmd,
+            'prevDateUrl' => $prevDateUrl,
+            'nextDateUrl' => $nextDateUrl,
+            'attendances' => $rows,
+        ]);
     }
 
-    private function minutesToHhmm(int $minutes): string
+    private function resolveTargetDate(mixed $rawDate): Carbon
     {
-        $h = intdiv($minutes, 60);
-        $m = $minutes % 60;
+        if (! is_string($rawDate) || $rawDate === '') {
+            return Carbon::today();
+        }
 
-        return sprintf('%d:%02d', $h, $m);
+        try {
+            return Carbon::createFromFormat('Y-m-d', $rawDate)->startOfDay();
+        } catch (\Throwable $throwable) {
+            return Carbon::today();
+        }
+    }
+
+    private function formatTimeHm(mixed $time): string
+    {
+        if (! is_string($time) || $time === '') {
+            return '';
+        }
+
+        try {
+            return Carbon::parse($time)->format('H:i');
+        } catch (\Throwable $throwable) {
+            return '';
+        }
+    }
+
+    private function formatMinutesToHourMinute(int $minutes): string
+    {
+        $hours = intdiv($minutes, 60);
+        $remainingMinutes = $minutes % 60;
+
+        return sprintf('%d:%02d', $hours, $remainingMinutes);
     }
 
     private function isAdminUser(User $user): bool
@@ -139,6 +180,6 @@ class AdminController extends Controller
             return true;
         }
 
-        return in_array($user->email, config('admin.emails', []), true);
+        return in_array((string) $user->email, (array) config('admin.emails', []), true);
     }
 }

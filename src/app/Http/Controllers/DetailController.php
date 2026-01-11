@@ -7,14 +7,16 @@ use App\Models\Attendance;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class DetailController extends Controller
 {
-    public function show(int $id)
+    public function show(int $id): View
     {
         $userId = Auth::id();
-        if (!$userId) {
+        if (! $userId) {
             abort(403);
         }
 
@@ -29,66 +31,57 @@ class DetailController extends Controller
 
         $employeeName = $attendance->user?->name ?? '';
 
-        $workDate      = Carbon::parse($attendance->work_date);
+        $workDate = Carbon::parse($attendance->work_date);
         $dateYearLabel = $workDate->format('Y年');
-        $dateDayLabel  = $workDate->format('n月j日');
-        $latestApp = $attendance->applications
+        $dateDayLabel = $workDate->format('n月j日');
+
+        $latestApplication = $attendance->applications
             ->sortByDesc('applied_at')
             ->first();
 
-        $statusCode  = $latestApp?->status?->code ?? null;
-        $statusLabel = $latestApp?->status?->label ?? '未申請';
-        $pendingCode = defined(ApplicationStatus::class . '::CODE_PENDING')
-            ? ApplicationStatus::CODE_PENDING
-            : 'pending';
+        $statusCode = $latestApplication?->status?->code ?? null;
+        $statusLabel = $latestApplication?->status?->label ?? '未申請';
 
-        $isPending = ($statusCode === $pendingCode);
+        $isPending = ($statusCode === ApplicationStatus::CODE_PENDING);
 
-        $time = $attendance->time;
+        $attendanceTime = $attendance->time;
 
-        $b1 = $attendance->breaks->firstWhere('break_no', 1);
-        $b2 = $attendance->breaks->firstWhere('break_no', 2);
+        $breakOne = $attendance->breaks->firstWhere('break_no', 1);
+        $breakTwo = $attendance->breaks->firstWhere('break_no', 2);
 
-        $currentWorkStart = $this->formatTime($time?->start_time);
-        $currentWorkEnd   = $this->formatTime($time?->end_time);
+        $currentWorkStart = $this->formatTime($attendanceTime?->start_time);
+        $currentWorkEnd = $this->formatTime($attendanceTime?->end_time);
 
-        $currentB1Start = $this->formatTime($b1?->start_time);
-        $currentB1End   = $this->formatTime($b1?->end_time);
+        $currentBreak1Start = $this->formatTime($breakOne?->start_time);
+        $currentBreak1End = $this->formatTime($breakOne?->end_time);
 
-        $currentB2Start = $this->formatTime($b2?->start_time);
-        $currentB2End   = $this->formatTime($b2?->end_time);
+        $currentBreak2Start = $this->formatTime($breakTwo?->start_time);
+        $currentBreak2End = $this->formatTime($breakTwo?->end_time);
 
-        $currentNote = (string)($attendance->note ?? '');
+        $currentNote = (string) ($attendance->note ?? '');
 
-        if ($isPending && $latestApp) {
-            $workStartLabel = $this->formatTime($latestApp->requested_work_start_time) ?: $currentWorkStart;
-            $workEndLabel   = $this->formatTime($latestApp->requested_work_end_time)   ?: $currentWorkEnd;
+        if ($isPending && $latestApplication) {
+            $workStartLabel = $this->formatTime($latestApplication->requested_work_start_time) ?: $currentWorkStart;
+            $workEndLabel = $this->formatTime($latestApplication->requested_work_end_time) ?: $currentWorkEnd;
 
-            if ($latestApp->requested_break1_start_time === null && $latestApp->requested_break1_end_time === null) {
-                $break1StartLabel = '';
-                $break1EndLabel   = '';
-            } else {
-                $break1StartLabel = $this->formatTime($latestApp->requested_break1_start_time) ?: $currentB1Start;
-                $break1EndLabel   = $this->formatTime($latestApp->requested_break1_end_time)   ?: $currentB1End;
-            }
+            $break1StartLabel = $this->formatTime($latestApplication->requested_break1_start_time) ?: $currentBreak1Start;
+            $break1EndLabel = $this->formatTime($latestApplication->requested_break1_end_time) ?: $currentBreak1End;
 
-            if ($latestApp->requested_break2_start_time === null && $latestApp->requested_break2_end_time === null) {
-                $break2StartLabel = '';
-                $break2EndLabel   = '';
-            } else {
-                $break2StartLabel = $this->formatTime($latestApp->requested_break2_start_time) ?: $currentB2Start;
-                $break2EndLabel   = $this->formatTime($latestApp->requested_break2_end_time)   ?: $currentB2End;
-            }
+            $break2StartLabel = $this->formatTime($latestApplication->requested_break2_start_time) ?: $currentBreak2Start;
+            $break2EndLabel = $this->formatTime($latestApplication->requested_break2_end_time) ?: $currentBreak2End;
 
-            $noteLabel = ($latestApp->requested_note !== null) ? (string)$latestApp->requested_note : $currentNote;
+            $noteLabel = (string) ($latestApplication->requested_note ?? $currentNote);
         } else {
-            $workStartLabel   = $currentWorkStart;
-            $workEndLabel     = $currentWorkEnd;
-            $break1StartLabel = $currentB1Start;
-            $break1EndLabel   = $currentB1End;
-            $break2StartLabel = $currentB2Start;
-            $break2EndLabel   = $currentB2End;
-            $noteLabel        = $currentNote;
+            $workStartLabel = $currentWorkStart;
+            $workEndLabel = $currentWorkEnd;
+
+            $break1StartLabel = $currentBreak1Start;
+            $break1EndLabel = $currentBreak1End;
+
+            $break2StartLabel = $currentBreak2Start;
+            $break2EndLabel = $currentBreak2End;
+
+            $noteLabel = $currentNote;
         }
 
         return view('detail', [
@@ -112,10 +105,10 @@ class DetailController extends Controller
         ]);
     }
 
-    public function update(AttendanceDetailRequest $request, int $id)
+    public function update(AttendanceDetailRequest $request, int $id): RedirectResponse
     {
         $userId = Auth::id();
-        if (!$userId) {
+        if (! $userId) {
             abort(403);
         }
 
@@ -123,26 +116,25 @@ class DetailController extends Controller
             ->where('user_id', $userId)
             ->findOrFail($id);
 
-        $latestApp = $attendance->applications->sortByDesc('applied_at')->first();
+        $latestApplication = $attendance->applications->sortByDesc('applied_at')->first();
 
-        $pendingCode = defined(ApplicationStatus::class . '::CODE_PENDING')
-            ? ApplicationStatus::CODE_PENDING
-            : 'pending';
-
-        if (($latestApp?->status?->code ?? null) === $pendingCode) {
+        if (($latestApplication?->status?->code ?? null) === ApplicationStatus::CODE_PENDING) {
             return back()
                 ->withErrors(['application' => '承認待ちのため修正はできません。'])
                 ->withInput();
         }
 
-        $pendingStatusId = ApplicationStatus::where('code', $pendingCode)->value('id');
-        if (!$pendingStatusId) {
+        $pendingStatusId = ApplicationStatus::query()
+            ->where('code', ApplicationStatus::CODE_PENDING)
+            ->value('id');
+
+        if (! $pendingStatusId) {
             return back()
                 ->withErrors(['application' => 'pending ステータスが存在しません。seed を確認してください。'])
                 ->withInput();
         }
 
-        $v = $request->validated();
+        $validated = $request->validated();
 
         AttendanceApplication::create([
             'attendance_id'     => $attendance->id,
@@ -151,13 +143,13 @@ class DetailController extends Controller
             'reason'            => '勤怠修正申請',
             'applied_at'        => now(),
 
-            'requested_work_start_time'   => $this->normalizeTime($v['start_time'] ?? null),
-            'requested_work_end_time'     => $this->normalizeTime($v['end_time'] ?? null),
-            'requested_break1_start_time' => $this->normalizeTime($v['break1_start'] ?? null),
-            'requested_break1_end_time'   => $this->normalizeTime($v['break1_end'] ?? null),
-            'requested_break2_start_time' => $this->normalizeTime($v['break2_start'] ?? null),
-            'requested_break2_end_time'   => $this->normalizeTime($v['break2_end'] ?? null),
-            'requested_note'              => $v['note'] ?? null,
+            'requested_work_start_time'   => $this->normalizeTime($validated['start_time'] ?? null),
+            'requested_work_end_time'     => $this->normalizeTime($validated['end_time'] ?? null),
+            'requested_break1_start_time' => $this->normalizeTime($validated['break1_start'] ?? null),
+            'requested_break1_end_time'   => $this->normalizeTime($validated['break1_end'] ?? null),
+            'requested_break2_start_time' => $this->normalizeTime($validated['break2_start'] ?? null),
+            'requested_break2_end_time'   => $this->normalizeTime($validated['break2_end'] ?? null),
+            'requested_note'              => $validated['note'] ?? null,
         ]);
 
         return redirect()
@@ -165,44 +157,47 @@ class DetailController extends Controller
             ->with('status', '修正申請を送信しました（承認待ち）');
     }
 
-    private function normalizeTime($value): ?string
+    private function normalizeTime(mixed $value): ?string
     {
         if ($value === null) {
             return null;
         }
-        $value = trim((string)$value);
-        if ($value === '') {
+
+        $trimmed = trim((string) $value);
+        if ($trimmed === '') {
             return null;
         }
 
-        if (preg_match('/^\d{1,2}:\d{2}$/', $value)) {
-            $dt = Carbon::createFromFormat('H:i', $value);
-            return $dt->format('H:i:s');
+        if (preg_match('/^\d{1,2}:\d{2}$/', $trimmed)) {
+            return Carbon::createFromFormat('H:i', $trimmed)->format('H:i:s');
         }
 
-        if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $value)) {
-            $dt = Carbon::createFromFormat('H:i:s', $value);
-            return $dt->format('H:i:s');
+        if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $trimmed)) {
+            return Carbon::createFromFormat('H:i:s', $trimmed)->format('H:i:s');
         }
 
         return null;
     }
 
-    private function formatTime($value): string
+    private function formatTime(mixed $value): string
     {
-        if ($value === null || $value === '') {
+        if ($value === null) {
             return '';
         }
+
         try {
-            $str = (string)$value;
-            if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $str)) {
-                return Carbon::createFromFormat('H:i:s', $str)->format('H:i');
+            $stringValue = (string) $value;
+
+            if (preg_match('/^\d{1,2}:\d{2}:\d{2}$/', $stringValue)) {
+                return Carbon::createFromFormat('H:i:s', $stringValue)->format('H:i');
             }
-            if (preg_match('/^\d{1,2}:\d{2}$/', $str)) {
-                return Carbon::createFromFormat('H:i', $str)->format('H:i');
+
+            if (preg_match('/^\d{1,2}:\d{2}$/', $stringValue)) {
+                return Carbon::createFromFormat('H:i', $stringValue)->format('H:i');
             }
-            return Carbon::parse($str)->format('H:i');
-        } catch (\Throwable $e) {
+
+            return Carbon::parse($stringValue)->format('H:i');
+        } catch (\Throwable $throwable) {
             return '';
         }
     }

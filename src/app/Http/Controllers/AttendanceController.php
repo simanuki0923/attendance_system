@@ -3,20 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use App\Models\AttendanceApplication;
+use App\Models\AttendanceBreak;
 use App\Models\AttendanceTime;
 use App\Models\AttendanceTotal;
-use App\Models\AttendanceBreak;
-use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
+use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\View\View;
 
 class AttendanceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $user  = Auth::user();
+        $user = Auth::user();
         $today = Carbon::today();
 
         $attendance = Attendance::with(['time', 'total', 'breaks'])
@@ -40,10 +42,10 @@ class AttendanceController extends Controller
     {
         $sessionStatus = session('attendance_status');
         if ($sessionStatus) {
-            return $sessionStatus;
+            return (string) $sessionStatus;
         }
 
-        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
             return 'before_work';
         }
 
@@ -51,11 +53,19 @@ class AttendanceController extends Controller
             return 'after_work';
         }
 
-        $hasOpenBreak = $attendance->breaks
-            ? $attendance->breaks->contains(fn($b) => empty($b->end_time))
-            : false;
+        $hasOpenBreak = false;
 
-        return $hasOpenBreak ? 'on_break' : 'working';
+        if ($attendance->breaks) {
+            $hasOpenBreak = $attendance->breaks->contains(function (AttendanceBreak $attendanceBreak): bool {
+                return empty($attendanceBreak->end_time);
+            });
+        }
+
+        if ($hasOpenBreak) {
+            return 'on_break';
+        }
+
+        return 'working';
     }
 
     protected function getOrCreateTodayAttendanceForUser(int $userId): Attendance
@@ -84,23 +94,27 @@ class AttendanceController extends Controller
 
     protected function nextBreakNo(Attendance $attendance): int
     {
-        $maxNo = $attendance->breaks()->max('break_no');
-        return ($maxNo ?? 0) + 1;
+        $maxBreakNo = $attendance->breaks()->max('break_no');
+
+        return ((int) ($maxBreakNo ?? 0)) + 1;
     }
 
     private function ensurePendingApplication(Attendance $attendance, int $userId): void
     {
-        $pendingStatusId = ApplicationStatus::where('code', ApplicationStatus::CODE_PENDING)->value('id');
+        $pendingStatusId = ApplicationStatus::query()
+            ->where('code', ApplicationStatus::CODE_PENDING)
+            ->value('id');
 
         if (! $pendingStatusId) {
             throw new \RuntimeException('application_statuses に pending が存在しません。Seeder を確認してください。');
         }
 
-        $exists = AttendanceApplication::where('attendance_id', $attendance->id)
+        $alreadyExists = AttendanceApplication::query()
+            ->where('attendance_id', $attendance->id)
             ->where('status_id', $pendingStatusId)
             ->exists();
 
-        if ($exists) {
+        if ($alreadyExists) {
             return;
         }
 
@@ -113,10 +127,11 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function clockIn(Request $request)
+    public function clockIn(Request $request): RedirectResponse
     {
-        $user           = Auth::user();
-        $attendance     = $this->getOrCreateTodayAttendanceForUser($user->id);
+        $user = Auth::user();
+
+        $attendance = $this->getOrCreateTodayAttendanceForUser($user->id);
         $attendanceTime = $attendance->time;
 
         if ($attendanceTime && $attendanceTime->start_time) {
@@ -132,7 +147,6 @@ class AttendanceController extends Controller
         $attendanceTime->save();
 
         $this->ensureTotal($attendance);
-
         $this->ensurePendingApplication($attendance, $user->id);
 
         session(['attendance_status' => 'working']);
@@ -142,9 +156,9 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 
-    public function clockOut(Request $request)
+    public function clockOut(Request $request): RedirectResponse
     {
-        $user  = Auth::user();
+        $user = Auth::user();
         $today = Carbon::today();
 
         $attendance = Attendance::with(['time', 'total', 'breaks'])
@@ -152,7 +166,7 @@ class AttendanceController extends Controller
             ->whereDate('work_date', $today)
             ->first();
 
-        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
@@ -160,28 +174,30 @@ class AttendanceController extends Controller
             session(['attendance_status' => 'after_work']);
             session()->forget('break_start_at');
             session()->forget('break_id');
+
             return redirect()->route('attendance.list');
         }
 
-        $total = $this->ensureTotal($attendance);
+        $attendanceTotal = $this->ensureTotal($attendance);
 
-        $breakId    = session('break_id');
-        $breakStart = session('break_start_at');
+        $breakId = session('break_id');
+        $breakStartAt = session('break_start_at');
 
-        if ($breakId && $breakStart) {
-            $break = AttendanceBreak::where('attendance_id', $attendance->id)
-                ->where('id', $breakId)
+        if ($breakId && $breakStartAt) {
+            $attendanceBreak = AttendanceBreak::query()
+                ->where('attendance_id', $attendance->id)
+                ->where('id', (int) $breakId)
                 ->first();
 
-            if ($break && empty($break->end_time)) {
-                $start   = Carbon::parse($breakStart);
-                $minutes = $start->diffInMinutes(now());
+            if ($attendanceBreak && empty($attendanceBreak->end_time)) {
+                $breakStart = Carbon::parse((string) $breakStartAt);
+                $breakMinutes = $breakStart->diffInMinutes(now());
 
-                $break->end_time = now()->format('H:i:s');
-                $break->minutes  = $minutes;
-                $break->save();
+                $attendanceBreak->end_time = now()->format('H:i:s');
+                $attendanceBreak->minutes = $breakMinutes;
+                $attendanceBreak->save();
 
-                $total->break_minutes += $minutes;
+                $attendanceTotal->break_minutes += $breakMinutes;
             }
 
             session()->forget('break_start_at');
@@ -191,16 +207,16 @@ class AttendanceController extends Controller
         $attendance->time->end_time = now()->format('H:i:s');
         $attendance->time->save();
 
-        $startTime = Carbon::parse($attendance->time->start_time);
-        $endTime   = Carbon::parse($attendance->time->end_time);
+        $workStart = Carbon::parse($attendance->time->start_time);
+        $workEnd = Carbon::parse($attendance->time->end_time);
 
-        $workMinutes = $startTime->diffInMinutes($endTime) - $total->break_minutes;
+        $workMinutes = $workStart->diffInMinutes($workEnd) - (int) $attendanceTotal->break_minutes;
         if ($workMinutes < 0) {
             $workMinutes = 0;
         }
 
-        $total->total_work_minutes = $workMinutes;
-        $total->save();
+        $attendanceTotal->total_work_minutes = $workMinutes;
+        $attendanceTotal->save();
 
         $this->ensurePendingApplication($attendance, $user->id);
 
@@ -209,9 +225,9 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 
-    public function breakIn(Request $request)
+    public function breakIn(Request $request): RedirectResponse
     {
-        $user  = Auth::user();
+        $user = Auth::user();
         $today = Carbon::today();
 
         $attendance = Attendance::with(['time', 'breaks'])
@@ -219,7 +235,7 @@ class AttendanceController extends Controller
             ->whereDate('work_date', $today)
             ->first();
 
-        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
@@ -231,11 +247,11 @@ class AttendanceController extends Controller
             return redirect()->route('attendance.list');
         }
 
-        $nextNo = $this->nextBreakNo($attendance);
+        $nextBreakNo = $this->nextBreakNo($attendance);
 
-        $break = AttendanceBreak::create([
+        $attendanceBreak = AttendanceBreak::create([
             'attendance_id' => $attendance->id,
-            'break_no'      => $nextNo,
+            'break_no'      => $nextBreakNo,
             'start_time'    => now()->format('H:i:s'),
             'end_time'      => null,
             'minutes'       => 0,
@@ -243,16 +259,16 @@ class AttendanceController extends Controller
 
         session([
             'attendance_status' => 'on_break',
-            'break_id'          => $break->id,
+            'break_id'          => $attendanceBreak->id,
             'break_start_at'    => now()->toDateTimeString(),
         ]);
 
         return redirect()->route('attendance.list');
     }
 
-    public function breakOut(Request $request)
+    public function breakOut(Request $request): RedirectResponse
     {
-        $user  = Auth::user();
+        $user = Auth::user();
         $today = Carbon::today();
 
         $attendance = Attendance::with(['total', 'time'])
@@ -260,7 +276,7 @@ class AttendanceController extends Controller
             ->whereDate('work_date', $today)
             ->first();
 
-        if (! $attendance || !$attendance->time || !$attendance->time->start_time) {
+        if (! $attendance || ! $attendance->time || ! $attendance->time->start_time) {
             return redirect()->route('attendance.list');
         }
 
@@ -268,31 +284,33 @@ class AttendanceController extends Controller
             return redirect()->route('attendance.list');
         }
 
-        $breakId    = session('break_id');
-        $breakStart = session('break_start_at');
+        $breakId = session('break_id');
+        $breakStartAt = session('break_start_at');
 
-        if (! $breakId || !$breakStart) {
+        if (! $breakId || ! $breakStartAt) {
             session(['attendance_status' => 'working']);
             session()->forget('break_id');
             session()->forget('break_start_at');
+
             return redirect()->route('attendance.list');
         }
 
-        $break = AttendanceBreak::where('attendance_id', $attendance->id)
-            ->where('id', $breakId)
+        $attendanceBreak = AttendanceBreak::query()
+            ->where('attendance_id', $attendance->id)
+            ->where('id', (int) $breakId)
             ->first();
 
-        if ($break) {
-            $start   = Carbon::parse($breakStart);
-            $minutes = $start->diffInMinutes(now());
+        if ($attendanceBreak) {
+            $breakStart = Carbon::parse((string) $breakStartAt);
+            $breakMinutes = $breakStart->diffInMinutes(now());
 
-            $break->end_time = now()->format('H:i:s');
-            $break->minutes  = $minutes;
-            $break->save();
+            $attendanceBreak->end_time = now()->format('H:i:s');
+            $attendanceBreak->minutes = $breakMinutes;
+            $attendanceBreak->save();
 
-            $total = $this->ensureTotal($attendance);
-            $total->break_minutes += $minutes;
-            $total->save();
+            $attendanceTotal = $this->ensureTotal($attendance);
+            $attendanceTotal->break_minutes += $breakMinutes;
+            $attendanceTotal->save();
         }
 
         session(['attendance_status' => 'working']);
@@ -302,5 +320,3 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.list');
     }
 }
-
-

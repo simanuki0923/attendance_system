@@ -3,42 +3,44 @@
 namespace App\Http\Controllers;
 
 use App\Models\Attendance;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
+use Illuminate\View\View;
 
 class ListController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $rawDate = $request->query('date');
 
         if ($rawDate) {
             try {
-                $targetDate = Carbon::createFromFormat('Y-m-d', $rawDate);
-            } catch (\Throwable $e) {
+                $targetDate = Carbon::createFromFormat('Y-m-d', (string) $rawDate);
+            } catch (\Throwable $throwable) {
                 try {
-                    $targetDate = Carbon::parse($rawDate);
-                } catch (\Throwable $e) {
+                    $targetDate = Carbon::parse((string) $rawDate);
+                } catch (\Throwable $throwable2) {
                     $targetDate = Carbon::today();
                 }
             }
         } else {
             $targetDate = Carbon::today();
         }
+
         $targetDate = $targetDate->startOfDay();
 
         $currentDateLabel = $targetDate->locale('ja')->isoFormat('YYYY年M月D日(ddd)');
-        $currentDateYmd   = $targetDate->format('Y/m/d');
+        $currentDateYmd = $targetDate->format('Y/m/d');
 
         $prevDate = $targetDate->copy()->subDay();
         $nextDate = $targetDate->copy()->addDay();
 
-        $prevDateUrl = route('attendance.month', [
+        $prevDateUrl = route('admin.attendance.list', [
             'date' => $prevDate->toDateString(),
         ]);
 
-        $nextDateUrl = route('attendance.month', [
+        $nextDateUrl = route('admin.attendance.list', [
             'date' => $nextDate->toDateString(),
         ]);
 
@@ -54,17 +56,17 @@ class ListController extends Controller
             ->orderBy('user_id')
             ->get();
 
-        $attendances = $records->map(function (Attendance $attendance) use ($loginUserId) {
-            $user  = $attendance->user;
-            $time  = $attendance->time;
-            $total = $attendance->total;
+        $attendances = $records->map(function (Attendance $attendance) use ($loginUserId): array {
+            $attendanceUser = $attendance->user;
+            $attendanceTime = $attendance->time;
+            $attendanceTotal = $attendance->total;
 
-            $nameLabel  = $user?->name ?? '';
-            $startLabel = $this->formatTime($time?->start_time);
-            $endLabel   = $this->formatTime($time?->end_time);
+            $nameLabel = $attendanceUser?->name ?? '';
+            $startLabel = $this->formatTime($attendanceTime?->start_time);
+            $endLabel = $this->formatTime($attendanceTime?->end_time);
 
-            $breakLabel = $this->formatMinutes($total?->break_minutes ?? null);
-            $totalLabel = $this->formatMinutes($total?->total_work_minutes ?? null);
+            $breakLabel = $this->formatMinutes($attendanceTotal?->break_minutes ?? null);
+            $totalLabel = $this->formatMinutes($attendanceTotal?->total_work_minutes ?? null);
 
             $detailUrl = route('attendance.detail', [
                 'id' => $attendance->id,
@@ -92,25 +94,27 @@ class ListController extends Controller
 
     private function formatTime(?string $value): string
     {
-        if (empty($value)) return '';
+        if (empty($value)) {
+            return '';
+        }
 
         try {
             return Carbon::parse($value)->format('H:i');
-        } catch (\Throwable $e) {
+        } catch (\Throwable $throwable) {
             return (string) $value;
         }
     }
 
-    private function formatMinutes($minutes): string
+    private function formatMinutes(mixed $minutes): string
     {
-        if ($minutes === null || (int) $minutes <= 0) return '';
+        if ($minutes === null || (int) $minutes <= 0) {
+            return '';
+        }
 
-        $minutes = (int) $minutes;
-        $hours   = intdiv($minutes, 60);
-        $mins    = $minutes % 60;
+        $totalMinutes = (int) $minutes;
+        $hours = intdiv($totalMinutes, 60);
+        $remainingMinutes = $totalMinutes % 60;
 
-        return sprintf('%d:%02d', $hours, $mins);
+        return sprintf('%d:%02d', $hours, $remainingMinutes);
     }
 }
-
-

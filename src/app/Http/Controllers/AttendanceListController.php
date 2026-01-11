@@ -6,13 +6,14 @@ use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class AttendanceListController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         $userId = Auth::id();
-        if (!$userId) {
+        if (! $userId) {
             abort(403);
         }
 
@@ -22,20 +23,20 @@ class AttendanceListController extends Controller
             $targetMonth = $rawMonth !== ''
                 ? Carbon::createFromFormat('Y-m', $rawMonth)->startOfMonth()
                 : Carbon::today()->startOfMonth();
-        } catch (\Throwable $e) {
+        } catch (\Throwable $throwable) {
             $targetMonth = Carbon::today()->startOfMonth();
         }
 
         $startOfMonth = $targetMonth->copy()->startOfMonth();
-        $endOfMonth   = $targetMonth->copy()->endOfMonth();
+        $endOfMonth = $targetMonth->copy()->endOfMonth();
 
-        $records = Attendance::with(['time', 'total'])
+        $recordsByDate = Attendance::with(['time', 'total'])
             ->where('user_id', $userId)
             ->whereDate('work_date', '>=', $startOfMonth->toDateString())
             ->whereDate('work_date', '<=', $endOfMonth->toDateString())
             ->get()
-            ->keyBy(function (Attendance $a) {
-                return Carbon::parse($a->work_date)->toDateString();
+            ->keyBy(function (Attendance $attendance): string {
+                return Carbon::parse($attendance->work_date)->toDateString();
             });
 
         $currentMonthLabel = $targetMonth->format('Y/m');
@@ -49,27 +50,27 @@ class AttendanceListController extends Controller
         ]);
 
         $daysInMonth = [];
-        $cursor = $startOfMonth->copy();
+        $cursorDate = $startOfMonth->copy();
 
-        while ($cursor->lessThanOrEqualTo($endOfMonth)) {
-            $ymd        = $cursor->toDateString();
-            $attendance = $records->get($ymd);
+        while ($cursorDate->lessThanOrEqualTo($endOfMonth)) {
+            $dateKey = $cursorDate->toDateString();
+            $attendance = $recordsByDate->get($dateKey);
 
             $detailUrl = $attendance
                 ? route('attendance.detail', ['id' => $attendance->id])
                 : '';
 
             $daysInMonth[] = [
-                'date_label'  => $cursor->format('m/d') . '(' . $cursor->locale('ja')->isoFormat('ddd') . ')',
+                'date_label'  => $cursorDate->format('m/d') . '(' . $cursorDate->locale('ja')->isoFormat('ddd') . ')',
                 'start_label' => $this->formatTime($attendance?->time?->start_time),
                 'end_label'   => $this->formatTime($attendance?->time?->end_time),
                 'break_label' => $this->formatMinutes($attendance?->total?->break_minutes),
                 'total_label' => $this->formatMinutes($attendance?->total?->total_work_minutes),
                 'detail_url'  => $detailUrl,
-                'is_active'   => $cursor->isToday(),
+                'is_active'   => $cursorDate->isToday(),
             ];
 
-            $cursor->addDay();
+            $cursorDate->addDay();
         }
 
         return view('list', [
@@ -88,21 +89,21 @@ class AttendanceListController extends Controller
 
         try {
             return Carbon::parse($value)->format('H:i');
-        } catch (\Throwable $e) {
+        } catch (\Throwable $throwable) {
             return (string) $value;
         }
     }
 
-    private function formatMinutes($minutes): string
+    private function formatMinutes(mixed $minutes): string
     {
         if ($minutes === null || (int) $minutes <= 0) {
             return '';
         }
 
-        $minutes = (int) $minutes;
-        $hours   = intdiv($minutes, 60);
-        $mins    = $minutes % 60;
+        $totalMinutes = (int) $minutes;
+        $hours = intdiv($totalMinutes, 60);
+        $remainingMinutes = $totalMinutes % 60;
 
-        return sprintf('%d:%02d', $hours, $mins);
+        return sprintf('%d:%02d', $hours, $remainingMinutes);
     }
 }

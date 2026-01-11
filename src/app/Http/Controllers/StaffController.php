@@ -2,27 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Attendance;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StaffController extends Controller
 {
-    public function index()
+    public function index(): View
     {
-        $adminEmails = config('admin.emails', []);
+        $adminEmails = (array) config('admin.emails', []);
 
         $staffUsers = User::query()
-            ->when(!empty($adminEmails), fn($q) => $q->whereNotIn('email', $adminEmails))
+            ->when(! empty($adminEmails), function ($query) use ($adminEmails): void {
+                $query->whereNotIn('email', $adminEmails);
+            })
             ->orderBy('name')
             ->get();
 
-        $staffList = $staffUsers->map(function (User $u) {
+        $staffList = $staffUsers->map(function (User $user): array {
             return [
-                'name_label'  => $u->name,
-                'email_label' => $u->email,
-                'detail_url'  => route('admin.attendance.staff', ['id' => $u->id]),
+                'name_label'  => $user->name,
+                'email_label' => $user->email,
+                'detail_url'  => route('admin.attendance.staff', ['id' => $user->id]),
                 'detail_text' => '詳細',
             ];
         });
@@ -33,15 +37,16 @@ class StaffController extends Controller
         ]);
     }
 
-    public function attendance(Request $request, int $id)
+    public function attendance(Request $request, int $id): View
     {
-        $staff = User::findOrFail($id);
+        $staffUser = User::findOrFail($id);
 
         $rawMonth = $request->query('month');
+
         if ($rawMonth) {
             try {
-                $targetMonth = Carbon::createFromFormat('Y-m', $rawMonth)->startOfMonth();
-            } catch (\Throwable $e) {
+                $targetMonth = Carbon::createFromFormat('Y-m', (string) $rawMonth)->startOfMonth();
+            } catch (\Throwable $throwable) {
                 $targetMonth = Carbon::today()->startOfMonth();
             }
         } else {
@@ -49,98 +54,103 @@ class StaffController extends Controller
         }
 
         $startOfMonth = $targetMonth->copy()->startOfMonth();
-        $endOfMonth   = $targetMonth->copy()->endOfMonth();
+        $endOfMonth = $targetMonth->copy()->endOfMonth();
 
         $recordsByDate = Attendance::with(['time', 'total', 'breaks'])
-            ->where('user_id', $staff->id)
+            ->where('user_id', $staffUser->id)
             ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
             ->get()
-            ->keyBy(fn (Attendance $a) => Carbon::parse($a->work_date)->format('Y-m-d'));
+            ->keyBy(function (Attendance $attendance): string {
+                return Carbon::parse($attendance->work_date)->format('Y-m-d');
+            });
 
-        $fmtMinutes = function (?int $minutes): string {
-            $minutes = (int)($minutes ?? 0);
-            $h = intdiv($minutes, 60);
-            $m = $minutes % 60;
-            return $h . ':' . str_pad((string) $m, 2, '0', STR_PAD_LEFT);
+        $formatMinutes = function (?int $minutes): string {
+            $totalMinutes = (int) ($minutes ?? 0);
+
+            $hours = intdiv($totalMinutes, 60);
+            $remainingMinutes = $totalMinutes % 60;
+
+            return $hours . ':' . str_pad((string) $remainingMinutes, 2, '0', STR_PAD_LEFT);
         };
 
         $attendances = collect();
-        $cursor = $startOfMonth->copy();
+        $cursorDate = $startOfMonth->copy();
 
-        while ($cursor->lte($endOfMonth)) {
-            $key        = $cursor->format('Y-m-d');
-            $attendance = $recordsByDate->get($key);
+        while ($cursorDate->lte($endOfMonth)) {
+            $dateKey = $cursorDate->format('Y-m-d');
+            $attendance = $recordsByDate->get($dateKey);
 
-            $weekdayJa = $cursor->locale('ja')->isoFormat('ddd');
+            $weekdayJa = $cursorDate->locale('ja')->isoFormat('ddd');
 
             if ($attendance) {
-                $time = $attendance->time;
+                $attendanceTime = $attendance->time;
 
-                $startLabel = $time?->start_time
-                    ? Carbon::parse($time->start_time)->format('H:i')
+                $startLabel = $attendanceTime?->start_time
+                    ? Carbon::parse($attendanceTime->start_time)->format('H:i')
                     : '';
 
-                $endLabel = $time?->end_time
-                    ? Carbon::parse($time->end_time)->format('H:i')
+                $endLabel = $attendanceTime?->end_time
+                    ? Carbon::parse($attendanceTime->end_time)->format('H:i')
                     : '';
 
-                $total      = $attendance->total;
-                $breakLabel = $fmtMinutes($total?->break_minutes);
-                $workLabel  = $fmtMinutes($total?->total_work_minutes);
+                $attendanceTotal = $attendance->total;
+                $breakLabel = $formatMinutes($attendanceTotal?->break_minutes);
+                $workLabel = $formatMinutes($attendanceTotal?->total_work_minutes);
 
                 $detailUrl = route('admin.attendance.detail', ['id' => $attendance->id]);
             } else {
                 $startLabel = '';
-                $endLabel   = '';
+                $endLabel = '';
                 $breakLabel = '';
-                $workLabel  = '';
-                $detailUrl  = null;
+                $workLabel = '';
+                $detailUrl = null;
             }
 
             $attendances->push([
-                'date_label'  => $cursor->format('m/d') . '(' . $weekdayJa . ')',
+                'date_label'  => $cursorDate->format('m/d') . '(' . $weekdayJa . ')',
                 'start_label' => $startLabel,
                 'end_label'   => $endLabel,
                 'break_label' => $breakLabel,
                 'total_label' => $workLabel,
                 'detail_url'  => $detailUrl,
-                'is_active'   => $cursor->isToday(),
+                'is_active'   => $cursorDate->isToday(),
             ]);
 
-            $cursor->addDay();
+            $cursorDate->addDay();
         }
 
         $prevMonth = $targetMonth->copy()->subMonth()->format('Y-m');
         $nextMonth = $targetMonth->copy()->addMonth()->format('Y-m');
 
         return view('admin.staff_id', [
-            'staffNameLabel'    => $staff->name,
+            'staffNameLabel'    => $staffUser->name,
             'currentMonthLabel' => $targetMonth->format('Y/m'),
             'prevMonthUrl'      => route('admin.attendance.staff', [
-                'id'    => $staff->id,
+                'id'    => $staffUser->id,
                 'month' => $prevMonth,
             ]),
             'nextMonthUrl'      => route('admin.attendance.staff', [
-                'id'    => $staff->id,
+                'id'    => $staffUser->id,
                 'month' => $nextMonth,
             ]),
             'attendances'       => $attendances,
             'csvDownloadUrl'    => route('admin.attendance.staff.csv', [
-                'id'    => $staff->id,
+                'id'    => $staffUser->id,
                 'month' => $targetMonth->format('Y-m'),
             ]),
         ]);
     }
 
-    public function attendanceCsv(Request $request, int $id)
+    public function attendanceCsv(Request $request, int $id): StreamedResponse
     {
-        $staff = User::findOrFail($id);
+        $staffUser = User::findOrFail($id);
 
         $rawMonth = $request->query('month');
+
         if ($rawMonth) {
             try {
-                $targetMonth = Carbon::createFromFormat('Y-m', $rawMonth)->startOfMonth();
-            } catch (\Throwable $e) {
+                $targetMonth = Carbon::createFromFormat('Y-m', (string) $rawMonth)->startOfMonth();
+            } catch (\Throwable $throwable) {
                 $targetMonth = Carbon::today()->startOfMonth();
             }
         } else {
@@ -148,71 +158,84 @@ class StaffController extends Controller
         }
 
         $startOfMonth = $targetMonth->copy()->startOfMonth();
-        $endOfMonth   = $targetMonth->copy()->endOfMonth();
+        $endOfMonth = $targetMonth->copy()->endOfMonth();
 
         $recordsByDate = Attendance::with(['time', 'total'])
-            ->where('user_id', $staff->id)
+            ->where('user_id', $staffUser->id)
             ->whereBetween('work_date', [$startOfMonth, $endOfMonth])
             ->get()
-            ->keyBy(fn (Attendance $a) => Carbon::parse($a->work_date)->format('Y-m-d'));
+            ->keyBy(function (Attendance $attendance): string {
+                return Carbon::parse($attendance->work_date)->format('Y-m-d');
+            });
 
-        $fmtMinutes = function (?int $minutes): string {
-            $minutes = (int)($minutes ?? 0);
-            if ($minutes === 0) {
+        $formatMinutes = function (?int $minutes): string {
+            $totalMinutes = (int) ($minutes ?? 0);
+
+            if ($totalMinutes === 0) {
                 return '';
             }
-            $h = intdiv($minutes, 60);
-            $m = $minutes % 60;
-            return $h . ':' . str_pad((string) $m, 2, '0', STR_PAD_LEFT);
+
+            $hours = intdiv($totalMinutes, 60);
+            $remainingMinutes = $totalMinutes % 60;
+
+            return $hours . ':' . str_pad((string) $remainingMinutes, 2, '0', STR_PAD_LEFT);
         };
 
         $rows = [];
         $rows[] = ['日付', '出勤', '退勤', '休憩', '合計'];
 
-        $cursor = $startOfMonth->copy();
-        while ($cursor->lte($endOfMonth)) {
-            $key        = $cursor->format('Y-m-d');
-            $attendance = $recordsByDate->get($key);
-            $weekdayJa  = $cursor->locale('ja')->isoFormat('ddd');
-            $dateLabel  = $cursor->format('m/d') . '(' . $weekdayJa . ')';
+        $cursorDate = $startOfMonth->copy();
+
+        while ($cursorDate->lte($endOfMonth)) {
+            $dateKey = $cursorDate->format('Y-m-d');
+            $attendance = $recordsByDate->get($dateKey);
+
+            $weekdayJa = $cursorDate->locale('ja')->isoFormat('ddd');
+            $dateLabel = $cursorDate->format('m/d') . '(' . $weekdayJa . ')';
 
             if ($attendance) {
-                $time = $attendance->time;
+                $attendanceTime = $attendance->time;
 
-                $startLabel = $time?->start_time
-                    ? Carbon::parse($time->start_time)->format('H:i')
+                $startLabel = $attendanceTime?->start_time
+                    ? Carbon::parse($attendanceTime->start_time)->format('H:i')
                     : '';
 
-                $endLabel = $time?->end_time
-                    ? Carbon::parse($time->end_time)->format('H:i')
+                $endLabel = $attendanceTime?->end_time
+                    ? Carbon::parse($attendanceTime->end_time)->format('H:i')
                     : '';
 
-                $total      = $attendance->total;
-                $breakLabel = $fmtMinutes($total?->break_minutes);
-                $workLabel  = $fmtMinutes($total?->total_work_minutes);
+                $attendanceTotal = $attendance->total;
+
+                $breakLabel = $formatMinutes($attendanceTotal?->break_minutes);
+                $workLabel = $formatMinutes($attendanceTotal?->total_work_minutes);
             } else {
                 $startLabel = '';
-                $endLabel   = '';
+                $endLabel = '';
                 $breakLabel = '';
-                $workLabel  = '';
+                $workLabel = '';
             }
 
             $rows[] = [$dateLabel, $startLabel, $endLabel, $breakLabel, $workLabel];
-            $cursor->addDay();
+            $cursorDate->addDay();
         }
 
-        $fileName = sprintf('%s_%s_勤怠一覧.csv', $targetMonth->format('Y-m'), $staff->name);
+        $fileName = sprintf('%s_%s_勤怠一覧.csv', $targetMonth->format('Y-m'), $staffUser->name);
 
         return response()->streamDownload(
-            function () use ($rows) {
+            function () use ($rows): void {
                 $handle = fopen('php://output', 'w');
+
                 foreach ($rows as $row) {
-                    $converted = array_map(
-                        fn ($v) => mb_convert_encoding((string) $v, 'SJIS-win', 'UTF-8'),
+                    $convertedRow = array_map(
+                        function (mixed $value): string {
+                            return mb_convert_encoding((string) $value, 'SJIS-win', 'UTF-8');
+                        },
                         $row
                     );
-                    fputcsv($handle, $converted);
+
+                    fputcsv($handle, $convertedRow);
                 }
+
                 fclose($handle);
             },
             $fileName,
@@ -220,4 +243,3 @@ class StaffController extends Controller
         );
     }
 }
-

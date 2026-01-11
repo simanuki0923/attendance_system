@@ -2,28 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
-use App\Models\Attendance;
 use App\Models\AttendanceApplication;
 use App\Models\ApplicationStatus;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class RequestController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
-        $user   = Auth::user();
+        $user = Auth::user();
         $userId = $user->id;
 
-        $rawTab    = (string) $request->query('tab', 'pending');
-        $activeTab = in_array($rawTab, ['pending', 'approved'], true) ? $rawTab : 'pending';
+        $rawTab = (string) $request->query('tab', ApplicationStatus::CODE_PENDING);
 
-        $pendingTabUrl  = route('requests.list', ['tab' => 'pending']);
-        $approvedTabUrl = route('requests.list', ['tab' => 'approved']);
-        $pageTitle      = '申請一覧';
+        $allowedTabs = [ApplicationStatus::CODE_PENDING, ApplicationStatus::CODE_APPROVED];
+        $activeTab = in_array($rawTab, $allowedTabs, true) ? $rawTab : ApplicationStatus::CODE_PENDING;
 
-        $status = ApplicationStatus::where('code', $activeTab)->first();
+        $pendingTabUrl = route('requests.list', ['tab' => ApplicationStatus::CODE_PENDING]);
+        $approvedTabUrl = route('requests.list', ['tab' => ApplicationStatus::CODE_APPROVED]);
+        $pageTitle = '申請一覧';
+
+        $status = ApplicationStatus::query()->where('code', $activeTab)->first();
 
         if (! $status) {
             return view('request', [
@@ -45,31 +47,33 @@ class RequestController extends Controller
             ->orderByDesc('applied_at')
             ->get();
 
-        $requests = $applications->map(function (AttendanceApplication $app) {
-            $attendance = $app->attendance;
-            $owner      = $attendance?->user;
+        $requests = $applications->map(function (AttendanceApplication $application): array {
+            $attendance = $application->attendance;
+            $attendanceOwner = $attendance?->user;
 
             $targetDateLabel = '';
             if ($attendance && $attendance->work_date) {
-                $workDate        = $attendance->work_date instanceof \DateTimeInterface
+                $workDate = $attendance->work_date instanceof \DateTimeInterface
                     ? Carbon::instance($attendance->work_date)
                     : Carbon::parse($attendance->work_date);
+
                 $targetDateLabel = $workDate->format('Y/m/d');
             }
 
             $appliedDateLabel = '';
-            if ($app->applied_at) {
-                $appliedAt        = $app->applied_at instanceof \DateTimeInterface
-                    ? Carbon::instance($app->applied_at)
-                    : Carbon::parse($app->applied_at);
+            if ($application->applied_at) {
+                $appliedAt = $application->applied_at instanceof \DateTimeInterface
+                    ? Carbon::instance($application->applied_at)
+                    : Carbon::parse($application->applied_at);
+
                 $appliedDateLabel = $appliedAt->format('Y/m/d');
             }
 
             return [
-                'status_label'       => $app->status?->label ?? '承認待ち',
-                'name_label'         => $owner?->name ?? '',
+                'status_label'       => $application->status?->label ?? '承認待ち',
+                'name_label'         => $attendanceOwner?->name ?? '',
                 'target_date_label'  => $targetDateLabel,
-                'reason_label'       => $app->reason ?? '',
+                'reason_label'       => $application->reason ?? '',
                 'applied_date_label' => $appliedDateLabel,
                 'detail_url'         => $attendance
                     ? route('attendance.detail', ['id' => $attendance->id])
@@ -86,5 +90,3 @@ class RequestController extends Controller
         ]);
     }
 }
-
-
