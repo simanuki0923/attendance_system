@@ -112,7 +112,6 @@
   box-shadow: 0 0 0 1px #e5e7eb;
 }
 
-/* table layout (divグリッド→tableへ移行) */
 .attendance-list__table-inner {
   width: 100%;
   border-collapse: collapse;
