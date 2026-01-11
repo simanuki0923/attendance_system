@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
-use Carbon\Carbon;
 
 class AttendanceDetailRequest extends FormRequest
 {
@@ -55,29 +55,29 @@ class AttendanceDetailRequest extends FormRequest
 
     private function validateBreak(Validator $v, int $no, ?Carbon $workStart, ?Carbon $workEnd): void
     {
-        $bs = $this->parseInputTime($this->input("break{$no}_start"));
-        $be = $this->parseInputTime($this->input("break{$no}_end"));
+        $breakStart = $this->parseInputTime($this->input("break{$no}_start"));
+        $breakEnd = $this->parseInputTime($this->input("break{$no}_end"));
 
-        if (! $bs && ! $be) {
+        if (! $breakStart && ! $breakEnd) {
             return;
         }
 
-        if ($bs && $be && $be->lessThan($bs)) {
+        if ($breakStart && $breakEnd && $breakEnd->lessThan($breakStart)) {
             $v->errors()->add("break{$no}_start", '休憩時間が不適切な値です');
             return;
         }
 
-        if ($bs && $workStart && $bs->lessThan($workStart)) {
+        if ($breakStart && $workStart && $breakStart->lessThan($workStart)) {
             $v->errors()->add("break{$no}_start", '休憩時間が不適切な値です');
         }
-        if ($bs && $workEnd && $bs->greaterThan($workEnd)) {
+        if ($breakStart && $workEnd && $breakStart->greaterThan($workEnd)) {
             $v->errors()->add("break{$no}_start", '休憩時間が不適切な値です');
         }
 
-        if ($be && $workStart && $be->lessThan($workStart)) {
+        if ($breakEnd && $workStart && $breakEnd->lessThan($workStart)) {
             $v->errors()->add("break{$no}_end", '休憩時間が不適切な値です');
         }
-        if ($be && $workEnd && $be->greaterThan($workEnd)) {
+        if ($breakEnd && $workEnd && $breakEnd->greaterThan($workEnd)) {
             $v->errors()->add("break{$no}_end", '休憩時間もしくは退勤時間が不適切な値です');
         }
     }

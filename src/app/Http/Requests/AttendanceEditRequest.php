@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
-
-use Carbon\Carbon;
 
 class AttendanceEditRequest extends FormRequest
 {
@@ -35,6 +34,7 @@ class AttendanceEditRequest extends FormRequest
         return [
             'note.required' => '備考を記入してください',
             'note.string'   => '備考を記入してください',
+            'note.max'      => '備考は1000文字以内で入力してください',
         ];
     }
 
