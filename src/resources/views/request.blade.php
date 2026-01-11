@@ -6,24 +6,13 @@
 
 @section('content')
 @php
-
     $pageTitle = $pageTitle ?? '申請一覧';
+
     $activeTab = $activeTab ?? 'pending';
     $pendingTabUrl  = $pendingTabUrl  ?? '#';
     $approvedTabUrl = $approvedTabUrl ?? '#';
 
-    if (!isset($requests)) {
-        $requests = collect(range(1, 9))->map(function () {
-            return [
-                'status_label'       => '承認待ち',
-                'name_label'         => '西 作香',
-                'target_date_label'  => '2023/06/01',
-                'reason_label'       => '遅刻のため',
-                'applied_date_label' => '2023/06/02',
-                'detail_url'         => '#',
-            ];
-        });
-    }
+    $requests = $requests ?? collect();
 @endphp
 
 <main class="request-list">
@@ -31,21 +20,23 @@
 
     <header class="request-list__header">
       <h1 class="request-list__title">
-        <span class="request-list__title-bar"></span>
+        <span class="request-list__title-bar" aria-hidden="true"></span>
         <span class="request-list__title-text">{{ $pageTitle }}</span>
       </h1>
     </header>
 
     <nav class="request-list__tabs" aria-label="申請ステータス切替">
-      <a href="{{ $pendingTabUrl }}" class="request-list__tab {{ $activeTab === 'pending' ? 'is-active' : '' }}">
+      <a href="{{ $pendingTabUrl }}"
+         class="request-list__tab {{ $activeTab === 'pending' ? 'is-active' : '' }}">
         承認待ち
       </a>
-      <a href="{{ $approvedTabUrl }}" class="request-list__tab {{ $activeTab === 'approved' ? 'is-active' : '' }}">
+      <a href="{{ $approvedTabUrl }}"
+         class="request-list__tab {{ $activeTab === 'approved' ? 'is-active' : '' }}">
         承認済み
       </a>
     </nav>
 
-    <section class="request-list__table-wrapper">
+    <section class="request-list__table-wrapper" aria-label="申請一覧">
       <table class="request-table">
         <thead>
           <tr>
@@ -57,17 +48,21 @@
             <th class="request-table__th request-table__th--narrow">詳細</th>
           </tr>
         </thead>
+
         <tbody>
           @forelse ($requests as $row)
+            @php
+                $detailUrl = $row['detail_url'] ?? null;
+            @endphp
             <tr>
               <td class="request-table__td">{{ $row['status_label'] ?? '' }}</td>
               <td class="request-table__td">{{ $row['name_label'] ?? '' }}</td>
               <td class="request-table__td">{{ $row['target_date_label'] ?? '' }}</td>
               <td class="request-table__td">{{ $row['reason_label'] ?? '' }}</td>
               <td class="request-table__td">{{ $row['applied_date_label'] ?? '' }}</td>
-              <td class="request-table__td request-table__td--link">
-                @if (!empty($row['detail_url']))
-                  <a href="{{ $row['detail_url'] }}" class="request-table__detail-link">詳細</a>
+              <td class="request-table__td request-table__td--narrow">
+                @if (!empty($detailUrl))
+                  <a href="{{ $detailUrl }}" class="request-table__detail-link">詳細</a>
                 @else
                   <span class="request-table__detail-link request-table__detail-link--disabled">詳細</span>
                 @endif
@@ -76,13 +71,14 @@
           @empty
             <tr>
               <td class="request-table__td request-table__td--empty" colspan="6">
-                表示する申請はありません。
+                申請情報がありません。
               </td>
             </tr>
           @endforelse
         </tbody>
       </table>
     </section>
+
   </div>
 </main>
 @endsection

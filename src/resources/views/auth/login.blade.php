@@ -33,12 +33,6 @@
             </div>
         @endif
 
-        @if ($errors->has('auth'))
-            <div class="form__error--global" role="alert">
-                {{ $errors->first('auth') }}
-            </div>
-        @endif
-
         @if (session('verification_link_sent'))
             <div class="form__notice" role="status">
                 認証メールを再送しました。メールをご確認ください。
@@ -58,7 +52,6 @@
                 @enderror
             </label>
 
-            {{-- パスワード --}}
             <label class="form__group" for="password">
                 <span class="form__label--item">パスワード</span>
                 <input id="password" type="password" name="password" autocomplete="current-password" required aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}" aria-describedby="{{ $errors->has('password') ? 'error-password' : '' }}" />

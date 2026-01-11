@@ -1,5 +1,3 @@
-
-{{-- resources/views/admin/login.blade.php --}}
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -32,12 +30,6 @@
             <div class="form__notice" role="status">
                 メール認証が完了していません。<br>
                 <a class="link--primary" href="{{ route('verification.notice') }}">認証はこちらから</a>
-            </div>
-        @endif
-
-        @if ($errors->has('auth'))
-            <div class="form__error--global" role="alert">
-                {{ $errors->first('auth') }}
             </div>
         @endif
 

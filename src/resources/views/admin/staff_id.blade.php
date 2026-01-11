@@ -6,12 +6,12 @@
 
 @section('content')
 @php
-    $staffNameLabel    = $staffNameLabel    ?? '';
-    $currentMonthLabel = $currentMonthLabel ?? '';
-    $prevMonthUrl      = $prevMonthUrl      ?? null;
-    $nextMonthUrl      = $nextMonthUrl      ?? null;
-    $attendances       = $attendances       ?? collect();
-    $csvDownloadUrl    = $csvDownloadUrl    ?? null;
+  $staffNameLabel    = $staffNameLabel    ?? '';
+  $currentMonthLabel = $currentMonthLabel ?? '';
+  $prevMonthUrl      = $prevMonthUrl      ?? null;
+  $nextMonthUrl      = $nextMonthUrl      ?? null;
+  $attendances       = $attendances       ?? collect();
+  $csvDownloadUrl    = $csvDownloadUrl    ?? null;
 @endphp
 
 <main class="attendance-list attendance-list--staff">
@@ -26,7 +26,7 @@
       </h1>
 
       <div class="attendance-list__month-nav">
-        @if (! empty($prevMonthUrl))
+        @if (!empty($prevMonthUrl))
           <a href="{{ $prevMonthUrl }}" class="month-nav__btn month-nav__btn--prev">
             <span class="month-nav__arrow" aria-hidden="true">&larr;</span>
             前月
@@ -43,7 +43,7 @@
           <span class="month-nav__label">{{ $currentMonthLabel }}</span>
         </div>
 
-        @if (! empty($nextMonthUrl))
+        @if (!empty($nextMonthUrl))
           <a href="{{ $nextMonthUrl }}" class="month-nav__btn month-nav__btn--next">
             翌月
             <span class="month-nav__arrow" aria-hidden="true">&rarr;</span>
@@ -57,51 +57,59 @@
       </div>
     </header>
 
-    <section class="attendance-list__table attendance-list__table--staff" aria-label="スタッフ別勤怠一覧">
+    <section class="attendance-list__table attendance-list__table--staff" aria-label="勤怠一覧（スタッフ別）">
+      <table class="attendance-list__table-inner">
+        <colgroup>
+          <col style="width: 25%">
+          <col style="width: 16%">
+          <col style="width: 16%">
+          <col style="width: 16%">
+          <col style="width: 16%">
+          <col style="width: 11%">
+        </colgroup>
 
-      <div class="attendance-list__row attendance-list__row--head">
-        <div class="attendance-list__cell attendance-list__cell--date">日付</div>
-        <div class="attendance-list__cell">出勤</div>
-        <div class="attendance-list__cell">退勤</div>
-        <div class="attendance-list__cell">休憩</div>
-        <div class="attendance-list__cell">合計</div>
-        <div class="attendance-list__cell attendance-list__cell--detail">詳細</div>
-      </div>
+        <thead>
+          <tr class="attendance-list__row attendance-list__row--head">
+            <th scope="col" class="attendance-list__cell attendance-list__cell--date">日付</th>
+            <th scope="col" class="attendance-list__cell">出勤</th>
+            <th scope="col" class="attendance-list__cell">退勤</th>
+            <th scope="col" class="attendance-list__cell">休憩</th>
+            <th scope="col" class="attendance-list__cell">合計</th>
+            <th scope="col" class="attendance-list__cell attendance-list__cell--detail">詳細</th>
+          </tr>
+        </thead>
 
-      @forelse($attendances as $row)
-        @php $isActive = !empty($row['is_active']); @endphp
+        <tbody>
+          @forelse($attendances as $row)
+            @php
+              $row = is_array($row) ? $row : (array) $row;
+              $isActive = !empty($row['is_active']);
+              $detailUrl = $row['detail_url'] ?? null;
+            @endphp
 
-        <div class="attendance-list__row {{ $isActive ? 'attendance-list__row--active' : '' }}">
-          <div class="attendance-list__cell attendance-list__cell--date">
-            {{ $row['date_label'] ?? '' }}
-          </div>
-          <div class="attendance-list__cell">
-            {{ $row['start_label'] ?? '' }}
-          </div>
-          <div class="attendance-list__cell">
-            {{ $row['end_label'] ?? '' }}
-          </div>
-          <div class="attendance-list__cell">
-            {{ $row['break_label'] ?? '' }}
-          </div>
-          <div class="attendance-list__cell">
-            {{ $row['total_label'] ?? '' }}
-          </div>
-          <div class="attendance-list__cell attendance-list__cell--detail">
-            @if (!empty($row['detail_url']))
-              <a href="{{ $row['detail_url'] }}" class="attendance-list__detail-link">
-                詳細
-              </a>
-            @else
-              <span class="attendance-list__detail-link attendance-list__detail-link--disabled">
-                詳細
-              </span>
-            @endif
-          </div>
-        </div>
-      @empty
-        <p class="attendance-list__empty">表示できる勤怠データがありません。</p>
-      @endforelse
+            <tr @class(['attendance-list__row', 'attendance-list__row--active' => $isActive])>
+              <td class="attendance-list__cell attendance-list__cell--date">{{ $row['date_label'] ?? '' }}</td>
+              <td class="attendance-list__cell">{{ $row['start_label'] ?? '' }}</td>
+              <td class="attendance-list__cell">{{ $row['end_label'] ?? '' }}</td>
+              <td class="attendance-list__cell">{{ $row['break_label'] ?? '' }}</td>
+              <td class="attendance-list__cell">{{ $row['total_label'] ?? '' }}</td>
+              <td class="attendance-list__cell attendance-list__cell--detail">
+                @if (!empty($detailUrl))
+                  <a href="{{ $detailUrl }}" class="attendance-list__detail-link">詳細</a>
+                @else
+                  <span class="attendance-list__detail-link attendance-list__detail-link--disabled">詳細</span>
+                @endif
+              </td>
+            </tr>
+          @empty
+            <tr class="attendance-list__row">
+              <td class="attendance-list__cell attendance-list__cell--empty" colspan="6">
+                <p class="attendance-list__empty">表示する勤怠はありません。</p>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
     </section>
 
     <div class="attendance-list__footer">
