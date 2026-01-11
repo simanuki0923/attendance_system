@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Attendance extends Model
 {
@@ -46,5 +46,21 @@ class Attendance extends Model
     {
         return $this->hasMany(AttendanceBreak::class)
             ->orderBy('break_no');
+    }
+
+    public function attendanceTimes(): HasOne
+    {
+        return $this->hasOne(AttendanceTime::class);
+    }
+
+    public function attendanceBreaks(): HasMany
+    {
+        return $this->hasMany(AttendanceBreak::class)
+            ->orderBy('break_no');
+    }
+
+    public function attendanceTotal(): HasOne
+    {
+        return $this->hasOne(AttendanceTotal::class);
     }
 }
