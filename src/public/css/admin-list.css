@@ -4,7 +4,7 @@
 }
 
 .attendance-list__inner {
-  max-width: 960px;
+  max-width: 980px;
   margin: 32px auto 64px;
   padding: 32px 40px 40px;
   border-radius: 4px;
@@ -15,106 +15,79 @@
 }
 
 .attendance-list__title {
-  margin: 0 0 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  margin: 0 0 16px;
   font-size: 20px;
   font-weight: 700;
+  color: #111111;
 }
 
 .attendance-list__title-bar {
   width: 4px;
   height: 24px;
   background: #111111;
-  border-radius: 2px;
+  border-radius: 999px;
 }
 
 .attendance-list__month-nav {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 10px 22px;
   display: flex;
   align-items: center;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 5px;
-  padding: 10px 28px;
-  box-shadow: 0 0 0 1px #e5e7eb;
+  justify-content: space-between;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.02);
+  transform: none;
 }
 
 .month-nav__btn {
-  min-width: auto;
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  font-weight: 700;
-  text-align: center;
-  color: black;
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #111111;
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
 }
 
 .month-nav__btn:hover {
-  text-decoration: underline;
+  background: #f3f3f6;
 }
 
 .month-nav__btn--disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: default;
   pointer-events: none;
 }
 
 .month-nav__arrow {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1;
 }
 
-.month-nav__btn--prev {
-  margin-right: auto;
-  font-size: 20px;
-}
-
-.month-nav__btn--next {
-  margin-left: auto;
-  font-size: 20px;
-}
-
 .month-nav__current {
-  min-width: auto;
-  padding: 0;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 20px;
-  margin: 0 auto;
+  gap: 10px;
+  font-size: 25px;
+  padding: 6px 12px;
 }
 
 .month-nav__icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 18px;
+  height: 14px;
   border: 2px solid #111111;
+  border-radius: 3px;
   position: relative;
-  display: inline-block;
 }
 
 .month-nav__icon::before {
-  content: "";
-  position: absolute;
-  left: 2px;
-  right: 2px;
-  top: 3px;
-  height: 0;
-  border-bottom: 2px solid #111111;
-}
-
-.month-nav__icon::after {
   content: "";
   position: absolute;
   top: -4px;
@@ -139,30 +112,38 @@
   box-shadow: 0 0 0 1px #e5e7eb;
 }
 
+/* table layout (divグリッド→tableへ移行) */
+.attendance-list__table-inner {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
 .attendance-list__row {
-  display: grid;
-  grid-template-columns: 2.2fr 1.4fr 1.4fr 1.4fr 1.4fr 1fr;
   font-size: 13px;
   color: #111827;
-  align-items: center;
 }
 
-.attendance-list__row:not(.attendance-list__row--head) {
-  background: #ffffff;
-}
-
-.attendance-list__row:nth-child(odd):not(.attendance-list__row--head) {
-  background: #fbfbfb;
-}
-
-.attendance-list__row--head {
+.attendance-list__table-inner thead .attendance-list__row--head {
   background: #f3f3f6;
   font-weight: 600;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.attendance-list__row + .attendance-list__row {
+.attendance-list__table-inner tbody .attendance-list__row {
+  background: #ffffff;
+}
+
+.attendance-list__table-inner tbody .attendance-list__row:nth-child(odd) {
+  background: #fbfbfb;
+}
+
+.attendance-list__table-inner tbody .attendance-list__row+.attendance-list__row td {
   border-top: 1px solid #e5e7eb;
+}
+
+.attendance-list__row--active {
+  background: #f0f7ff !important;
 }
 
 .attendance-list__cell {
@@ -170,21 +151,23 @@
   padding: 10px 25px;
   text-align: left;
   white-space: nowrap;
-  background: #ffffff;
+  background: transparent;
+}
+
+.attendance-list__cell--name {
+  text-align: left;
 }
 
 .attendance-list__cell--date {
   text-align: left;
-  transform:translateX(50px);
 }
 
 .attendance-list__cell--detail {
-  text-align: left;
+  text-align: center;
 }
 
-.attendance-list__row--active {
-  position: relative;
-  background: #f0f7ff;
+.attendance-list__cell--empty {
+  padding: 0;
 }
 
 .attendance-list__detail-link {
@@ -214,20 +197,15 @@
 
   .attendance-list__inner {
     max-width: 1100px;
-    padding: 36px 48px 44px;
+    padding: 36px 52px 46px;
   }
 
   .attendance-list__title {
-    font-size: 22px;
+    font-size: 24px;
   }
 
-  .attendance-list__month-nav {
-    max-width: 1100px;
-    padding: 12px 32px;
-  }
-
-  .month-nav__btn {
-    font-size: 17px;
+  .attendance-list__title-bar {
+    height: 28px;
   }
 
   .month-nav__btn--prev,
@@ -237,10 +215,6 @@
 
   .month-nav__current {
     font-size: 22px;
-  }
-
-  .attendance-list__row {
-    grid-template-columns: 2.3fr 1.45fr 1.45fr 1.45fr 1.45fr 1fr;
   }
 
   .attendance-list__cell {

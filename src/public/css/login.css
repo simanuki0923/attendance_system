@@ -1,4 +1,8 @@
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
   color: #222;
@@ -8,10 +12,12 @@ header {
   background: #111;
   padding: 8px 16px;
 }
+
 header a {
   display: inline-block;
   line-height: 0;
 }
+
 header img {
   height: 28px;
   display: block;
@@ -27,7 +33,6 @@ main {
   width: min(550px, 100%);
   background: #fff;
   padding: 28px 28px 20px;
-  box-shadow: 0 1px 2px rgba(0,0,0,.02);
 }
 
 .login-form__heading {
@@ -43,14 +48,16 @@ main {
   margin-bottom: 10px;
 }
 
-.form__group { display: block; }
+.form__group {
+  display: block;
+}
 
 .form__label--item {
   display: block;
   font-size: 20px;
   color: #333;
   margin-bottom: 6px;
-  font-weight:700;
+  font-weight: 700;
 }
 
 .form input[type="email"],
@@ -72,7 +79,6 @@ main {
 .form input[type="email"]:focus,
 .form input[type="password"]:focus {
   border-color: #333;
-  box-shadow: 0 0 0 2px rgba(0,0,0,.06);
 }
 
 .form__error {
@@ -100,11 +106,13 @@ main {
   margin: 14px 0 2px;
   text-align: center;
 }
+
 .register__button-submit {
   font-size: 20px;
   color: #2a7bd2;
   text-decoration: none;
 }
+
 .register__button-submit:hover {
   text-decoration: underline;
 }
