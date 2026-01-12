@@ -61,7 +61,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $res = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
+        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
             'start_time'   => '18:00',
             'end_time'     => '09:00',
             'break1_start' => null,
@@ -71,8 +71,8 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'note'         => '備考',
         ]);
 
-        $res->assertStatus(302);
-        $res->assertSessionHasErrors(['start_time']);
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors(['start_time']);
     }
 
     public function test_break_start_after_end_time_shows_validation_error(): void
@@ -81,7 +81,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $res = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
+        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
             'start_time'   => '09:00',
             'end_time'     => '18:00',
             'break1_start' => '13:00',
@@ -91,8 +91,8 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'note'         => '備考',
         ]);
 
-        $res->assertStatus(302);
-        $res->assertSessionHasErrors(['break1_start']);
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors(['break1_start']);
     }
 
     public function test_break_end_after_work_end_time_shows_validation_error(): void
@@ -101,7 +101,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $res = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
+        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
             'start_time'   => '09:00',
             'end_time'     => '18:00',
             'break1_start' => '17:50',
@@ -111,8 +111,8 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'note'         => '備考',
         ]);
 
-        $res->assertStatus(302);
-        $res->assertSessionHasErrors(['break1_end']);
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors(['break1_end']);
     }
 
     public function test_note_is_required_and_shows_validation_error(): void
@@ -121,7 +121,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $res = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
+        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
             'start_time'   => '09:10',
             'end_time'     => '18:10',
             'break1_start' => null,
@@ -131,8 +131,8 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'note'         => '',
         ]);
 
-        $res->assertStatus(302);
-        $res->assertSessionHasErrors(['note']);
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors(['note']);
 
         $this->assertDatabaseCount('attendance_applications', 0);
     }
@@ -143,7 +143,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $res = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
+        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
             'start_time'   => '09:30',
             'end_time'     => '18:30',
             'break1_start' => '12:00',
@@ -153,8 +153,8 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'note'         => '申請備考',
         ]);
 
-        $res->assertStatus(302);
-        $res->assertSessionHas('status');
+        $response->assertStatus(302);
+        $response->assertSessionHas('status');
 
         $this->assertDatabaseHas('attendance_times', [
             'attendance_id' => $attendance->id,
@@ -189,7 +189,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'applied_at'        => now(),
         ]);
 
-        $res = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
+        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
             'start_time'   => '09:30',
             'end_time'     => '18:30',
             'break1_start' => null,
@@ -199,7 +199,7 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'note'         => '備考',
         ]);
 
-        $res->assertStatus(302);
-        $res->assertSessionHasErrors(['application']);
+        $response->assertStatus(302);
+        $response->assertSessionHasErrors(['application']);
     }
 }

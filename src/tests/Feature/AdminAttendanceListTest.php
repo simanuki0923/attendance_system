@@ -74,16 +74,16 @@ class AdminAttendanceListTest extends TestCase
         $this->createAttendance($staffA, $target, '09:00:00', '18:00:00', 60, 480);
 
 
-        $res = $this->actingAs($admin)->get(route('admin.attendance.list'));
-        $res->assertStatus(200);
-        $res->assertSeeText('一般 一郎');
-        $res->assertSeeText('09:00');
-        $res->assertSeeText('18:00');
-        $res->assertSeeText('1:00');
-        $res->assertSeeText('8:00');
-        $res->assertSeeText('一般 二郎');
-        $res->assertSeeText('前日');
-        $res->assertSeeText('翌日');
+        $response = $this->actingAs($admin)->get(route('admin.attendance.list'));
+        $response->assertStatus(200);
+        $response->assertSeeText('一般 一郎');
+        $response->assertSeeText('09:00');
+        $response->assertSeeText('18:00');
+        $response->assertSeeText('1:00');
+        $response->assertSeeText('8:00');
+        $response->assertSeeText('一般 二郎');
+        $response->assertSeeText('前日');
+        $response->assertSeeText('翌日');
     }
 
     public function testAdminListShowsCurrentDateOnArrival(): void
@@ -91,10 +91,10 @@ class AdminAttendanceListTest extends TestCase
         Carbon::setTestNow(Carbon::create(2025, 12, 13, 10, 0, 0, 'Asia/Tokyo'));
 
         $admin = $this->createAdminUser();
-        $res = $this->actingAs($admin)->get(route('admin.attendance.list'));
-        $res->assertStatus(200);
-        $res->assertSeeText('2025/12/13');
-        $res->assertSee('2025年12月13日');
+        $response = $this->actingAs($admin)->get(route('admin.attendance.list'));
+        $response->assertStatus(200);
+        $response->assertSeeText('2025/12/13');
+        $response->assertSee('2025年12月13日');
     }
 
     public function testAdminCanNavigateToPreviousDay(): void
@@ -109,18 +109,18 @@ class AdminAttendanceListTest extends TestCase
 
         $this->createAttendance($staff, $yesterday, '10:00:00', '19:00:00', 45, 495);
 
-        $res = $this->actingAs($admin)->get(route('admin.attendance.list', [
+        $response = $this->actingAs($admin)->get(route('admin.attendance.list', [
             'date' => $yesterday->format('Y-m-d'),
         ]));
 
-        $res->assertStatus(200);
-        $res->assertSeeText($yesterday->format('Y/m/d'));
-        $res->assertSeeText('一般 一郎');
-        $res->assertSeeText('10:00');
-        $res->assertSeeText('19:00');
-        $res->assertSeeText('0:45');
-        $res->assertSeeText('8:15');
-        $res->assertDontSee($today->format('Y/m/d'));
+        $response->assertStatus(200);
+        $response->assertSeeText($yesterday->format('Y/m/d'));
+        $response->assertSeeText('一般 一郎');
+        $response->assertSeeText('10:00');
+        $response->assertSeeText('19:00');
+        $response->assertSeeText('0:45');
+        $response->assertSeeText('8:15');
+        $response->assertDontSee($today->format('Y/m/d'));
     }
 
     public function testAdminCanNavigateToNextDay(): void
@@ -134,16 +134,16 @@ class AdminAttendanceListTest extends TestCase
 
         $this->createAttendance($staff, $tomorrow, '08:30:00', '17:30:00', 60, 480);
 
-        $res = $this->actingAs($admin)->get(route('admin.attendance.list', [
+        $response = $this->actingAs($admin)->get(route('admin.attendance.list', [
             'date' => $tomorrow->format('Y-m-d'),
         ]));
 
-        $res->assertStatus(200);
-        $res->assertSeeText($tomorrow->format('Y/m/d'));
-        $res->assertSeeText('一般 一郎');
-        $res->assertSeeText('08:30');
-        $res->assertSeeText('17:30');
-        $res->assertSeeText('1:00');
-        $res->assertSeeText('8:00');
+        $response->assertStatus(200);
+        $response->assertSeeText($tomorrow->format('Y/m/d'));
+        $response->assertSeeText('一般 一郎');
+        $response->assertSeeText('08:30');
+        $response->assertSeeText('17:30');
+        $response->assertSeeText('1:00');
+        $response->assertSeeText('8:00');
     }
 }

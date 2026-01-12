@@ -46,16 +46,16 @@ class AdminUserInfoTest extends TestCase
 
     public function test_admin_can_see_all_staff_names_and_emails_on_staff_list(): void
     {
-        $res = $this->actingAs($this->admin)
+        $response = $this->actingAs($this->admin)
             ->get(route('admin.staff.list'));
-        $res->assertOk();
-        $res->assertSee('スタッフ一覧');
-        $res->assertSee($this->staff1->name);
-        $res->assertSee($this->staff1->email);
-        $res->assertSee($this->staff2->name);
-        $res->assertSee($this->staff2->email);
-        $res->assertSee(route('admin.attendance.staff', ['id' => $this->staff1->id]));
-        $res->assertSee(route('admin.attendance.staff', ['id' => $this->staff2->id]));
+        $response->assertOk();
+        $response->assertSee('スタッフ一覧');
+        $response->assertSee($this->staff1->name);
+        $response->assertSee($this->staff1->email);
+        $response->assertSee($this->staff2->name);
+        $response->assertSee($this->staff2->email);
+        $response->assertSee(route('admin.attendance.staff', ['id' => $this->staff1->id]));
+        $response->assertSee(route('admin.attendance.staff', ['id' => $this->staff2->id]));
     }
 
     public function test_admin_can_view_selected_staff_monthly_attendance_list_and_data_is_correct(): void
@@ -78,21 +78,21 @@ class AdminUserInfoTest extends TestCase
             'total_work_minutes' => 420,
         ]);
 
-        $res = $this->actingAs($this->admin)
+        $response = $this->actingAs($this->admin)
             ->get(route('admin.attendance.staff', [
                 'id'    => $this->staff1->id,
                 'month' => '2025-12',
             ]));
 
-        $res->assertOk();
-        $res->assertSee($this->staff1->name . 'さんの勤怠');
-        $res->assertSee('2025/12');
-        $res->assertSee('12/10(');
-        $res->assertSee('09:00');
-        $res->assertSee('18:00');
-        $res->assertSee('1:00');
-        $res->assertSee('7:00');
-        $res->assertSee(route('admin.attendance.detail', ['id' => $attendance->id]));
+        $response->assertOk();
+        $response->assertSee($this->staff1->name . 'さんの勤怠');
+        $response->assertSee('2025/12');
+        $response->assertSee('12/10(');
+        $response->assertSee('09:00');
+        $response->assertSee('18:00');
+        $response->assertSee('1:00');
+        $response->assertSee('7:00');
+        $response->assertSee(route('admin.attendance.detail', ['id' => $attendance->id]));
     }
 
     public function test_prev_month_link_shows_previous_month(): void

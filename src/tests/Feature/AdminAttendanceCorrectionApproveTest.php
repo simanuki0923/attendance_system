@@ -70,12 +70,12 @@ class AdminAttendanceCorrectionApproveTest extends TestCase
             'requested_note'              => '承認後の備考',
         ]);
 
-        $res = $this->actingAs($admin)->post(route('stamp_correction_request.approve', [
+        $response = $this->actingAs($admin)->post(route('stamp_correction_request.approve', [
             'attendance_correct_request_id' => $app->id,
         ]));
 
-        $res->assertStatus(302);
-        $res->assertSessionHas('status', '承認しました');
+        $response->assertStatus(302);
+        $response->assertSessionHas('status', '承認しました');
 
         $this->assertDatabaseHas('attendance_applications', [
             'id' => $app->id,

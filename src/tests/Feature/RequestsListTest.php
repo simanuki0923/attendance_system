@@ -59,10 +59,10 @@ class RequestsListTest extends TestCase
             'applied_at'        => now(),
         ]);
 
-        $res = $this->actingAs($user)->get(route('requests.list', ['tab' => 'pending']));
-        $res->assertOk();
-        $res->assertSee('申請一覧');
-        $res->assertSee('勤怠修正申請');
+        $response = $this->actingAs($user)->get(route('requests.list', ['tab' => 'pending']));
+        $response->assertOk();
+        $response->assertSee('申請一覧');
+        $response->assertSee('勤怠修正申請');
     }
 
     public function test_user_can_view_own_approved_requests(): void
@@ -94,9 +94,9 @@ class RequestsListTest extends TestCase
             'applied_at'        => now(),
         ]);
 
-        $res = $this->actingAs($user)->get(route('requests.list', ['tab' => 'approved']));
-        $res->assertOk();
-        $res->assertSee('申請一覧');
-        $res->assertSee('勤怠修正申請');
+        $response = $this->actingAs($user)->get(route('requests.list', ['tab' => 'approved']));
+        $response->assertOk();
+        $response->assertSee('申請一覧');
+        $response->assertSee('勤怠修正申請');
     }
 }
