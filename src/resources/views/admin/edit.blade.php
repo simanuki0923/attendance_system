@@ -16,9 +16,11 @@
     $break2StartLabel  = $break2StartLabel  ?? '';
     $break2EndLabel    = $break2EndLabel    ?? '';
     $noteLabel         = $noteLabel         ?? '';
-    $lockByPending = $lockByPending ?? false;
-    $isLocked     = (bool) $lockByPending;
-    $readOnlyAttr = $isLocked ? 'readonly' : '';
+    $isPending         = (bool) ($isPending ?? false);
+
+    $attendance = $attendance ?? null;
+
+    $readOnlyAttr = $isPending ? 'readonly' : '';
 @endphp
 
 @isset($attendance)
@@ -49,13 +51,8 @@
       </h1>
     </header>
 
-    @if (session('success'))
-      <p class="attendance-detail__flash">{{ session('success') }}</p>
-    @endif
-    @if (session('error'))
-      <p class="attendance-detail__flash attendance-detail__flash--error">
-        {{ session('error') }}
-      </p>
+    @if (session('status'))
+      <p class="attendance-detail__flash" role="status">{{ session('status') }}</p>
     @endif
 
 
@@ -84,15 +81,32 @@
           <dt class="attendance-detail__label">出勤・退勤</dt>
           <dd class="attendance-detail__value">
             <div class="attendance-detail__time-range">
-              <div class="attendance-detail__time-input">
-                <input type="text" name="start_time" placeholder="09:00" value="{{ old('start_time', $workStartLabel) }}" class="{{ $errors->has('start_time') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
-              </div>
+              <span class="attendance-detail__time-input">
+                <input
+                  type="text"
+                  name="start_time"
+                  value="{{ old('start_time', $workStartLabel) }}"
+                  placeholder="例) 09:00"
+                  inputmode="numeric"
+                  pattern="\d{1,2}:\d{2}"
+                  class="{{ $errors->has('start_time') ? 'is-invalid' : '' }}"
+                  {{ $readOnlyAttr }}
+                >
+              </span>
               <span class="attendance-detail__tilde">~</span>
-              <div class="attendance-detail__time-input">
-                <input type="text" name="end_time" placeholder="18:00" value="{{ old('end_time', $workEndLabel) }}" class="{{ $errors->has('end_time') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
-              </div>
+              <span class="attendance-detail__time-input">
+                <input
+                  type="text"
+                  name="end_time"
+                  value="{{ old('end_time', $workEndLabel) }}"
+                  placeholder="例) 18:00"
+                  inputmode="numeric"
+                  pattern="\d{1,2}:\d{2}"
+                  class="{{ $errors->has('end_time') ? 'is-invalid' : '' }}"
+                  {{ $readOnlyAttr }}
+                >
+              </span>
             </div>
-
             @if ($workTimeError)
               <p class="form-error">{{ $workTimeError }}</p>
             @endif
@@ -103,15 +117,32 @@
           <dt class="attendance-detail__label">休憩</dt>
           <dd class="attendance-detail__value">
             <div class="attendance-detail__time-range">
-              <div class="attendance-detail__time-input">
-                <input type="text" name="break1_start" placeholder="12:00" value="{{ old('break1_start', $break1StartLabel) }}" class="{{ $errors->has('break1_start') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
-              </div>
+              <span class="attendance-detail__time-input">
+                <input
+                  type="text"
+                  name="break1_start"
+                  value="{{ old('break1_start', $break1StartLabel) }}"
+                  placeholder="例) 12:00"
+                  inputmode="numeric"
+                  pattern="\d{1,2}:\d{2}"
+                  class="{{ $errors->has('break1_start') ? 'is-invalid' : '' }}"
+                  {{ $readOnlyAttr }}
+                >
+              </span>
               <span class="attendance-detail__tilde">~</span>
-              <div class="attendance-detail__time-input">
-                <input type="text" name="break1_end" placeholder="13:00" value="{{ old('break1_end', $break1EndLabel) }}" class="{{ $errors->has('break1_end') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
-              </div>
+              <span class="attendance-detail__time-input">
+                <input
+                  type="text"
+                  name="break1_end"
+                  value="{{ old('break1_end', $break1EndLabel) }}"
+                  placeholder="例) 13:00"
+                  inputmode="numeric"
+                  pattern="\d{1,2}:\d{2}"
+                  class="{{ $errors->has('break1_end') ? 'is-invalid' : '' }}"
+                  {{ $readOnlyAttr }}
+                >
+              </span>
             </div>
-
             @if ($break1Error)
               <p class="form-error">{{ $break1Error }}</p>
             @endif
@@ -122,15 +153,32 @@
           <dt class="attendance-detail__label">休憩2</dt>
           <dd class="attendance-detail__value">
             <div class="attendance-detail__time-range">
-              <div class="attendance-detail__time-input">
-                <input type="text" name="break2_start" placeholder="15:00" value="{{ old('break2_start', $break2StartLabel) }}" class="{{ $errors->has('break2_start') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
-              </div>
+              <span class="attendance-detail__time-input">
+                <input
+                  type="text"
+                  name="break2_start"
+                  value="{{ old('break2_start', $break2StartLabel) }}"
+                  placeholder="例) 15:00"
+                  inputmode="numeric"
+                  pattern="\d{1,2}:\d{2}"
+                  class="{{ $errors->has('break2_start') ? 'is-invalid' : '' }}"
+                  {{ $readOnlyAttr }}
+                >
+              </span>
               <span class="attendance-detail__tilde">~</span>
-              <div class="attendance-detail__time-input">
-                <input type="text" name="break2_end" placeholder="15:15" value="{{ old('break2_end', $break2EndLabel) }}" class="{{ $errors->has('break2_end') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
-              </div>
+              <span class="attendance-detail__time-input">
+                <input
+                  type="text"
+                  name="break2_end"
+                  value="{{ old('break2_end', $break2EndLabel) }}"
+                  placeholder="例) 15:15"
+                  inputmode="numeric"
+                  pattern="\d{1,2}:\d{2}"
+                  class="{{ $errors->has('break2_end') ? 'is-invalid' : '' }}"
+                  {{ $readOnlyAttr }}
+                >
+              </span>
             </div>
-
             @if ($break2Error)
               <p class="form-error">{{ $break2Error }}</p>
             @endif
@@ -141,9 +189,14 @@
           <dt class="attendance-detail__label">備考</dt>
           <dd class="attendance-detail__value">
             <div class="attendance-detail__note">
-              <input type="text" name="note" placeholder="備考を入力" value="{{ old('note', $noteLabel) }}" class="{{ $errors->has('note') ? 'is-invalid' : '' }}" {{ $readOnlyAttr }}>
+              <input
+                type="text"
+                name="note"
+                value="{{ old('note', $noteLabel) }}"
+                class="{{ $errors->has('note') ? 'is-invalid' : '' }}"
+                {{ $readOnlyAttr }}
+              >
             </div>
-
             @if ($noteError)
               <p class="form-error">{{ $noteError }}</p>
             @endif
@@ -152,18 +205,17 @@
 
       </section>
 
-      <div class="attendance-detail__actions attendance-detail__actions--admin">
-        @if ($isLocked)
-          <p class="attendance-detail__warning">承認待ちのため修正はできません。</p>
+      <div class="attendance-detail__actions">
+        @if ($isPending)
+          <p class="attendance-detail__warning">承認待ちのため編集できません。</p>
         @else
-          <button type="submit" class="attendance-detail__button attendance-detail__button--approve">修正</button>
+          <button type="submit" class="attendance-detail__button">修正</button>
         @endif
       </div>
+
     </form>
+
   </div>
 </main>
-
-@else
-  <p style="padding:20px;">attendance が渡されていません。</p>
 @endisset
 @endsection
