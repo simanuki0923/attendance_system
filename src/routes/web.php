@@ -88,5 +88,3 @@ Route::middleware('auth')->get('/stamp_correction_request/list', static function
         ? app(AdminRequestController::class)->index($request)
         : app(RequestController::class)->index($request);
 })->name('requests.list');
-
-
