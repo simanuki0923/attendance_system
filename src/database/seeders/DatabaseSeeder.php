@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class DatabaseSeeder extends Seeder
@@ -21,7 +22,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name'     => '管理者ユーザー',
                 'email'    => 'admin@example.com',
-                'password' => 'admin1234',
+                'password' => Hash::make('admin1234'),
             ]
         );
         $admin->forceFill([
@@ -34,7 +35,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name'     => '一般ユーザー',
                 'email'    => 'test@example.com',
-                'password' => 'password123',
+                'password' => Hash::make('password123'),
             ]
         );
         $user->forceFill([

@@ -9,6 +9,7 @@ use App\Models\AttendanceBreak;
 use App\Models\AttendanceTotal;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class AttendanceSeeder extends Seeder
@@ -34,23 +35,23 @@ class AttendanceSeeder extends Seeder
                 $start  = '09:00:00';
                 $end    = '18:00:00';
                 $breaks = [
-                    ['no' => 1, 'start' => '12:00:00', 'end' => '13:00:00'],
-                    ['no' => 2, 'start' => '15:00:00', 'end' => '15:15:00'],
+                    ['break_no' => 1, 'start_time' => '12:00:00', 'end_time' => '13:00:00'],
+                    ['break_no' => 2, 'start_time' => '15:00:00', 'end_time' => '15:15:00'],
                 ];
                 $note = 'ダミー：通常勤務(9-18)';
             } elseif ($pattern === 1) {
                 $start  = '10:00:00';
                 $end    = '19:00:00';
                 $breaks = [
-                    ['no' => 1, 'start' => '13:00:00', 'end' => '14:00:00'],
+                    ['break_no' => 1, 'start_time' => '13:00:00', 'end_time' => '14:00:00'],
                 ];
                 $note = 'ダミー：遅番(10-19)';
             } else {
                 $start  = '09:30:00';
                 $end    = '17:30:00';
                 $breaks = [
-                    ['no' => 1, 'start' => '12:30:00', 'end' => '13:15:00'],
-                    ['no' => 2, 'start' => '16:00:00', 'end' => '16:10:00'],
+                    ['break_no' => 1, 'start_time' => '12:30:00', 'end_time' => '13:15:00'],
+                    ['break_no' => 2, 'start_time' => '16:00:00', 'end_time' => '16:10:00'],
                 ];
                 $note = 'ダミー：短め勤務(9:30-17:30)';
             }
@@ -72,18 +73,18 @@ class AttendanceSeeder extends Seeder
 
             $totalBreakMinutes = 0;
 
-            foreach ($breaks as $b) {
-                $minutes = $this->minutesBetween($b['start'], $b['end']);
+            foreach ($breaks as $breakData) {
+                $minutes = $this->minutesBetween($breakData['start_time'], $breakData['end_time']);
                 $totalBreakMinutes += $minutes;
 
                 AttendanceBreak::updateOrCreate(
                     [
                         'attendance_id' => $attendance->id,
-                        'break_no'      => $b['no'],
+                        'break_no'      => $breakData['break_no'],
                     ],
                     [
-                        'start_time' => $b['start'],
-                        'end_time'   => $b['end'],
+                        'start_time' => $breakData['start_time'],
+                        'end_time'   => $breakData['end_time'],
                         'minutes'    => $minutes,
                     ]
                 );
@@ -104,8 +105,8 @@ class AttendanceSeeder extends Seeder
 
     private function minutesBetween(string $start, string $end): int
     {
-        $s = Carbon::createFromFormat('H:i:s', $start);
-        $e = Carbon::createFromFormat('H:i:s', $end);
-        return $s->diffInMinutes($e);
+        $startTime = Carbon::createFromFormat('H:i:s', $start);
+        $endTime = Carbon::createFromFormat('H:i:s', $end);
+        return $startTime->diffInMinutes($endTime);
     }
 }
