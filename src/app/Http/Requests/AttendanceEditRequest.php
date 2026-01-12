@@ -40,47 +40,47 @@ class AttendanceEditRequest extends FormRequest
 
     public function withValidator(Validator $validator): void
     {
-        $validator->after(function (Validator $v) {
+        $validator->after(function (Validator $afterValidator) {
             $start = $this->toCarbon($this->input('start_time'));
             $end   = $this->toCarbon($this->input('end_time'));
 
-            $b1s = $this->toCarbon($this->input('break1_start'));
-            $b1e = $this->toCarbon($this->input('break1_end'));
-            $b2s = $this->toCarbon($this->input('break2_start'));
-            $b2e = $this->toCarbon($this->input('break2_end'));
+            $break1Start = $this->toCarbon($this->input('break1_start'));
+            $break1End = $this->toCarbon($this->input('break1_end'));
+            $break2Start = $this->toCarbon($this->input('break2_start'));
+            $break2End = $this->toCarbon($this->input('break2_end'));
 
-            if ($start && $end && $start->gt($end)) {
-                $msg = '出勤時間もしくは退勤時間が不適切な値です';
-                $v->errors()->add('start_time', $msg);
-                $v->errors()->add('end_time', $msg);
-            }
-
-            if ($b1s && $start && $b1s->lt($start)) {
-                $v->errors()->add('break1_start', '休憩時間が不適切な値です');
-            }
-            if ($b1s && $end && $b1s->gt($end)) {
-                $v->errors()->add('break1_start', '休憩時間が不適切な値です');
+            if ($start && $end && $start->greaterThan($end)) {
+                $workTimeMessage = '出勤時間もしくは退勤時間が不適切な値です';
+                $afterValidator->errors()->add('start_time', $workTimeMessage);
+                $afterValidator->errors()->add('end_time', $workTimeMessage);
             }
 
-            if ($b2s && $start && $b2s->lt($start)) {
-                $v->errors()->add('break2_start', '休憩時間が不適切な値です');
+            if ($break1Start && $start && $break1Start->lessThan($start)) {
+                $afterValidator->errors()->add('break1_start', '休憩時間が不適切な値です');
             }
-            if ($b2s && $end && $b2s->gt($end)) {
-                $v->errors()->add('break2_start', '休憩時間が不適切な値です');
-            }
-
-            if ($b1e && $end && $b1e->gt($end)) {
-                $v->errors()->add('break1_end', '休憩時間もしくは退勤時間が不適切な値です');
-            }
-            if ($b2e && $end && $b2e->gt($end)) {
-                $v->errors()->add('break2_end', '休憩時間もしくは退勤時間が不適切な値です');
+            if ($break1Start && $end && $break1Start->greaterThan($end)) {
+                $afterValidator->errors()->add('break1_start', '休憩時間が不適切な値です');
             }
 
-            if ($b1s && $b1e && $b1e->lt($b1s)) {
-                $v->errors()->add('break1_start', '休憩時間が不適切な値です');
+            if ($break2Start && $start && $break2Start->lessThan($start)) {
+                $afterValidator->errors()->add('break2_start', '休憩時間が不適切な値です');
             }
-            if ($b2s && $b2e && $b2e->lt($b2s)) {
-                $v->errors()->add('break2_start', '休憩時間が不適切な値です');
+            if ($break2Start && $end && $break2Start->greaterThan($end)) {
+                $afterValidator->errors()->add('break2_start', '休憩時間が不適切な値です');
+            }
+
+            if ($break1End && $end && $break1End->greaterThan($end)) {
+                $afterValidator->errors()->add('break1_end', '休憩時間もしくは退勤時間が不適切な値です');
+            }
+            if ($break2End && $end && $break2End->greaterThan($end)) {
+                $afterValidator->errors()->add('break2_end', '休憩時間もしくは退勤時間が不適切な値です');
+            }
+
+            if ($break1Start && $break1End && $break1End->lessThan($break1Start)) {
+                $afterValidator->errors()->add('break1_start', '休憩時間が不適切な値です');
+            }
+            if ($break2Start && $break2End && $break2End->lessThan($break2Start)) {
+                $afterValidator->errors()->add('break2_start', '休憩時間が不適切な値です');
             }
         });
     }
