@@ -11,7 +11,6 @@
 
 .staff-list__header {
   margin-bottom: 24px;
-  transform: translateX(100px);
 }
 
 .staff-list__title {
@@ -36,10 +35,10 @@
 .staff-list__card {
   max-width: 720px;
   margin: 0 auto;
-  background: #ffffff;
-  border-radius: 6px;
-  box-shadow: 0 0 0 1px #e5e7eb;
-  overflow: hidden;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .staff-list__table {
@@ -51,42 +50,38 @@
 
 .staff-list__th,
 .staff-list__td {
-  padding: 10px 16px;
+  padding: 12px 16px;
   text-align: center;
   white-space: nowrap;
+  border-bottom: 1px solid #d1d5db;
+  background: transparent;
 }
 
 .staff-list__th {
   font-weight: 600;
   font-size: 12px;
   color: #6b7280;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
 }
 
 .staff-list__td {
   font-size: 13px;
   color: #111827;
-  border-bottom: 1px solid #f1f5f9;
 }
 
 .staff-list__th--name,
 .staff-list__td--name {
   width: 30%;
-  transform: translateX(80px);
 }
 
 .staff-list__th--email,
 .staff-list__td--email {
   width: 50%;
-  transform: translateX(-15px);
 }
 
 .staff-list__th--monthly,
 .staff-list__td--monthly {
   width: 20%;
   text-align: center;
-  transform: translateX(-80px);
 }
 
 .staff-list__detail-link {
@@ -111,7 +106,6 @@
 }
 
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
-
   .staff-list__inner {
     max-width: 1000px;
     padding: 0 32px;

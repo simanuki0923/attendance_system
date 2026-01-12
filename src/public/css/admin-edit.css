@@ -30,16 +30,18 @@
 }
 
 .attendance-detail__card {
-  background: #ffffff;
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px #e5e7eb;
-  overflow: hidden;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
 }
 
 .attendance-detail__row {
   display: flex;
   align-items: stretch;
-  border-top: 1px solid #f1f1f3;
+  border-top: none;
+  border-bottom: 1px solid #d1d5db;
+  padding: 18px 0;
 }
 
 .attendance-detail__row:first-child {
@@ -48,7 +50,7 @@
 
 .attendance-detail__label {
   flex: 0 0 180px;
-  padding: 20px 24px;
+  padding: 0 24px;
   font-size: 15px;
   color: #4b5563;
   display: flex;
@@ -57,38 +59,41 @@
 
 .attendance-detail__value {
   flex: 1;
-  padding: 20px 24px;
+  padding: 0 24px;
   font-size: 14px;
   color: #111827;
   display: flex;
   align-items: center;
 }
 
-.attendance-detail__value--date {
-  justify-content: center;
-  gap: 120px;
-}
-
 .attendance-detail__text {
   font-weight: 600;
+  margin-left: 150px;
 }
 
 .attendance-detail__time-range {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
+  gap: 45px;
   margin: 0 auto;
 }
 
 .attendance-detail__time-input input {
   width: 96px;
-  height: 36px;
-  border-radius: 6px;
-  border: 2px solid #d4d4d8;
-  font-size: 13px;
+  height: 32px;
+  border: none;
+  border-bottom: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
   text-align: center;
   color: #111827;
-  padding: 0 8px;
+  padding: 0 6px;
+  outline: none;
+}
+
+.attendance-detail__time-input input:focus {
+  outline: none;
 }
 
 .attendance-detail__time-input input[readonly] {
@@ -108,16 +113,24 @@
   width: 100%;
   display: flex;
   align-items: center;
+  margin-left: 120px;
 }
 
 .attendance-detail__note input {
   width: 200px;
-  height: 60px;
-  border-radius: 6px;
-  border: 2px solid #d4d4d8;
-  font-size: 13px;
-  padding: 0 12px;
+  height: 32px;
+  border: none;
+  border-bottom: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14px;
+  padding: 0 6px;
   color: #111827;
+  outline: none;
+}
+
+.attendance-detail__note input:focus {
+  outline: none;
 }
 
 .attendance-detail__actions {
@@ -141,13 +154,11 @@
   background: #111111;
   border-radius: 4px;
   text-decoration: none;
-  transform: translateY(25px);
 }
 
 .attendance-detail__button:hover {
   opacity: 0.85;
 }
-
 
 .form-error {
   margin: 6px 0 0;
@@ -190,7 +201,6 @@
 }
 
 @media screen and (min-width: 1400px) and (max-width: 1540px) {
-
   .attendance-detail__inner {
     max-width: 900px;
     padding: 0 32px;
@@ -198,7 +208,11 @@
 
   .attendance-detail__label,
   .attendance-detail__value {
-    padding: 22px 28px;
+    padding: 0 28px;
+  }
+
+  .attendance-detail__row {
+    padding: 20px 0;
   }
 
   .attendance-detail__value--date {
