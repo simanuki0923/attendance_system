@@ -62,7 +62,7 @@
   padding: 0 24px;
   font-size: 14px;
   color: #111827;
-  display: flex;
+
   align-items: center;
 }
 
@@ -78,7 +78,7 @@
 .attendance-detail__time-range {
   display: inline-flex;
   align-items: center;
-  gap: 25px;
+  gap: 50px;
   margin-left: 100px;
 }
 
