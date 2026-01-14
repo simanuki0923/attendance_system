@@ -61,18 +61,23 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
-            'start_time'   => '18:00',
-            'end_time'     => '09:00',
-            'break1_start' => null,
-            'break1_end'   => null,
-            'break2_start' => null,
-            'break2_end'   => null,
-            'note'         => '備考',
-        ]);
+        $response = $this->actingAs($user)->patch(
+            route('attendance.detail.update', ['id' => $attendance->id]),
+            [
+                'start_time'   => '18:00',
+                'end_time'     => '09:00',
+                'break1_start' => null,
+                'break1_end'   => null,
+                'break2_start' => null,
+                'break2_end'   => null,
+                'note'         => '備考',
+            ]
+        );
 
         $response->assertStatus(302);
-        $response->assertSessionHasErrors(['start_time']);
+        $response->assertSessionHasErrors([
+            'start_time' => '出勤時間が不適切な値です',
+        ]);
     }
 
     public function test_break_start_after_end_time_shows_validation_error(): void
@@ -81,18 +86,23 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
-            'start_time'   => '09:00',
-            'end_time'     => '18:00',
-            'break1_start' => '13:00',
-            'break1_end'   => '12:00',
-            'break2_start' => null,
-            'break2_end'   => null,
-            'note'         => '備考',
-        ]);
+        $response = $this->actingAs($user)->patch(
+            route('attendance.detail.update', ['id' => $attendance->id]),
+            [
+                'start_time'   => '09:00',
+                'end_time'     => '18:00',
+                'break1_start' => '13:00',
+                'break1_end'   => '12:00',
+                'break2_start' => null,
+                'break2_end'   => null,
+                'note'         => '備考',
+            ]
+        );
 
         $response->assertStatus(302);
-        $response->assertSessionHasErrors(['break1_start']);
+        $response->assertSessionHasErrors([
+            'break1_start' => '休憩時間が不適切な値です',
+        ]);
     }
 
     public function test_break_end_after_work_end_time_shows_validation_error(): void
@@ -101,18 +111,23 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
-            'start_time'   => '09:00',
-            'end_time'     => '18:00',
-            'break1_start' => '17:50',
-            'break1_end'   => '18:10',
-            'break2_start' => null,
-            'break2_end'   => null,
-            'note'         => '備考',
-        ]);
+        $response = $this->actingAs($user)->patch(
+            route('attendance.detail.update', ['id' => $attendance->id]),
+            [
+                'start_time'   => '09:00',
+                'end_time'     => '18:00',
+                'break1_start' => '17:50',
+                'break1_end'   => '18:10',
+                'break2_start' => null,
+                'break2_end'   => null,
+                'note'         => '備考',
+            ]
+        );
 
         $response->assertStatus(302);
-        $response->assertSessionHasErrors(['break1_end']);
+        $response->assertSessionHasErrors([
+            'break1_end' => '休憩時間もしくは退勤時間が不適切な値です',
+        ]);
     }
 
     public function test_note_is_required_and_shows_validation_error(): void
@@ -121,18 +136,23 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
-            'start_time'   => '09:10',
-            'end_time'     => '18:10',
-            'break1_start' => null,
-            'break1_end'   => null,
-            'break2_start' => null,
-            'break2_end'   => null,
-            'note'         => '',
-        ]);
+        $response = $this->actingAs($user)->patch(
+            route('attendance.detail.update', ['id' => $attendance->id]),
+            [
+                'start_time'   => '09:10',
+                'end_time'     => '18:10',
+                'break1_start' => null,
+                'break1_end'   => null,
+                'break2_start' => null,
+                'break2_end'   => null,
+                'note'         => '',
+            ]
+        );
 
         $response->assertStatus(302);
-        $response->assertSessionHasErrors(['note']);
+        $response->assertSessionHasErrors([
+            'note' => '備考を記入してください',
+        ]);
 
         $this->assertDatabaseCount('attendance_applications', 0);
     }
@@ -143,19 +163,23 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $user = $this->createVerifiedUser();
         $attendance = $this->createAttendanceFor($user);
 
-        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
-            'start_time'   => '09:30',
-            'end_time'     => '18:30',
-            'break1_start' => '12:00',
-            'break1_end'   => '13:00',
-            'break2_start' => null,
-            'break2_end'   => null,
-            'note'         => '申請備考',
-        ]);
+        $response = $this->actingAs($user)->patch(
+            route('attendance.detail.update', ['id' => $attendance->id]),
+            [
+                'start_time'   => '09:30',
+                'end_time'     => '18:30',
+                'break1_start' => '12:00',
+                'break1_end'   => '13:00',
+                'break2_start' => null,
+                'break2_end'   => null,
+                'note'         => '申請備考',
+            ]
+        );
 
         $response->assertStatus(302);
         $response->assertSessionHas('status');
 
+        // 勤怠本体は変更されない（申請のみ作られる）前提
         $this->assertDatabaseHas('attendance_times', [
             'attendance_id' => $attendance->id,
             'start_time' => '09:00:00',
@@ -189,15 +213,18 @@ class UserAttendanceDetailUpdateTest extends TestCase
             'applied_at'        => now(),
         ]);
 
-        $response = $this->actingAs($user)->patch(route('attendance.detail.update', ['id' => $attendance->id]), [
-            'start_time'   => '09:30',
-            'end_time'     => '18:30',
-            'break1_start' => null,
-            'break1_end'   => null,
-            'break2_start' => null,
-            'break2_end'   => null,
-            'note'         => '備考',
-        ]);
+        $response = $this->actingAs($user)->patch(
+            route('attendance.detail.update', ['id' => $attendance->id]),
+            [
+                'start_time'   => '09:30',
+                'end_time'     => '18:30',
+                'break1_start' => null,
+                'break1_end'   => null,
+                'break2_start' => null,
+                'break2_end'   => null,
+                'note'         => '備考',
+            ]
+        );
 
         $response->assertStatus(302);
         $response->assertSessionHasErrors(['application']);
