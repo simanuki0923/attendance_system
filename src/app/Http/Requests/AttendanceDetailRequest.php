@@ -66,13 +66,11 @@ class AttendanceDetailRequest extends FormRequest
             return;
         }
 
-        // 休憩終了 < 休憩開始
         if ($breakStart && $breakEnd && $breakEnd->lessThan($breakStart)) {
             $validator->errors()->add("break{$breakNumber}_start", '休憩時間が不適切な値です');
             return;
         }
 
-        // 休憩開始の範囲チェック
         if ($breakStart && $workStart && $breakStart->lessThan($workStart)) {
             $validator->errors()->add("break{$breakNumber}_start", '休憩時間が不適切な値です');
         }
@@ -80,7 +78,6 @@ class AttendanceDetailRequest extends FormRequest
             $validator->errors()->add("break{$breakNumber}_start", '休憩時間が不適切な値です');
         }
 
-        // 休憩終了の範囲チェック
         if ($breakEnd && $workStart && $breakEnd->lessThan($workStart)) {
             $validator->errors()->add("break{$breakNumber}_end", '休憩時間が不適切な値です');
         }
