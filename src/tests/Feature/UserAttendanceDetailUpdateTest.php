@@ -179,7 +179,6 @@ class UserAttendanceDetailUpdateTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHas('status');
 
-        // 勤怠本体は変更されない（申請のみ作られる）前提
         $this->assertDatabaseHas('attendance_times', [
             'attendance_id' => $attendance->id,
             'start_time' => '09:00:00',
