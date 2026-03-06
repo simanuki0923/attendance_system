@@ -45,7 +45,7 @@ body {
 .header__logo img {
   display: block;
   height: 26px;
-  transform: translateX(-300px);
+  margin-left: -100px;
 }
 
 .header__nav {
@@ -59,7 +59,6 @@ body {
   list-style: none;
   margin: 0;
   padding: 0;
-  transform: translateX(280px);
 }
 
 .header__nav-item {
@@ -129,13 +128,5 @@ body {
   .banner-page__button,
   .banner-page__card {
     max-width: 100%;
-  }
-
-  .header__logo img {
-    transform: translateX(-100px);
-  }
-
-  .header__nav-list {
-    transform: translateX(70px);
   }
 }
